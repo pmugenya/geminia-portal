@@ -1,0 +1,112 @@
+
+<div class="flex flex-col max-w-md w-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">
+            Get {{ insuranceType | titlecase }} Insurance Quote
+        </h2>
+        <button
+            mat-icon-button
+            (click)="closeModal()"
+            class="text-gray-400 hover:text-gray-600"
+        >
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6">
+        <p class="text-sm text-gray-600 mb-6">
+            Fill out the form below and our team will contact you with a personalized 
+            {{ insuranceType }} insurance quote.
+        </p>
+
+        <form [formGroup]="quoteForm" (ngSubmit)="submitQuote()" class="space-y-4">
+            <!-- Full Name -->
+            <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Full Name</mat-label>
+                <input
+                    matInput
+                    formControlName="fullName"
+                    placeholder="Enter your full name"
+                />
+                <mat-error>
+                    {{ getErrorMessage('fullName') }}
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Phone Number -->
+            <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Phone Number</mat-label>
+                <input
+                    matInput
+                    formControlName="phoneNumber"
+                    placeholder="+254 or 07XX XXX XXX"
+                    type="tel"
+                />
+                <mat-hint>We'll contact you via call, SMS, or WhatsApp</mat-hint>
+                <mat-error>
+                    {{ getErrorMessage('phoneNumber') }}
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Email Address -->
+            <mat-form-field class="w-full" appearance="outline">
+                <mat-label>Email Address (Optional)</mat-label>
+                <input
+                    matInput
+                    formControlName="email"
+                    placeholder="your.email@example.com"
+                    type="email"
+                />
+                <mat-hint>Recommended for quote delivery</mat-hint>
+                <mat-error>
+                    {{ getErrorMessage('email') }}
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Location -->
+            <mat-form-field class="w-full" appearance="outline">
+                <mat-label>County / Town / Location (Optional)</mat-label>
+                <mat-select formControlName="location">
+                    <mat-option value="">Select your location</mat-option>
+                    <mat-option *ngFor="let county of counties" [value]="county">
+                        {{ county }}
+                    </mat-option>
+                </mat-select>
+                <mat-hint>Helps us provide location-specific rates</mat-hint>
+            </mat-form-field>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <button
+            mat-button
+            (click)="closeModal()"
+            [disabled]="isSubmitting"
+            class="text-gray-600"
+        >
+            Cancel
+        </button>
+        <button
+            mat-flat-button
+            color="primary"
+            (click)="submitQuote()"
+            [disabled]="isSubmitting"
+            class="min-w-[120px]"
+        >
+            @if (!isSubmitting) {
+                <span>Get Quote</span>
+            }
+            @if (isSubmitting) {
+                <mat-progress-spinner
+                    [diameter]="20"
+                    [mode]="'indeterminate'"
+                    class="mr-2"
+                ></mat-progress-spinner>
+                <span>Submitting...</span>
+            }
+        </button>
+    </div>
+</div>

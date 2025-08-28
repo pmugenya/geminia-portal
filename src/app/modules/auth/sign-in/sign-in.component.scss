@@ -1,0 +1,54 @@
+/* Custom styles for the sign-up component */
+
+/* Make input placeholders faint */
+::placeholder {
+  color: #a0aec0; /* Tailwind's gray-400 */
+  opacity: 1;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #a0aec0;
+  opacity: 1;
+}
+:-ms-input-placeholder {
+  color: #a0aec0 !important;
+}
+::-ms-input-placeholder {
+  color: #a0aec0;
+}
+
+
+/* 
+  UPDATED TOAST STYLING 
+  This system now aligns with the marine-quote page.
+*/
+
+/* General styling for the bottom toast container */
+.login-toast {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  color: white !important;
+}
+
+/* Color override for SUCCESS type */
+.login-toast[ng-reflect-type='success'] {
+  background-color: #22c55e !important; /* Standard Green */
+}
+
+/* Color override for INFO type (using Pantone 2758C) */
+.login-toast[ng-reflect-type='info'] {
+  background-color: #21275c !important; 
+}
+
+/* Color override for ERROR type (inline alerts) */
+fuse-alert[ng-reflect-type='error'] {
+    background-color: #ef4444 !important; /* Standard Red */
+}
+
+/* Ensure the text and icon inside all toast/alert types are white */
+.login-toast .fuse-alert-icon,
+.login-toast .fuse-alert-message,
+fuse-alert[ng-reflect-type='error'] .fuse-alert-icon,
+fuse-alert[ng-reflect-type='error'] .fuse-alert-message {
+  color: white !important;
+}

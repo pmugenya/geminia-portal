@@ -1,0 +1,12 @@
+.mat-mdc-dialog-container {
+    --mdc-dialog-container-color: white;
+    --mdc-dialog-supporting-text-color: #6b7280;
+}
+
+.mat-mdc-form-field {
+    --mdc-filled-text-field-container-color: transparent;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-focus-overlay {
+    opacity: 0;
+}

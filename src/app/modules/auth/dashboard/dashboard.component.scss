@@ -1,0 +1,187 @@
+// Define the only allowed colors as variables for easy use
+$pantone-light-blue: #04b2e1;
+$pantone-dark-blue: #21275c;
+$white: #ffffff;
+
+// --- UTILITY CLASSES ---
+.bg-pantone-light-blue {
+    background-color: $pantone-light-blue !important;
+}
+.bg-pantone-dark-blue {
+    background-color: $pantone-dark-blue !important;
+}
+.text-pantone-light-blue {
+    color: $pantone-light-blue !important;
+}
+.text-pantone-dark-blue {
+    color: $pantone-dark-blue !important;
+}
+
+// --- COMPONENT STYLES ---
+
+.sidebar-bg {
+    background-color: $pantone-light-blue;
+}
+
+.nav-menu-item {
+    .sidebar-nav-icon {
+        color: $pantone-dark-blue;
+        transition: color 0.2s ease-in-out;
+    }
+
+    span.font-medium {
+        font-weight: 700; // 700 is equivalent to font-bold in Tailwind
+    }
+}
+
+.nav-menu-item.active-menu-item {
+    background-color: rgba($pantone-dark-blue, 0.3) !important;
+    color: $white !important;
+
+    .sidebar-nav-icon {
+        color: $white !important;
+    }
+}
+
+.stats-card {
+    background-color: $white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07);
+        transform: translateY(-2px);
+    }
+}
+
+.policy-details-collapsible {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out;
+    background-color: #f9fafb;
+
+    &.expanded {
+        max-height: 1000px;
+        transition: max-height 0.6s ease-in;
+    }
+}
+
+.detail-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $pantone-light-blue;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.policy-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 0.75rem 1.5rem;
+
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item-full {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.75rem;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: $pantone-dark-blue;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+// --- NEW/UPDATED CLAIM STYLES ---
+.claim-filed-chip {
+    background-color: rgba($pantone-dark-blue, 0.1);
+    color: $pantone-dark-blue;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.file-claim-button {
+    border-color: $pantone-light-blue !important;
+    color: $pantone-light-blue !important;
+
+    &:hover {
+        background-color: rgba($pantone-light-blue, 0.05);
+    }
+
+    mat-icon {
+        color: $pantone-light-blue;
+    }
+}
+
+.claim-status-chip {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 110px;
+
+    &.status-submitted {
+        background-color: #e0f2fe;
+        color: #0ea5e9;
+    }
+    &.status-review {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+    &.status-info-required {
+        background-color: #ffedd5;
+        color: #f97316;
+    }
+    &.status-approved {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    &.status-settled {
+        background-color: #e0e7ff;
+        color: #4f46e5;
+    }
+    &.status-rejected {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+}
+
+// Styles for the custom Geminia Toast Message
+::ng-deep .geminia-toast-panel {
+    --mdc-snackbar-container-color: #{$pantone-dark-blue};
+    --mdc-snackbar-supporting-text-color: #{$white};
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    font-weight: 500;
+
+    .mat-mdc-button.mat-mdc-snack-bar-action {
+        color: #{$pantone-light-blue} !important;
+        font-weight: 700;
+    }
+}
