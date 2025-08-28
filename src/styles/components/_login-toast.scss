@@ -1,0 +1,44 @@
+/* Login Toast Style */
+.login-toast {
+    @apply min-w-80;
+    background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
+    color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+    ::ng-deep {
+        .fuse-alert-container {
+            @apply bg-transparent;
+
+            .fuse-alert-message {
+                @apply text-white;
+            }
+
+            .fuse-alert-icon {
+                .mat-icon {
+                    @apply text-white;
+                }
+            }
+        }
+    }
+
+    &.show {
+        animation: slideIn 0.3s ease-out forwards;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Override default success color for login toast */
+.login-toast .fuse-alert-container {
+    border: none !important;
+}

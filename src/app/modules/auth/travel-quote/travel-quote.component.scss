@@ -1,0 +1,119 @@
+:root {
+  --geminia-blue: #04b2e1; /* Pantone 306C */
+  --geminia-navy: #21275c; /* Pantone 2758C */
+}
+
+/* Custom text color utilities */
+.text-geminia-blue {
+  color: var(--geminia-blue);
+}
+
+.text-geminia-navy {
+  color: var(--geminia-navy);
+}
+
+/* Product selection card styling with brand color borders */
+.product-selection-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.product-selection-card > div {
+  border: 2px solid var(--geminia-blue); /* Light blue border by default */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.product-selection-card:hover > div {
+  border-color: var(--geminia-navy); /* Deep blue border on hover */
+  box-shadow: 0 10px 25px -5px rgba(33, 39, 92, 0.15), 0 4px 6px -2px rgba(33, 39, 92, 0.1);
+}
+
+.product-selection-card:hover {
+  transform: translateY(-4px); /* Slight lift on hover */
+}
+
+/*
+  Custom Button Styling:
+  - Base color is geminia-blue (#04b2e1)
+  - Hover color is geminia-navy (#21275c)
+  - This class now styles all primary action buttons for consistency.
+*/
+.btn-select-plan-custom {
+  background-color: var(--geminia-blue);
+  transition: background-color 0.3s ease-in-out;
+}
+
+.btn-select-plan-custom:hover {
+  background-color: var(--geminia-navy);
+}
+
+/* Enhanced popular badge styling */
+.product-selection-card:hover .text-geminia-blue {
+  color: var(--geminia-navy);
+  background-color: rgba(33, 39, 92, 0.1);
+}
+
+/* Modal animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Form inputs with on-brand focus style */
+.form-input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: var(--geminia-blue);
+    box-shadow: 0 0 0 3px rgba(4, 178, 225, 0.3);
+  }
+}
+
+/* Styling for select dropdown placeholder text */
+select.form-input:required:invalid {
+  color: #6b7280; /* text-gray-500 */
+}
+
+option {
+  color: #111827; /* text-gray-900 */
+}
+
+
+/* Step Indicator styling */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  font-weight: 600;
+  transition: all 0.3s ease-in-out;
+
+  &.active {
+    background-color: var(--geminia-navy);
+    color: white;
+  }
+}
