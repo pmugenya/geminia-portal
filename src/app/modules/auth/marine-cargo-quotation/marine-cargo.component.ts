@@ -9,8 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin, Subject, takeUntil } from 'rxjs';
 import { AuthenticationService, StoredUser, PendingQuote } from '../shared/services/auth.service';
+import { CargoTypeData, Category, MarineProduct, PackagingType } from '../../../core/user/user.types';
+import { UserService } from '../../../core/user/user.service';
+import { ThousandsSeparatorValueAccessor } from '../directives/thousands-separator-value-accessor';
 
 // --- INTERFACES & VALIDATORS ---
 
@@ -84,11 +87,6 @@ interface PremiumCalculation {
     currency: string;
 }
 
-interface MarineProduct {
-    code: string;
-    name: string;
-    rate: number;
-}
 
 interface ImporterDetails {
     name: string;
@@ -225,7 +223,9 @@ export class PaymentModalComponent implements OnInit {
 @Component({
     selector: 'app-marine-cargo-quotation',
     standalone: true,
-    imports: [ CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule, MatIconModule, TitleCasePipe, PaymentModalComponent, TermsPrivacyModalComponent ],
+    imports: [ CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule,
+        MatIconModule, TitleCasePipe, PaymentModalComponent, TermsPrivacyModalComponent,
+        ThousandsSeparatorValueAccessor ],
     templateUrl: './marine-cargo-quotation.component.html',
     styleUrls: ['./marine-cargo-quotation.component.scss'],
 })
@@ -247,20 +247,23 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     isLoggedIn: boolean = false;
     currentUser: StoredUser | null = null;
     displayUser: DisplayUser = { type: 'individual', name: 'Individual User' };
-
+    isLoadingMarineData: boolean = true;
+    isLoadingCargoTypes: boolean = true;
     private uploadedFileRegistry = new Map<string, string>();
-
+    marineProducts: MarineProduct[] = [];
+    marinePackagingTypes: PackagingType[] = [];
+    marineCategories: Category[] = [];
+    marineCargoTypes: CargoTypeData[] = [];
     private readonly TAX_RATES = { PHCF_RATE: 0.0025, TRAINING_LEVY: 0.0025, COMMISSION_RATE: 0.1 };
-    readonly marineProducts: MarineProduct[] = [ { code: 'ICC_A', name: 'Institute Cargo Clauses (A) - All Risks', rate: 0.005 }, { code: 'ICC_B', name: 'Institute Cargo Clauses (B) - Named Perils', rate: 0.0035 }, { code: 'ICC_C', name: 'Institute Cargo Clauses (C) - Limited Perils', rate: 0.0025 } ];
-    readonly marineCargoTypes: string[] = [ 'Pharmaceuticals', 'Electronics', 'Apparel', 'Vehicles', 'Machinery', 'General Goods' ];
     readonly blacklistedCountries: string[] = [ 'Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia' ];
-    readonly allCountriesList: string[] = [ 'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe' ];
+    readonly allCountriesList: string[] = [ 'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe' ];
 
     constructor(
         private fb: FormBuilder,
         private router: Router,
         public dialog: MatDialog,
         private authService: AuthenticationService,
+        private userService: UserService,
         private route: ActivatedRoute
     ) {
         this.quotationForm = this.createQuotationForm();
@@ -281,6 +284,30 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 }
             });
 
+        this.isLoadingMarineData = true;
+
+        forkJoin({
+            products: this.userService.getMarineProducts(),
+            packagingTypes: this.userService.getMarinePackagingTypes(),
+            categories: this.userService.getMarineCategories()
+        }).subscribe({
+            next: (data) => {
+                // Update everything in one batch
+                this.marineProducts = data.products || [];
+                this.marinePackagingTypes = data.packagingTypes || [];
+                this.marineCategories = data.categories || [];
+
+                // Show form only after all data is loaded
+                setTimeout(() => {
+                    this.isLoadingMarineData = false;
+                }, 50); // Small delay to ensure DOM is stable
+            },
+            error: (err) => {
+                console.error('Error loading marine data:', err);
+                this.isLoadingMarineData = false;
+            }
+        });
+
         this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
             const quoteId = params['editId'];
             if (quoteId) {
@@ -291,11 +318,39 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
         this.setupFormSubscriptions();
         this.setDefaultDate();
+
+
     }
+
+
 
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    onCategorySelected(event: Event) {
+        this.marineCargoTypes =  [];
+        this.quotationForm.get('marineCargoType')?.reset();
+        const input = (event.target as HTMLInputElement).value;
+        const selected = this.marineCategories.find(p => p.catname === input);
+        console.log(selected);
+        if (selected) {
+            this.isLoadingCargoTypes = true;
+            this.userService.getCargoTypesByCategory(selected.id).subscribe({
+                next: (types) => {
+                    console.log(types);
+                    this.marineCargoTypes = types || [];
+                    this.isLoadingCargoTypes = false;
+                },
+                error: (err) => {
+                    console.error('Error fetching cargo types', err);
+                    this.isLoadingCargoTypes = false;
+                }
+            });
+        } else {
+            console.warn('No matching category found');
+        }
     }
 
     openTermsModal(event?: Event): void {
@@ -421,13 +476,15 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             cargoType: ['', Validators.required],
             tradeType: ['import', Validators.required],
             modeOfShipment: ['', Validators.required],
-            marineProduct: ['Institute Cargo Clauses (A) - All Risks', Validators.required],
+            marineProduct: ['', Validators.required],
+            marineCategory: ['', Validators.required],
             marineCargoType: ['', Validators.required],
+            marinePackagingType: ['', Validators.required],
             origin: ['', Validators.required],
             destination: [''],
             vesselName: [''],
             coverStartDate: ['', [Validators.required, this.noPastDatesValidator]],
-            sumInsured: ['', Validators.required],
+            sumInsured: [null, Validators.required],
             descriptionOfGoods: ['', [Validators.required, minWords(10), maxWords(100)]], // UPDATED VALIDATION
             ucrNumber: ['', ucrNumberValidator],
             idfNumber: ['', [Validators.required, idfNumberValidator]],
@@ -483,8 +540,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     private calculatePremium(): void {
         const sumInsured = this.quotationForm.get('sumInsured')?.value || 0;
         const productValue = this.quotationForm.get('marineProduct')?.value;
-        const selectedProduct = this.marineProducts.find((p) => p.name === productValue);
-        const rate = selectedProduct ? selectedProduct.rate : 0;
+        const selectedProduct = this.marineProducts.find((p) => p.productdisplay === productValue);
+        const rate =  0;
         const { PHCF_RATE, TRAINING_LEVY, COMMISSION_RATE } = this.TAX_RATES;
         const basePremium = sumInsured * rate;
         const phcf = basePremium * PHCF_RATE;
