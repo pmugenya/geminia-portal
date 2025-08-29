@@ -166,12 +166,12 @@
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Mode of Shipment <span class="text-red-500">*</span></label>
-                                        <select formControlName="modeOfShipment" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'modeOfShipment')}"><option value="">Select mode</option><option value="sea">Sea</option><option value="air">Air</option></select>
+                                        <select formControlName="modeOfShipment" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'modeOfShipment')}"><option value="">Select mode</option><option value="1">Sea</option><option value="2">Air</option></select>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'modeOfShipment')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'modeOfShipment') }}</div>
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Trade Type <span class="text-red-500">*</span></label>
-                                        <select formControlName="tradeType" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'tradeType')}"><option value="import">Import</option><option value="export">Export</option></select>
+                                        <select formControlName="tradeType" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'tradeType')}"><option value="1">Import</option><option value="2">Export</option></select>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'tradeType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'tradeType') }}</div>
                                     </div>
                                 </div>
@@ -184,7 +184,7 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Marine Packaging Type <span class="text-red-500">*</span></label>
-                                        <input type="text" formControlName="marineCargoType" list="packaging-type-list" placeholder="Search for a cargo type..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marinePackagingType')}"/>
+                                        <input type="text" formControlName="marinePackagingType" list="packaging-type-list" placeholder="Search for a cargo type..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marinePackagingType')}"/>
                                         <datalist id="packaging-type-list"><option *ngFor="let type of marinePackagingTypes" [value]="type.packingtype"></option></datalist>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'marinePackagingType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marinePackagingType') }}</div>
                                     </div>
@@ -192,7 +192,7 @@
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Select Category <span class="text-red-500">*</span></label>
-                                        <input type="text" formControlName="marineProduct" list="marine-category-list" placeholder="Search for a category..."
+                                        <input type="text" formControlName="marineCategory" list="marine-category-list" placeholder="Search for a category..."
                                                class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
                                                [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineCategory')}"
                                         (change)="onCategorySelected($event)"/>
@@ -215,7 +215,7 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Destination</label>
-                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2" readonly/>
+                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2"/>
                                     </div>
                                 </div>
                                 <div class="mb-6">
@@ -267,7 +267,7 @@
                                     </label>
                                     <div *ngIf="isFieldInvalid(quotationForm, 'termsAndPolicyConsent')" class="ml-7 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'termsAndPolicyConsent') }}</div>
                                 </div>
-                                <button type="submit" [disabled]="quotationForm.invalid" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors">Get Quote</button>
+                                <button type="submit" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors">Get Quote</button>
                             </fieldset>
                         </form>
                     </div>
