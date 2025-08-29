@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 import {
     FormBuilder,
@@ -79,6 +78,11 @@ export class AuthSignInComponent implements OnInit {
     showTermsModal = false;
     showDataPrivacyModal = false;
     loginState: 'credentials' | 'otp' = 'credentials';
+    
+    // OTP Resend functionality properties
+    resendCooldown = 0;
+    resendTimer: any;
+    isResending = false;
 
     constructor(
         private fb: FormBuilder,
@@ -335,14 +339,14 @@ export class AuthSignInComponent implements OnInit {
             this.verifyOtp();
         }
     }
-
-    /**
+        /**
      * Step 1: Submits credentials, expecting a temporary token in the response.
      */
     submitCredentials(): void {
         console.log('loggin in...');
         this.signInForm.disable();
         this.showAlert = false;
+        this.isResending = true; // For showing a loading spinner
         const { username, password } = this.signInForm.getRawValue();
         const credentials = { username, password };
 
@@ -350,6 +354,7 @@ export class AuthSignInComponent implements OnInit {
             finalize(() => {
                 this.signInForm.get('username').enable();
                 this.signInForm.get('password').enable();
+                this.isResending = false; // Hide the loading spinner
             })
         ).subscribe({
             next: (res: any) => {
@@ -359,6 +364,7 @@ export class AuthSignInComponent implements OnInit {
                     console.log('✅ Temporary token saved.');
                     this.loginState = 'otp';
                     this.signInForm.get('otp').enable();
+                    this.startResendCooldown(); // Start cooldown when OTP screen is shown
                 } else {
                     this.alert = { type: 'error', message: 'Login failed: Invalid response from server.', position: 'inline' };
                     this.showAlert = true;
@@ -394,19 +400,72 @@ export class AuthSignInComponent implements OnInit {
                 // handle success: save final JWT, navigate, etc.
                 this.router.navigate(['/sign-up/dashboard']);
             },
-            error: (err: Error) => {
-                this.alert = {
-                    type: 'error',
-                    message: err.message,
-                    position: 'inline'
-                };
-                this.showAlert = true;
-                this.signInForm.enable();
+            error: (err: any) => {
+                const errorMessage = err?.error?.errors[0]?.developerMessage || err.message || 'An unknown error occurred.';
+
+                // ** NEW: Check if OTP is expired **
+                if (errorMessage.toLowerCase().includes('expired')) {
+                    this.alert = {
+                        type: 'warning',
+                        message: 'Your OTP has expired. A new one has been sent.',
+                        position: 'inline'
+                    };
+                    this.showAlert = true;
+                    this.signInForm.get('otp').reset(); // Clear the invalid OTP
+                    // Automatically call submitCredentials to resend the OTP
+                    this.submitCredentials();
+                } else {
+                    // Handle other errors like "Invalid OTP"
+                    this.alert = {
+                        type: 'error',
+                        message: errorMessage,
+                        position: 'inline'
+                    };
+                    this.showAlert = true;
+                    this.signInForm.enable(); // Re-enable the form for the user to try again
+                }
             }
         });
     }
 
+    /**
+     * Resends the OTP code to the user. This is for a user-clicked button.
+     */
+    resendOtp(): void {
+        // Prevent user from spamming the resend button
+        if (this.resendCooldown > 0) {
+            return;
+        }
+        this.alert = { type: 'info', message: 'Sending a new OTP...', position: 'inline'};
+        this.showAlert = true;
+        // The logic to resend is the same as submitting credentials initially
+        this.submitCredentials();
+    }
+    
+    /**
+     * Starts the cooldown timer for resend OTP button.
+     */
+    private startResendCooldown(): void {
+        this.clearResendCooldown(); // Ensure no multiple timers are running
+        this.resendCooldown = 60; // 60 seconds cooldown
+        this.resendTimer = setInterval(() => {
+            this.resendCooldown--;
+            if (this.resendCooldown <= 0) {
+                clearInterval(this.resendTimer);
+            }
+        }, 1000);
+    }
 
+    /**
+     * Clears the resend cooldown timer.
+     */
+    private clearResendCooldown(): void {
+        if (this.resendTimer) {
+            clearInterval(this.resendTimer);
+            this.resendTimer = null;
+        }
+        this.resendCooldown = 0;
+    }
 
     getCurrentDate(): string {
         return new Date().toLocaleDateString('en-US', {
@@ -432,6 +491,7 @@ export class AuthSignInComponent implements OnInit {
         this.authService.clearTempToken();
         this.signInForm.get('otp').disable();
         this.signInForm.get('otp').reset();
+        this.clearResendCooldown(); // Clear cooldown when going back
     }
 
     /**
@@ -495,10 +555,12 @@ export class AuthSignInComponent implements OnInit {
 
     }
 
-
     togglePasswordVisibility(): void {
         this.showPassword = !this.showPassword;
     }
 
-
+    ngOnDestroy(): void {
+        // Clean up timer when component is destroyed
+        this.clearResendCooldown();
+    }
 }
