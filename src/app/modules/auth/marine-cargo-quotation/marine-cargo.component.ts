@@ -1,4 +1,4 @@
-import { CommonModule, CurrencyPipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -14,6 +14,7 @@ import { AuthenticationService, StoredUser, PendingQuote } from '../shared/servi
 import { CargoTypeData, Category, MarineProduct, PackagingType } from '../../../core/user/user.types';
 import { UserService } from '../../../core/user/user.service';
 import { ThousandsSeparatorValueAccessor } from '../directives/thousands-separator-value-accessor';
+import { QuoteService } from '../shared/services/quote.service';
 
 // --- INTERFACES & VALIDATORS ---
 
@@ -226,6 +227,7 @@ export class PaymentModalComponent implements OnInit {
     imports: [ CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule,
         MatIconModule, TitleCasePipe, PaymentModalComponent, TermsPrivacyModalComponent,
         ThousandsSeparatorValueAccessor ],
+    providers:[DatePipe],
     templateUrl: './marine-cargo-quotation.component.html',
     styleUrls: ['./marine-cargo-quotation.component.scss'],
 })
@@ -254,6 +256,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     marinePackagingTypes: PackagingType[] = [];
     marineCategories: Category[] = [];
     marineCargoTypes: CargoTypeData[] = [];
+    selectedFiles: { [key: string]: File } = {};
     private readonly TAX_RATES = { PHCF_RATE: 0.0025, TRAINING_LEVY: 0.0025, COMMISSION_RATE: 0.1 };
     readonly blacklistedCountries: string[] = [ 'Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia' ];
     readonly allCountriesList: string[] = [ 'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe' ];
@@ -264,7 +267,9 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         public dialog: MatDialog,
         private authService: AuthenticationService,
         private userService: UserService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private datePipe: DatePipe,
+        private quotationService: QuoteService
     ) {
         this.quotationForm = this.createQuotationForm();
         this.exportRequestForm = this.createExportRequestForm();
@@ -414,25 +419,64 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     onSubmit(): void {
-        // this.quotationForm.markAllAsTouched();
+        this.quotationForm.markAllAsTouched();
+        console.log(this.quotationForm.get('marinePackagingType')?.value);
         //
-        // if (this.quotationForm.valid) {
-        //     if (!this.showHighRiskModal && !this.showExportModal) {
-        //         this.calculatePremium();
-        //         const newQuote: PendingQuote = {
-        //             id: this.editModeQuoteId || `GEM-Q-${Date.now()}`,
-        //             title: `Marine - ${this.quotationForm.value.marineCargoType || 'Quote'}`,
-        //             type: 'marine', status: 'pending', createdDate: new Date().toISOString(),
-        //             quoteDetails: this.quotationForm.value, premium: this.premiumCalculation
-        //         };
-        //         this.authService.savePendingQuote(newQuote);
-        //         this.showToast('Your quote has been saved! Please review and proceed.');
-        //         this.goToStep(2);
-        //     }
-        // } else {
+        const productValue = this.quotationForm.get('marineProduct')?.value;
+        const packagingType = this.quotationForm.get('marinePackagingType')?.value;
+        const category = this.quotationForm.get('marineCategory')?.value;
+        const cargoType = this.quotationForm.get('marineCargoType')?.value;
+        const selectedProduct = this.marineProducts.find((p) => p.productdisplay === productValue);
+        const selectedPackaging = this.marinePackagingTypes.find((p) => p.packingtype === packagingType);
+        const selectedCategory = this.marineCategories.find((p) => p.catname === category);
+        const selectedCargoType = this.marineCargoTypes.find((p) => p.ctname === cargoType);
+        var formattedDate = this.datePipe.transform(this.quotationForm.get('coverStartDate')?.value, 'dd MMM yyyy');
+
+        // if (!this.quotationForm.valid) {
         //     this.showToast('Please fill in all required fields correctly before proceeding.');
         //     this.scrollToFirstError();
+        //     return;
         // }
+        const metadata = {
+            suminsured: this.quotationForm.get('sumInsured')?.value,
+            firstName: this.quotationForm.get('firstName')?.value,
+            lastName: this.quotationForm.get('lastName')?.value,
+            email: this.quotationForm.get('email')?.value,
+            phoneNumber: this.quotationForm.get('phoneNumber')?.value,
+            idNumber: this.quotationForm.get('idNumber')?.value,
+            kraPin: this.quotationForm.get('kraPin')?.value,
+            shippingid: this.quotationForm.get('modeOfShipment')?.value,
+            tradeType: this.quotationForm.get('tradeType')?.value,
+            countryOrigin: this.quotationForm.get('origin')?.value,
+            destination: this.quotationForm.get('destination')?.value,
+            vesselName: this.quotationForm.get('vesselName')?.value,
+            ucrNumber: this.quotationForm.get('ucrNumber')?.value,
+            idfNumber: this.quotationForm.get('idfNumber')?.value,
+            goodsDescription: this.quotationForm.get('descriptionOfGoods')?.value,
+            coverDateFrom: formattedDate,
+            locale: "en_US",
+            productId: selectedProduct.id,
+            packagetypeid: selectedPackaging.id,
+            categoryid: selectedCategory.id,
+            cargoId: selectedCargoType.id,
+        };
+        console.log(metadata);
+        const formData = new FormData();
+        formData.append('kraPinUpload', this.quotationForm.get('kraPinUpload')?.value);
+        formData.append('nationalIdUpload', this.quotationForm.get('nationalIdUpload')?.value);
+        formData.append('invoiceUpload', this.quotationForm.get('invoiceUpload')?.value);
+        formData.append('idfUpload', this.quotationForm.get('idfUpload')?.value);
+        formData.append('metadata', JSON.stringify(metadata));
+
+        this.quotationService.createQuote(formData).subscribe({
+            next: (res) => {
+                console.log('Upload success:', res);
+            },
+            error: (err) => {
+                console.error('Upload error:', err);
+            }
+        });
+
     }
 
     private scrollToFirstError(): void {
@@ -485,7 +529,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             vesselName: [''],
             coverStartDate: ['', [Validators.required, this.noPastDatesValidator]],
             sumInsured: [null, Validators.required],
-            descriptionOfGoods: ['', [Validators.required, minWords(10), maxWords(100)]], // UPDATED VALIDATION
+            descriptionOfGoods: ['', [Validators.required]], // UPDATED VALIDATION
             ucrNumber: ['', ucrNumberValidator],
             idfNumber: ['', [Validators.required, idfNumberValidator]],
         });
@@ -616,31 +660,11 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         return 'Please enter a valid value.';
     }
 
-    onFileSelected(event: Event, controlName: string): void {
-        const element = event.currentTarget as HTMLInputElement;
-        const fileList: FileList | null = element.files;
-        let oldFileId: string | null = null;
-        for (const [key, value] of this.uploadedFileRegistry.entries()) {
-            if (value === controlName) { oldFileId = key; break; }
-        }
-        if (oldFileId) { this.uploadedFileRegistry.delete(oldFileId); }
-
-        if (fileList && fileList.length > 0) {
-            const file = fileList[0];
-            const fileId = `${file.name}:${file.size}`;
-            if (this.uploadedFileRegistry.has(fileId)) {
-                const existingControlName = this.uploadedFileRegistry.get(fileId);
-                this.showToast(`Error: "${file.name}" is already used for the ${existingControlName?.replace('Upload', '')} field.`);
-                element.value = '';
-                this.quotationForm.get(controlName)?.setValue(null);
-                this.quotationForm.get(controlName)?.markAsTouched();
-                return;
-            }
-            this.quotationForm.get(controlName)?.setValue(file);
-            this.uploadedFileRegistry.set(fileId, controlName);
-            this.showToast(`${file.name} selected for ${controlName.replace('Upload', '')}.`);
-        } else {
-            this.quotationForm.get(controlName)?.setValue(null);
+    onFileSelected(event: Event, field: string) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            this.selectedFiles[field] = input.files[0];
+            this.quotationForm.get(field)?.setValue(this.selectedFiles[field]); // update form
         }
     }
 }
