@@ -1,16 +1,16 @@
 <!-- Terms of Service Modal -->
 <div *ngIf="showTermsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" (click)="showTermsModal = false">
     <div class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl" (click)="$event.stopPropagation()">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 sm:px-6">
+        <div class="sticky top-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Terms of Service</h2>
+                <h2 class="text-xl font-bold text-gray-800 sm:text-2xl">Terms of Service</h2>
                 <button (click)="showTermsModal = false" class="text-gray-400 hover:text-gray-600">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
         </div>
         <div class="px-4 py-6 sm:px-6">
-            <div class="prose max-w-none text-sm sm:text-base text-gray-700">
+            <div class="prose max-w-none text-sm text-gray-700 sm:text-base">
                 <p class="mb-4">
                     <strong>Terms of Use for Geminia Insurance Company Limited</strong>
                 </p>
@@ -52,7 +52,7 @@
                 </p>
             </div>
         </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4 sm:px-6">
+        <div class="sticky bottom-0 border-t border-gray-200 bg-white px-4 py-4 sm:px-6">
             <div class="flex justify-end">
                 <button (click)="showTermsModal = false" class="rounded-md bg-sky-500 px-4 py-2 text-white hover:bg-sky-600">
                     Close
@@ -65,16 +65,16 @@
 <!-- Data Privacy Policy Modal -->
 <div *ngIf="showDataPrivacyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" (click)="showDataPrivacyModal = false">
     <div class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl" (click)="$event.stopPropagation()">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 sm:px-6">
+        <div class="sticky top-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Data Privacy Policy</h2>
+                <h2 class="text-xl font-bold text-gray-800 sm:text-2xl">Data Privacy Policy</h2>
                 <button (click)="showDataPrivacyModal = false" class="text-gray-400 hover:text-gray-600">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
         </div>
         <div class="px-4 py-6 sm:px-6">
-            <div class="prose max-w-none text-sm sm:text-base text-gray-700">
+            <div class="prose max-w-none text-sm text-gray-700 sm:text-base">
                 <p class="mb-4">
                     <strong>Data Privacy Statement - Geminia Insurance Company Limited</strong>
                 </p>
@@ -92,7 +92,7 @@
                     <div>
                         <h3 class="font-semibold">Purpose of Processing</h3>
                         <p>Your personal data is processed for the following purposes:</p>
-                        <ul class="ml-4 list-disc space-y-1 mt-2">
+                        <ul class="ml-4 mt-2 list-disc space-y-1">
                             <li>Provision of insurance products and services</li>
                             <li>Compliance with regulatory requirements</li>
                             <li>Risk assessment and underwriting</li>
@@ -116,7 +116,7 @@
                         <h3 class="font-semibold">Contact Information</h3>
                         <p>For more detailed information about our data processing practices, please visit:
                            <a href="https://geminia.co.ke/data-privacy-statement/" target="_blank"
-                              class="text-sky-500 hover:underline break-all">
+                              class="break-all text-sky-500 hover:underline">
                               https://geminia.co.ke/data-privacy-statement/
                            </a>
                         </p>
@@ -127,7 +127,7 @@
                 </p>
             </div>
         </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4 sm:px-6">
+        <div class="sticky bottom-0 border-t border-gray-200 bg-white px-4 py-4 sm:px-6">
             <div class="flex justify-end">
                 <button (click)="showDataPrivacyModal = false" class="rounded-md bg-sky-500 px-4 py-2 text-white hover:bg-sky-600">
                     Close
@@ -148,11 +148,6 @@
         <!-- Geminia Get Quote Portal (Left/Top on mobile) -->
             <!-- Background -->
     <div class="flex min-w-0 flex-auto flex-col-reverse items-center sm:flex-row sm:justify-center md:items-start md:justify-start">
-        <!--
-          FIX: Changed 'items-center' to 'sm:items-center'.
-               This aligns content to the top on mobile (showing everything) and
-               restores vertical centering on sm screens and larger.
-        -->
         <div class="relative flex min-h-[40vh] w-full flex-auto justify-center overflow-hidden p-6 sm:min-h-screen sm:w-1/2 sm:items-center sm:p-8 md:p-16 lg:px-28 dark:border-r" style="background-color: #04b2e1">
             <!-- Background Elements -->
             <div class="absolute inset-0 overflow-hidden">
@@ -194,12 +189,10 @@
             </div>
         </div>
 
-        <!-- Login/Register Form (Right) -->
-<!--        <div class="relative flex min-h-[60vh] w-full flex-auto flex-col items-center justify-center overflow-hidden bg-white p-2 sm:h-screen sm:p-4 md:w-1/2 md:p-6 lg:p-8">-->
-        <!-- Login/Register Form (White Panel) -->
-        <div class="relative flex min-h-[60vh] w-full flex-auto flex-col items-center justify-center bg-white p-4 sm:h-auto sm:overflow-y-auto sm:p-6 md:w-1/2 md:p-8 lg:p-12">
+        <!-- MODIFIED: Login/Register Form container to prevent scrolling -->
+        <div class="relative flex min-h-[60vh] w-full flex-auto flex-col items-center justify-center overflow-hidden bg-white p-4 sm:h-screen sm:p-6 md:w-1/2 md:p-8 lg:p-12">
             <div class="w-full max-w-sm px-2 sm:px-0">
-                <!-- Login Form -->
+                <!-- Login Form (unchanged) -->
                 <div *ngIf="formType === 'login'" class="animate-fade-in">
                     <div class="mb-8 text-center">
                         <div class="text-2xl font-bold text-gray-800">Geminia Insurance</div>
@@ -235,7 +228,22 @@
                              <div class="mb-4">
                                 <label class="mb-2 block text-sm font-medium text-gray-700">Enter OTP Code</label>
                                 <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg tracking-[.5em] shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="otp" placeholder="_ _ _ _ _ _ _ _"/>
-                                <div class="mt-2 text-right text-xs">
+                                <div class="mt-2 flex items-center justify-between text-xs">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-gray-500">Didn't receive code?</span>
+                                        <button type="button"
+                                                (click)="resendOtp()"
+                                                [disabled]="resendCooldown > 0 || isResending"
+                                                class="font-medium transition-colors"
+                                                [ngClass]="{
+                                                    'text-sky-500 hover:underline cursor-pointer': resendCooldown === 0 && !isResending,
+                                                    'text-gray-400 cursor-not-allowed': resendCooldown > 0 || isResending
+                                                }">
+                                            <span *ngIf="!isResending && resendCooldown === 0">Resend OTP</span>
+                                            <span *ngIf="!isResending && resendCooldown > 0">Resend in {{ resendCooldown }}s</span>
+                                            <span *ngIf="isResending">Sending...</span>
+                                        </button>
+                                    </div>
                                     <a (click)="backToCredentials()" class="cursor-pointer font-medium text-sky-500 hover:underline">Back to login</a>
                                 </div>
                             </div>
@@ -273,22 +281,22 @@
                     </div>
                 </div>
 
-                <!-- Registration Form -->
+                <!-- MODIFIED: Registration Form with compact spacing -->
                 <div *ngIf="formType === 'register'" class="animate-fade-in">
-                    <div class="mb-4 text-center">
-                        <div class="text-xl sm:text-2xl font-bold text-gray-800">Create Your Account</div>
-                        <div class="mt-1 text-xs sm:text-sm text-gray-500">Fill in the details below to get started</div>
+                    <div class="mb-2 text-center">
+                        <div class="text-xl font-bold text-gray-800 sm:text-2xl">Create Your Account</div>
+                        <div class="mt-1 text-xs text-gray-500 sm:text-sm">Fill in the details below to get started</div>
                     </div>
                     <form [formGroup]="registerForm" novalidate>
-                        <div class="mb-4">
-                            <label class="mb-2 block text-sm font-medium text-gray-700">Account Type</label>
+                        <div class="mb-2">
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Account Type</label>
                             <mat-radio-group class="flex space-x-4" formControlName="accountType"><mat-radio-button value="C">Individual</mat-radio-button><mat-radio-button value="A">Intermediary</mat-radio-button></mat-radio-group>
                         </div>
                         <div *ngIf="registerForm.get('accountType').value === 'C'">
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Full Name</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">Full Name</label>
                                 <input type="text"
-                                       class="w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched)"
                                        formControlName="fullName"
@@ -299,10 +307,10 @@
                                     <span *ngIf="registerForm.get('fullName')?.errors?.['fullNameInvalid']">Please enter at least two names separated by a space</span>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Email Address</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">Email Address</label>
                                 <input type="email"
-                                       class="w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('email')?.invalid && registerForm.get('email')?.touched)"
                                        formControlName="email"
@@ -313,10 +321,10 @@
                                     <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email address</span>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">KRA PIN</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">KRA PIN</label>
                                 <input type="text"
-                                       class="w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('kraPin')?.invalid && registerForm.get('kraPin')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('kraPin')?.invalid && registerForm.get('kraPin')?.touched)"
                                        formControlName="kraPin"
@@ -330,10 +338,10 @@
                                 </div>
                                 <div class="mt-0.5 text-xs text-gray-500">Letter + 9 digits + Letter (e.g., A123456789M)</div>
                             </div>
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Phone Number</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">Phone Number</label>
                                 <input type="tel"
-                                       class="w-full rounded-md border px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched)"
                                        formControlName="phoneNumber"
@@ -349,26 +357,26 @@
                             </div>
                         </div>
                         <div *ngIf="registerForm.get('accountType').value === 'A'">
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Intermediary - IRA Number</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">Intermediary - IRA Number</label>
                                 <input type="text"
-                                       class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        formControlName="iraNumber"
                                        placeholder="IRA Number"/>
                             </div>
-                            <div class="mb-3">
-                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">PIN Number</label>
+                            <div class="mb-1">
+                                <label class="mb-1 block text-xs font-medium text-gray-700">PIN Number</label>
                                 <input type="text"
-                                       class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        formControlName="pinNumber"
                                        placeholder="PIN Number"/>
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="mb-2 block text-sm font-medium text-gray-700">Password</label>
+                        <div class="mb-1">
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Password</label>
                             <div class="relative">
                                 <input [type]="showPassword ? 'text' : 'password'"
-                                       class="w-full rounded-md border px-2 py-1.5 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('password')?.invalid && registerForm.get('password')?.touched)"
                                        formControlName="password"
@@ -381,15 +389,15 @@
                                 </button>
                                     </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="mb-2 block text-sm font-medium text-gray-700">Confirm Password</label>
+                        <div class="mb-1">
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Confirm Password</label>
                             <div class="relative">
                                 <input [type]="showPassword ? 'text' : 'password'"
-                                       class="w-full rounded-md border px-2 py-1.5 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
+                                       class="w-full rounded-md border px-2 py-1 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
                                        [class.border-red-300]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
                                        [class.border-gray-300]="!(registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched)"
                                        formControlName="confirmPassword"
-                                       placeholder="Create a strong password"
+                                       placeholder="Confirm your password"
                                        required/>
                                 <button type="button"
                                         class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600"
@@ -397,13 +405,13 @@
                                     <mat-icon class="text-sm">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                                 </button>
                             </div>
-                            <p class="mt-1 text-sm text-red-600" *ngIf="registerForm.errors?.passwordMismatch && confirmPassword?.touched">
+                            <p class="mt-1 text-xs text-red-600" *ngIf="registerForm.errors?.passwordMismatch && confirmPassword?.touched">
                                 Passwords do not match
                             </p>
                         </div>
-                        <div class="mb-3 flex items-start">
-                            <mat-checkbox formControlName="agreementAccepted" id="register-agreement" class="flex-shrink-0 mt-0.5"></mat-checkbox>
-                            <label for="register-agreement" class="ml-2 text-xs text-gray-600 leading-relaxed">
+                        <div class="mb-2 flex items-start">
+                            <mat-checkbox formControlName="agreementAccepted" id="register-agreement" class="mt-0.5 flex-shrink-0"></mat-checkbox>
+                            <label for="register-agreement" class="ml-2 text-xs leading-relaxed text-gray-600">
                                 I agree to the
                                 <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a>
                                 and
@@ -411,7 +419,7 @@
                             </label>
                         </div>
                         <button type="button" (click)="register()"
-                                class="mt-6 w-full rounded-md py-2.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                class="mt-2 w-full rounded-md py-2 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                 [ngClass]="{ 'bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500': registerForm.valid,
                          'cursor-not-allowed bg-gray-200 text-gray-500': registerForm.invalid || registerForm.disabled }"
                                 [disabled]="registerForm.invalid || registerForm.disabled">
@@ -427,7 +435,7 @@
                             </ng-template>
                         </button>
                     </form>
-                    <div class="mt-6 text-center text-sm">
+                    <div class="mt-2 text-center text-sm">
                         <span class="text-gray-600">Already have an account?</span>
                         <a class="ml-1 cursor-pointer font-medium text-sky-500 hover:underline" (click)="formType = 'login'">Sign In</a>
                     </div>
