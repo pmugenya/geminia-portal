@@ -1,4 +1,4 @@
 export const environment = {
     production: false,
-    apiUrl: 'http://192.168.165.79:8080/fineract-provider/api/v1'
+    apiUrl: 'http://10.1.1.64:9090/marineportal/api/v1'
 };

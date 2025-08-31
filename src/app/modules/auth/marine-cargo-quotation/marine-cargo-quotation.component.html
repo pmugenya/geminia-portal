@@ -267,7 +267,11 @@
                                     </label>
                                     <div *ngIf="isFieldInvalid(quotationForm, 'termsAndPolicyConsent')" class="ml-7 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'termsAndPolicyConsent') }}</div>
                                 </div>
-                                <button type="submit" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors">Get Quote</button>
+                                <button type="submit"
+                                        class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors"
+                                        [disabled]="isSaving">
+                                    {{ isSaving ? 'Saving...' : 'Get Quote' }}
+                                </button>
                             </fieldset>
                         </form>
                     </div>
@@ -326,7 +330,7 @@
                             <p class="text-center text-gray-500">Complete the form to see your quote.</p>
                         </div>
 
-                        <div *ngIf="currentStep === 2 && premiumCalculation.basePremium">
+                        <div *ngIf="currentStep === 2 && quoteResult.netprem">
                             <div class="space-y-3 text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Sum Insured</span>
@@ -334,33 +338,33 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Base Premium</span>
-                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ premiumCalculation.basePremium | number: '1.2-2' }}</span>
+                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ quoteResult.premium | number: '1.2-2' }}</span>
                                 </div>
 
                                 <div class="border-t border-gray-200 pt-3"></div>
 
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">PHCF (0.25%)</span>
-                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ premiumCalculation.phcf | number: '1.2-2' }}</span>
+                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ quoteResult.phcf | number: '1.2-2' }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Training Levy (0.25%)</span>
-                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ premiumCalculation.trainingLevy | number: '1.2-2' }}</span>
+                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ quoteResult.tl | number: '1.2-2' }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Stamp Duty</span>
-                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ premiumCalculation.stampDuty | number: '1.2-2' }}</span>
+                                    <span class="font-semibold text-gray-900">{{ premiumCalculation.currency }} {{ quoteResult.sd | number: '1.2-2' }}</span>
                                 </div>
 
-                                <div *ngIf="displayUser.type === 'intermediary' && premiumCalculation.commission > 0" class="flex justify-between text-green-600 border-t border-gray-200 pt-3">
-                                    <span class="font-medium">Commission (10%)</span>
-                                    <span class="font-medium">-{{ premiumCalculation.currency }} {{ premiumCalculation.commission | number: '1.2-2' }}</span>
-                                </div>
+<!--                                <div *ngIf="displayUser.type === 'intermediary' && premiumCalculation.commission > 0" class="flex justify-between text-green-600 border-t border-gray-200 pt-3">-->
+<!--                                    <span class="font-medium">Commission (10%)</span>-->
+<!--                                    <span class="font-medium">-{{ premiumCalculation.currency }} {{ premiumCalculation.commission | number: '1.2-2' }}</span>-->
+<!--                                </div>-->
 
                                 <div class="mt-4 rounded-lg bg-primary p-4 text-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-lg font-semibold">Total Payable</span>
-                                        <span class="text-2xl font-bold">{{ premiumCalculation.currency }} {{ premiumCalculation.totalPayable | number: '1.2-2' }}</span>
+                                        <span class="text-2xl font-bold">{{ premiumCalculation.currency }} {{ quoteResult.netprem | number: '1.2-2' }}</span>
                                     </div>
                                 </div>
                             </div>

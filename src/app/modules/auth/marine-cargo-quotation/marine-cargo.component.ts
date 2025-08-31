@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { debounceTime, distinctUntilChanged, forkJoin, Subject, takeUntil } from 'rxjs';
 import { AuthenticationService, StoredUser, PendingQuote } from '../shared/services/auth.service';
-import { CargoTypeData, Category, MarineProduct, PackagingType } from '../../../core/user/user.types';
+import { CargoTypeData, Category, MarineProduct, PackagingType, QuoteResult } from '../../../core/user/user.types';
 import { UserService } from '../../../core/user/user.service';
 import { ThousandsSeparatorValueAccessor } from '../directives/thousands-separator-value-accessor';
 import { QuoteService } from '../shared/services/quote.service';
@@ -247,6 +247,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     private editModeQuoteId: string | null = null;
     user: StoredUser | null = null;
     isLoggedIn: boolean = false;
+    quoteResult: QuoteResult = null;
     currentUser: StoredUser | null = null;
     displayUser: DisplayUser = { type: 'individual', name: 'Individual User' };
     isLoadingMarineData: boolean = true;
@@ -418,10 +419,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         // }
     }
 
+    isSaving = false;
     onSubmit(): void {
+        this.isSaving = true;
         this.quotationForm.markAllAsTouched();
-        console.log(this.quotationForm.get('marinePackagingType')?.value);
-        //
         const productValue = this.quotationForm.get('marineProduct')?.value;
         const packagingType = this.quotationForm.get('marinePackagingType')?.value;
         const category = this.quotationForm.get('marineCategory')?.value;
@@ -454,6 +455,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             idfNumber: this.quotationForm.get('idfNumber')?.value,
             goodsDescription: this.quotationForm.get('descriptionOfGoods')?.value,
             coverDateFrom: formattedDate,
+            dateFormat: 'dd MMM yyyy',
             locale: "en_US",
             productId: selectedProduct.id,
             packagetypeid: selectedPackaging.id,
@@ -470,10 +472,13 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
         this.quotationService.createQuote(formData).subscribe({
             next: (res) => {
-                console.log('Upload success:', res);
+                this.quoteResult = res;
+                this.currentStep = 2;
+                this.isSaving = false;
             },
             error: (err) => {
                 console.error('Upload error:', err);
+                this.isSaving = false;
             }
         });
 
