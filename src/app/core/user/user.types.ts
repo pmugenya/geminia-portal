@@ -16,6 +16,15 @@ export interface CreateUserObject {
     email: string,
 }
 
+export interface QuoteResult {
+    result: number,
+    premium: number,
+    phcf: number,
+    tl: number,
+    sd: number,
+    netprem: number,
+}
+
 export interface MarineProduct {
     id: number
     prodshtdesc: string;
