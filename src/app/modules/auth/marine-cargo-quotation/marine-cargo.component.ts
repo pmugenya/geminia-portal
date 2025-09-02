@@ -50,10 +50,10 @@ export const phoneNumberValidator: ValidatorFn = (control: AbstractControl): Val
     return phonePattern.test(control.value) ? null : { invalidPhoneNumber: true };
 };
 
-// Custom validator for ID number format (5-15 alphanumeric characters)
+// Custom validator for ID number format (8 numbers)
 export const idNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const idPattern = /^[a-zA-Z0-9]{5,15}$/;
+    const idPattern = /^[0-9]{8}$/;
     return idPattern.test(control.value) ? null : { invalidIdNumber: true };
 };
 
@@ -925,7 +925,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (control.hasError('min')) return 'Value must be greater than 0.';
         if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z.';
         if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: 0712345678.';
-        if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 5-15 alphanumeric characters.';
+        if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 8 numerals.';
         if (control.hasError('invalidName')) return 'Name can only contain letters, spaces, and hyphens.';
         if (control.hasError('invalidIdfNumber')) return 'Invalid IDF. Format: 12ABCDE1234567890.';
         if (control.hasError('invalidUcrNumber')) return 'Invalid UCR. Format: 12ABC123456789D1234567890.';
@@ -1004,6 +1004,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             lastName: ['', [Validators.required, nameValidator]],
             email: ['', [Validators.required, Validators.email]],
             phoneNumber: ['', [Validators.required, phoneNumberValidator]],
+            marineProduct: ['', Validators.required],
             marineCargoType: ['', Validators.required],
             idfNumber: ['', idfNumberValidator],
             ucrNumber: ['', ucrNumberValidator],
@@ -1017,6 +1018,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
     private createExportRequestForm(): FormGroup {
         const form = this.createModalForm();
+        // Set 'originCountry' to 'Kenya' and disable it
         form.get('originCountry')?.patchValue('Kenya');
         form.get('originCountry')?.disable();
         form.addControl('vesselName', this.fb.control('', Validators.required));
