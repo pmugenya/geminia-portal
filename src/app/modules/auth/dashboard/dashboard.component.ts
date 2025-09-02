@@ -269,24 +269,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // loadDashboardData(): void {
-  //   this.pendingQuotes = this.authService.getPendingQuotes();
-  //   this.dashboardStats = {
-  //     marinePolicies: this.activePolicies.filter(p => p.type === 'marine').length,
-  //     travelPolicies: this.activePolicies.filter(p => p.type === 'travel').length,
-  //     pendingQuotes: this.pendingQuotes.length,
-  //     totalPremium: this.activePolicies.reduce((sum, p) => sum + p.premium, 0),
-  //     activeClaims: this.claims.filter(c => c.status !== 'Settled' && c.status !== 'Rejected').length
-  //   };
-  // }
-
-
     scrollToSection(sectionId: string): void {
         const element = document.getElementById(sectionId);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        // Automatically close the sidebar on mobile after clicking a link
         if (this.isMobileSidebarOpen) {
             this.isMobileSidebarOpen = false;
         }
@@ -311,9 +298,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           });
 
           if (quote.type === 'marine') { this.activateMarinePolicy(quote); }
-
-          // this.authService.removePendingQuote(quoteId);
-          // this.loadDashboardData();
         }
       });
     }
@@ -365,81 +349,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   deleteQuote(quoteId: string): void {
     if (confirm('Are you sure you want to delete this saved quote?')) {
-        // this.authService.removePendingQuote(quoteId);
-        // this.loadDashboardData();
-        // this.snackBar.open('Quote deleted.', 'OK', {
-    // this.pendingQuotes = this.authService.getPendingQuotes();
-    // this.dashboardStats = {
-    //   marinePolicies: this.activePolicies.filter(p => p.type === 'marine').length,
-    //   travelPolicies: this.activePolicies.filter(p => p.type === 'travel').length,
-    //   // pendingQuotes: this.pendingQuotes.length,
-    //   totalPremium: this.activePolicies.reduce((sum, p) => sum + p.premium, 0),
-    //   activeClaims: this.claims.filter(c => c.status !== 'Settled' && c.status !== 'Rejected').length
      };
   }
 
   logout(): void {
-    // if (confirm('Are you sure you want to logout?')) {
      this.authService.logout();
       this.router.navigate(['/sign-in'], { replaceUrl: true }).then(success => {
 
       });
       console.log('log out');
-    // }
   }
 
     goToMarineQuote() {
-        this.router.navigate(['/marine-quote']);
+        this.router.navigate(['/sign-up/marine-quote']);
     }
-
-
-
-
-  // private activateMarinePolicy(quote: PendingQuote): void {
-  //   if (quote.type !== 'marine' || !quote.quoteDetails) {
-  //     console.error('Attempted to activate a non-marine quote or a quote with no details.');
-  //     return;
-  //   }
-  //
-  //   const details = quote.quoteDetails;
-  //   const policyNumber = `MAR/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`;
-  //
-  //   const newPolicy: Policy = {
-  //     id: 'P' + Date.now().toString(36),
-  //     type: 'marine',
-  //     title: quote.title,
-  //     policyNumber: policyNumber,
-  //     status: 'active',
-  //     premium: quote.premium.totalPayable,
-  //     startDate: new Date(details.coverStartDate),
-  //     endDate: new Date(new Date(details.coverStartDate).setDate(new Date(details.coverStartDate).getDate() + 90)),
-  //     certificateUrl: `/simulated/${policyNumber}.pdf`,
-  //     marineDetails: {
-  //       vesselName: details.vesselName,
-  //       cargoType: details.cargoType,
-  //       tradeType: details.tradeType,
-  //       modeOfShipment: details.modeOfShipment,
-  //       marineProduct: details.marineProduct,
-  //       marineCargoType: details.marineCargoType,
-  //       origin: details.origin,
-  //       destination: details.destination,
-  //       sumInsured: details.sumInsured,
-  //       descriptionOfGoods: details.descriptionOfGoods,
-  //       ucrNumber: details.ucrNumber,
-  //       idfNumber: details.idfNumber,
-  //       clientInfo: {
-  //           name: `${details.firstName} ${details.lastName}`,
-  //           idNumber: details.idNumber,
-  //           kraPin: details.kraPin,
-  //           email: details.email,
-  //           phoneNumber: details.phoneNumber,
-  //       }
-  //     }
-  //   };
-  //   this.activePolicies.unshift(newPolicy);
-  // }
-
-
 
   openClaimModal(policy: Policy): void {
     const dialogRef = this.dialog.open(ClaimRegistrationModalComponent, {
@@ -455,7 +378,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (policyToUpdate) {
           policyToUpdate.hasClaim = true;
         }
-        // this.loadDashboardData();
         this.snackBar.open(`Claim ${newClaim.claimNumber} has been submitted successfully.`, 'OK', {
           duration: 7000,
           panelClass: ['geminia-toast-panel']
@@ -470,7 +392,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             { label: 'My Claims', icon: 'assignment_late', sectionId: 'my-claims-section' },
             {
                 label: 'Marine Insurance', icon: 'directions_boat', isExpanded: true,
-                children: [ { label: 'New Quote', route: '/marine-quote', icon: 'add_circle' } ]
+                children: [ { label: 'New Quote', route: '/sign-up/marine-quote', icon: 'add_circle' } ]
             },
             { label: 'My Policies', icon: 'shield', sectionId: 'my-policies-section' },
             { label: 'Receipts', icon: 'receipt_long', route: '/receipts' } // Stays as a route
@@ -483,7 +405,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   togglePolicyDetails(policyId: string): void { this.expandedPolicyId = this.expandedPolicyId === policyId ? null : policyId; }
   toggleClaimDetails(claimId: string): void { this.expandedClaimId = this.expandedClaimId === claimId ? null : claimId; }
   getInitials(name: string): string { return name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || ''; }
-  // getRoleDisplayName(): string { return this.user?.type === 'intermediary' ? 'Intermediary' : 'Individual Client'; }
   getUnreadNotificationCount(): number { return this.notifications.filter((n) => !n.read).length; }
   toggleNavItem(item: NavigationItem): void { if (item.children) item.isExpanded = !item.isExpanded; }
   toggleMobileSidebar(): void { this.isMobileSidebarOpen = !this.isMobileSidebarOpen; }
