@@ -1,16 +1,6 @@
-
 import { Component, OnInit } from '@angular/core';
-import {
-    FormBuilder,
-    FormGroup,
-    Validators,
-    ReactiveFormsModule,
-    ValidatorFn,
-    AbstractControl,
-    ValidationErrors,
-} from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from 'app/core/auth/auth.service';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,6 +11,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
 import { FuseAlertComponent } from '@fuse/components/alert';
 import { finalize } from 'rxjs';
+import { AuthService } from 'app/core/auth/auth.service';
 import { UserService } from '../../../core/user/user.service';
 import { CreateUserObject } from '../../../core/user/user.types';
 
@@ -30,20 +21,11 @@ export interface Alert {
     position?: 'inline' | 'bottom';
 }
 
-export interface PasswordStrength {
-    level: number;
-    text: string;
-    color: string;
-}
+// Validator to check if 'password' and 'confirmPassword' fields match.
 export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const password = control.get('password');
     const confirmPassword = control.get('confirmPassword');
-
-    if (!password || !confirmPassword) {
-        return null; // controls not yet initialized
-    }
-
-    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
+    return password && confirmPassword && password.value === confirmPassword.value ? null : { passwordMismatch: true };
 };
 
 @Component({
@@ -52,24 +34,12 @@ export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): V
     styleUrls: ['./sign-in.component.scss'],
     standalone: true,
     imports: [
-        CommonModule,
-        RouterModule,
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        MatCheckboxModule,
-        MatRadioModule,
-        FuseAlertComponent,
+        CommonModule, RouterModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule,
+        MatInputModule, MatIconModule, MatProgressSpinnerModule, MatCheckboxModule,
+        MatRadioModule, FuseAlertComponent,
     ],
 })
-
-
-// This 'export' keyword makes the component importable in other files like your routes file.
 export class AuthSignInComponent implements OnInit {
-    // --- PROPERTIES ---
     showAlert: boolean = false;
     alert: Alert = { type: 'error', message: '' };
     signInForm: FormGroup;
@@ -84,22 +54,20 @@ export class AuthSignInComponent implements OnInit {
         private fb: FormBuilder,
         private authService: AuthService,
         private userService: UserService,
-        private router: Router
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
         this.signInForm = this.fb.group({
-            username: [
-                'individual@geminia.com',
-                [Validators.required, Validators.email],
-            ],
+            username: ['individual@geminia.com', [Validators.required, Validators.email]],
             password: ['password123', Validators.required],
-            otp: [''],
+            otp: [''], // OTP is not required initially
             agreementAccepted: [false, Validators.requiredTrue],
         });
 
+        // The registration form now includes 'confirmPassword' and the passwordMatchValidator.
         this.registerForm = this.fb.group({
-            accountType: ['individual', Validators.required],
+            accountType: ['C', Validators.required],
             fullName: ['', [Validators.required, this.fullNameValidator]],
             email: ['', [Validators.required, Validators.email]],
             kraPin: ['', [Validators.required, this.kraPinValidator]],
@@ -107,398 +75,199 @@ export class AuthSignInComponent implements OnInit {
             iraNumber: [''],
             pinNumber: [''],
             password: ['', [Validators.required, this.strongPasswordValidator]],
+            confirmPassword: ['', Validators.required],
             agreementAccepted: [false, Validators.requiredTrue],
+        }, { validators: passwordMatchValidator }); // Validator applied at the form group level
+
+        // This logic correctly switches validators based on account type
+        this.registerForm.get('accountType')?.valueChanges.subscribe((accountType) => {
+            this.clearAllValidators();
+            if (accountType === 'C') {
+                this.setIndividualValidators();
+            } else if (accountType === 'A') {
+                this.setIntermediaryValidators();
+            }
+            // Update the validity of all controls
+            Object.keys(this.registerForm.controls).forEach(key => {
+                this.registerForm.get(key).updateValueAndValidity();
+            });
         });
 
-        // Conditional Validation Logic
-        this.registerForm
-            .get('accountType')
-            ?.valueChanges.subscribe((accountType) => {
-                this.clearIndividualValidators();
-                this.clearIntermediaryValidators();
-
-                if (accountType === 'individual') {
-                    this.setIndividualValidators();
-                } else if (accountType === 'intermediary') {
-                    this.setIntermediaryValidators();
-                }
-
-                this.registerForm.updateValueAndValidity();
-            });
-
-        // Initially set validators for the default 'individual' type
-        this.setIndividualValidators();
+        this.setIndividualValidators(); // Set initial validators for the default 'Individual' type
     }
 
-    // Custom validators
+    // --- Form Control Accessors for cleaner template code ---
+    get password() { return this.registerForm.get('password'); }
+    get confirmPassword() { return this.registerForm.get('confirmPassword'); }
+
+    // --- Custom Validators ---
     fullNameValidator(control: AbstractControl): ValidationErrors | null {
         if (!control.value) return null;
-        const names = control.value
-            .trim()
-            .split(' ')
-            .filter((name: string) => name.length > 0);
+        const names = control.value.trim().split(' ').filter((name: string) => name.length > 0);
         return names.length >= 2 ? null : { fullNameInvalid: true };
     }
 
     kraPinValidator(control: AbstractControl): ValidationErrors | null {
         if (!control.value) return null;
-        const kraPattern = /^[A-Za-z]\d{9}[A-Za-z]$/;
-        return kraPattern.test(control.value) ? null : { kraPinInvalid: true };
+        return /^[A-Za-z]\d{9}[A-Za-z]$/.test(control.value) ? null : { kraPinInvalid: true };
     }
 
     phoneNumberValidator(control: AbstractControl): ValidationErrors | null {
         if (!control.value) return null;
-        const phonePattern = /^\+254\d{9,12}$/;
-        return phonePattern.test(control.value)
-            ? null
-            : { phoneNumberInvalid: true };
+        return /^\+254\d{9,12}$/.test(control.value) ? null : { phoneNumberInvalid: true };
     }
 
     strongPasswordValidator(control: AbstractControl): ValidationErrors | null {
         if (!control.value) return null;
-
         const value = control.value;
-        const hasMinLength = value.length >= 8;
-        const hasLowerCase = /(?=.*[a-z])/.test(value);
-        const hasUpperCase = /(?=.*[A-Z])/.test(value);
-        const hasNumber = /(?=.*\d)/.test(value);
-        const hasSpecialChar = /(?=.*[@$!%*?&])/.test(value);
-
-        const valid =
-            hasMinLength &&
-            hasLowerCase &&
-            hasUpperCase &&
-            hasNumber &&
-            hasSpecialChar;
+        const valid = /(?=.*[a-z])/.test(value) && /(?=.*[A-Z])/.test(value) && /(?=.*\d)/.test(value) && /(?=.*[@$!%*?&])/.test(value) && value.length >= 8;
         return valid ? null : { strongPasswordInvalid: true };
     }
 
-    // Password validation helper methods (used in HTML)
-    hasMinLength(password: string): boolean {
-        return password ? password.length >= 8 : false;
-    }
+    // --- Password strength helper methods for the HTML template ---
+    hasMinLength(password: string): boolean { return !!password && password.length >= 8; }
+    hasLowercase(password: string): boolean { return !!password && /(?=.*[a-z])/.test(password); }
+    hasUppercase(password: string): boolean { return !!password && /(?=.*[A-Z])/.test(password); }
+    hasNumber(password: string): boolean { return !!password && /(?=.*\d)/.test(password); }
+    hasSpecialChar(password: string): boolean { return !!password && /(?=.*[@$!%*?&])/.test(password); }
 
-    hasLowercase(password: string): boolean {
-        return password ? /(?=.*[a-z])/.test(password) : false;
-    }
-
-    hasUppercase(password: string): boolean {
-        return password ? /(?=.*[A-Z])/.test(password) : false;
-    }
-
-    hasNumber(password: string): boolean {
-        return password ? /(?=.*\d)/.test(password) : false;
-    }
-
-    hasSpecialChar(password: string): boolean {
-        return password ? /(?=.*[@$!%*?&])/.test(password) : false;
-    }
-
-    private clearIndividualValidators(): void {
-        this.registerForm.get('fullName')?.clearValidators();
-        this.registerForm.get('email')?.clearValidators();
-        this.registerForm.get('kraPin')?.clearValidators();
-        this.registerForm.get('phoneNumber')?.clearValidators();
-        this.registerForm.get('fullName')?.updateValueAndValidity();
-        this.registerForm.get('email')?.updateValueAndValidity();
-        this.registerForm.get('kraPin')?.updateValueAndValidity();
-        this.registerForm.get('phoneNumber')?.updateValueAndValidity();
+    // --- Dynamic Validator Management ---
+    private clearAllValidators(): void {
+        const fields = ['fullName', 'email', 'kraPin', 'phoneNumber', 'iraNumber', 'pinNumber'];
+        fields.forEach(field => this.registerForm.get(field)?.clearValidators());
     }
 
     private setIndividualValidators(): void {
-        this.registerForm
-            .get('fullName')
-            ?.setValidators([Validators.required, this.fullNameValidator]);
-        this.registerForm
-            .get('email')
-            ?.setValidators([Validators.required, Validators.email]);
-        this.registerForm
-            .get('kraPin')
-            ?.setValidators([Validators.required, this.kraPinValidator]);
-        this.registerForm
-            .get('phoneNumber')
-            ?.setValidators([Validators.required, this.phoneNumberValidator]);
-        this.registerForm.get('fullName')?.updateValueAndValidity();
-        this.registerForm.get('email')?.updateValueAndValidity();
-        this.registerForm.get('kraPin')?.updateValueAndValidity();
-        this.registerForm.get('phoneNumber')?.updateValueAndValidity();
-    }
-
-    private clearIntermediaryValidators(): void {
-        this.registerForm.get('iraNumber')?.clearValidators();
-        this.registerForm.get('pinNumber')?.clearValidators();
-        this.registerForm.get('iraNumber')?.updateValueAndValidity();
-        this.registerForm.get('pinNumber')?.updateValueAndValidity();
+        this.registerForm.get('fullName')?.setValidators([Validators.required, this.fullNameValidator]);
+        this.registerForm.get('email')?.setValidators([Validators.required, Validators.email]);
+        this.registerForm.get('kraPin')?.setValidators([Validators.required, this.kraPinValidator]);
+        this.registerForm.get('phoneNumber')?.setValidators([Validators.required, this.phoneNumberValidator]);
     }
 
     private setIntermediaryValidators(): void {
-        this.registerForm
-            .get('iraNumber')
-            ?.setValidators([
-                Validators.required,
-                Validators.pattern(/^[A-Za-z0-9]{5,15}$/),
-            ]);
-        this.registerForm
-            .get('pinNumber')
-            ?.setValidators([
-                Validators.required,
-                Validators.pattern(/^[A-Za-z0-9]{10}$/),
-            ]);
-        this.registerForm.get('iraNumber')?.updateValueAndValidity();
-        this.registerForm.get('pinNumber')?.updateValueAndValidity();
+        this.registerForm.get('iraNumber')?.setValidators([Validators.required, Validators.pattern(/^[A-Za-z0-9]{5,15}$/)]);
+        this.registerForm.get('pinNumber')?.setValidators([Validators.required, Validators.pattern(/^[A-Za-z0-9]{10}$/)]);
     }
 
-    // Input formatting methods
+    // --- Input Formatting ---
     onKraPinChange(event: any): void {
-        let value = event.target.value.toUpperCase();
-        value = value.replace(/[^A-Z0-9]/g, '');
-        if (value.length > 11) {
-            value = value.substring(0, 11);
-        }
-        this.registerForm.get('kraPin')?.setValue(value);
+        let value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        this.registerForm.get('kraPin')?.setValue(value.substring(0, 11), { emitEvent: false });
     }
 
     onPhoneNumberChange(event: any): void {
-        let value = event.target.value;
-        value = value.replace(/[^\d+]/g, '');
-
+        let value = event.target.value.replace(/[^\d+]/g, '');
         if (!value.startsWith('+254') && value.length > 0) {
-            if (value.startsWith('0')) {
-                value = '+254' + value.substring(1);
-            } else if (value.startsWith('254')) {
-                value = '+' + value;
-            } else if (!value.startsWith('+')) {
-                value = '+254' + value;
-            }
+            if (value.startsWith('0')) value = '+254' + value.substring(1);
+            else if (value.startsWith('254')) value = '+' + value;
+            else if (!value.startsWith('+')) value = '+254' + value;
         }
-
-        if (value.length > 13) {
-            value = value.substring(0, 13);
-        }
-
-        this.registerForm.get('phoneNumber')?.setValue(value);
+        this.registerForm.get('phoneNumber')?.setValue(value.substring(0, 13), { emitEvent: false });
     }
-
-    // Password strength checker
-    getPasswordStrength(password: string): PasswordStrength {
-        if (!password) {
-            return { level: 0, text: 'No password', color: 'text-gray-400' };
-        }
-
-        let score = 0;
-        const checks = [
-            password.length >= 8,
-            /(?=.*[a-z])/.test(password),
-            /(?=.*[A-Z])/.test(password),
-            /(?=.*\d)/.test(password),
-            /(?=.*[@$!%*?&])/.test(password),
-        ];
-
-        score = checks.filter((check) => check).length;
-
-        const strengthLevels = [
-            { level: 1, text: 'Very Weak', color: 'text-red-500' },
-            { level: 2, text: 'Weak', color: 'text-red-500' },
-            { level: 3, text: 'Fair', color: 'text-yellow-500' },
-            { level: 4, text: 'Good', color: 'text-blue-500' },
-            { level: 5, text: 'Strong', color: 'text-green-500' },
-        ];
-
-        return strengthLevels[Math.max(0, score - 1)] || strengthLevels[0];
-    }
-
-    signIn(): void {
-        if (this.signInForm.invalid) {
-            this.alert = {
-                type: 'error',
-                message:
-                    'Please enter a valid email and password and accept the terms.',
-                position: 'bottom',
-            };
-            this.showAlert = true;
-
-            // Set a timeout to hide the alert message after 3 seconds
-            setTimeout(() => {
-                this.showAlert = false;
-                this.alert = null; // Clear the alert message
-            }, 3000); // 3000 milliseconds = 3 seconds
-        }
-    }
+    
+    // --- NOTE ---
+    // The old `signIn()` method was removed from here because it was unused.
+    // The button in the HTML correctly calls `handleSignIn()` below.
 
     /**
-     * Main submission handler for the login form.
+     * Main submission handler for the login form. This is the function called by the button.
+     * It acts as a router, directing to the correct submission logic based on the login state.
      */
     handleSignIn(): void {
-        if (this.loginState === 'credentials') {
-            this.submitCredentials();
-        } else {
-            this.verifyOtp();
-        }
+        if (this.signInForm.invalid) return;
+        this.loginState === 'credentials' ? this.submitCredentials() : this.verifyOtp();
     }
 
     /**
-     * Step 1: Submits credentials, expecting a temporary token in the response.
+     * Step 1 of login: Submits username and password.
      */
     submitCredentials(): void {
-        console.log('loggin in...');
         this.signInForm.disable();
         this.showAlert = false;
         const { username, password } = this.signInForm.getRawValue();
-        const credentials = { username, password };
-
-        this.authService.signIn(credentials).pipe(
-            finalize(() => {
-                this.signInForm.get('username').enable();
-                this.signInForm.get('password').enable();
-            })
+        this.authService.signIn({ username, password }).pipe(
+            finalize(() => this.signInForm.enable())
         ).subscribe({
             next: (res: any) => {
-                const token = res.tempToken;
-                if (token && typeof token === 'string') {
-                    this.authService.tempToken = token;
-                    console.log('✅ Temporary token saved.');
+                if (res.tempToken) {
+                    this.authService.tempToken = res.tempToken;
                     this.loginState = 'otp';
-                    this.signInForm.get('otp').enable();
                 } else {
-                    this.alert = { type: 'error', message: 'Login failed: Invalid response from server.', position: 'inline' };
+                    this.alert = { type: 'error', message: 'Login failed: Invalid response.' };
                     this.showAlert = true;
                 }
             },
             error: (err) => {
-                this.alert = { type: 'error', message: err.error.errors[0].developerMessage || 'Wrong email or password.', position: 'inline' };
+                this.alert = { type: 'error', message: err.error?.errors?.[0]?.developerMessage || 'Wrong email or password.' };
                 this.showAlert = true;
-            }
+            },
         });
     }
 
     /**
-     * Step 2: Verifies the temporary token and OTP.
-     * On success, navigates to the dashboard.
+     * Step 2 of login: Verifies the OTP code.
      */
     verifyOtp(): void {
-        const tempToken = this.authService.tempToken;
-        console.log(tempToken);
-        if (!tempToken) {
-            this.backToCredentials();
-            return;
-        }
-
+        if (!this.authService.tempToken) { this.backToCredentials(); return; }
         this.signInForm.disable();
         this.showAlert = false;
-
         const { otp } = this.signInForm.value;
-        const credentials = { tempToken, otp };
-
-        this.authService.verifyOtp(credentials).subscribe({
-            next: (res) => {
-                // handle success: save final JWT, navigate, etc.
-                this.router.navigate(['/sign-up/dashboard']);
-            },
-            error: (err: Error) => {
-                this.alert = {
-                    type: 'error',
-                    message: err.message,
-                    position: 'inline'
-                };
+        this.authService.verifyOtp({ tempToken: this.authService.tempToken, otp }).pipe(
+            finalize(() => this.signInForm.enable())
+        ).subscribe({
+            next: () => this.router.navigate(['/sign-up/dashboard']),
+            error: (err) => {
+                this.alert = { type: 'error', message: err.message || 'Invalid OTP code.' };
                 this.showAlert = true;
-                this.signInForm.enable();
-            }
+            },
         });
-    }
-
-
-
-    getCurrentDate(): string {
-        return new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    }
-    get password() {
-        return this.registerForm.get('password');
-    }
-
-    get confirmPassword() {
-        return this.registerForm.get('confirmPassword');
-    }
-
-    /**
-     * Resets the UI back to the initial credential state.
-     */
-    backToCredentials(): void {
-        this.loginState = 'credentials';
-        this.showAlert = false;
-        this.authService.clearTempToken();
-        this.signInForm.get('otp').disable();
-        this.signInForm.get('otp').reset();
     }
 
     /**
      * Handles the registration form submission.
      */
     register(): void {
-
         if (this.registerForm.invalid) return;
-
         this.registerForm.disable();
-        const { accountType, fullName,email,kraPin,phoneNumber,iraNumber,pinNumber,password,confirmPassword } = this.registerForm.getRawValue();
-
+        const formValue = this.registerForm.getRawValue();
         const user: CreateUserObject = {
-            password: password,
-            passwordConfirm: confirmPassword,
-            pinNumber: kraPin,
-            mobileno: phoneNumber,
-            docnumber: iraNumber,
-            firstName: fullName,
-            email: email,
-            clientType: accountType
-        }
-
-        console.log(user)
+            password: formValue.password,
+            passwordConfirm: formValue.confirmPassword,
+            pinNumber: formValue.kraPin,
+            mobileno: formValue.phoneNumber,
+            docnumber: formValue.iraNumber,
+            firstName: formValue.fullName,
+            email: formValue.email,
+            clientType: formValue.accountType
+        };
 
         this.userService.createUser(user).pipe(
             finalize(() => this.registerForm.enable())
         ).subscribe({
             next: () => {
-                try {
-                    console.log('successful....');
-                    this.alert = { type: 'success', message: 'Registration successful! Please sign in.', position: 'bottom' };
-                    this.showAlert = true;
-                    this.formType = 'login';
-                    setTimeout(() => this.showAlert = false, 5000);
-                } catch (e) {
-                    console.error('Error in success handler:', e);
-                }
+                this.alert = { type: 'success', message: 'Registration successful! Please sign in.', position: 'bottom' };
+                this.showAlert = true;
+                this.formType = 'login';
+                setTimeout(() => this.showAlert = false, 5000);
             },
             error: (err) => {
-                console.error('API error:', err?.error);
-                this.alert = {
-                    type: 'error',
-                    message: err?.error?.errors[0].developerMessage || 'Something went wrong.',
-                    position: 'inline'
-                };
+                this.alert = { type: 'error', message: err.error?.errors?.[0]?.developerMessage || 'Registration failed.' };
                 this.showAlert = true;
-                this.registerForm.reset({
-                    accountType: accountType,
-                    fullName: '',
-                    email: '',
-                    kraPin: '',
-                    phoneNumber: '',
-                    iraNumber: '',
-                    pinNumber: '',
-                    password: '',
-                    confirmPassword: ''
-                });
-            }
+            },
         });
-
     }
 
-
-    togglePasswordVisibility(): void {
-        this.showPassword = !this.showPassword;
+    /**
+     * Resets the UI back to the initial credential state from the OTP view.
+     */
+    backToCredentials(): void {
+        this.loginState = 'credentials';
+        this.showAlert = false;
+        this.authService.clearTempToken();
+        this.signInForm.get('otp')?.reset();
     }
 
-
+    // --- UI Helpers ---
+    togglePasswordVisibility(): void { this.showPassword = !this.showPassword; }
+    getCurrentDate(): string { return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); }
 }

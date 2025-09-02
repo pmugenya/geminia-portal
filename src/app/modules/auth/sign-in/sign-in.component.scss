@@ -5,18 +5,20 @@
   color: #a0aec0; /* Tailwind's gray-400 */
   opacity: 1;
 }
+
 input::placeholder,
 textarea::placeholder {
   color: #a0aec0;
   opacity: 1;
 }
+
 :-ms-input-placeholder {
   color: #a0aec0 !important;
 }
+
 ::-ms-input-placeholder {
   color: #a0aec0;
 }
-
 
 /* 
   UPDATED TOAST STYLING 
@@ -51,4 +53,12 @@ fuse-alert[ng-reflect-type='error'] {
 fuse-alert[ng-reflect-type='error'] .fuse-alert-icon,
 fuse-alert[ng-reflect-type='error'] .fuse-alert-message {
   color: white !important;
+}
+
+/* Style for password validation icons */
+.icon-size-3 {
+  font-size: 1rem;      /* 16px */
+  height: 1rem;
+  width: 1rem;
+  vertical-align: middle;
 }
