@@ -78,24 +78,80 @@ export const nameValidator: ValidatorFn = (control: AbstractControl): Validation
     return namePattern.test(control.value) ? null : { invalidName: true };
 };
 
-// Custom validator to prevent duplicate file uploads in a form group
-export const duplicateFileValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+// Enhanced duplicate file validator
+export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!(control instanceof FormGroup)) {
         return null;
     }
-    const files: File[] = Object.values(control.controls)
-        .map(ctrl => ctrl.value)
-        .filter((value): value is File => value instanceof File && value !== null);
+
+    const files: { name: string, control: string, file: File }[] = [];
+    
+    // Collect all uploaded files with their control names
+    Object.keys(control.controls).forEach(controlName => {
+        const file = control.get(controlName)?.value;
+        if (file instanceof File) {
+            files.push({ name: file.name.toLowerCase(), control: controlName, file });
+        }
+    });
 
     if (files.length <= 1) {
         return null;
     }
 
-    const fileNames = files.map(file => file.name);
-    const uniqueFileNames = new Set(fileNames);
+    // Check for duplicate file names
+    const duplicates: string[] = [];
+    const seen = new Set<string>();
+    
+    files.forEach(({ name, control }) => {
+        if (seen.has(name)) {
+            duplicates.push(control);
+        } else {
+            seen.add(name);
+        }
+    });
 
-    return fileNames.length !== uniqueFileNames.size ? { duplicateFiles: true } : null;
+    return duplicates.length > 0 ? { 
+        duplicateFiles: { 
+            duplicatedControls: duplicates,
+            message: 'The same document cannot be uploaded to multiple fields'
+        } 
+    } : null;
 };
+
+// Enhanced file type validator with size check
+export function enhancedFileTypeValidator(allowedTypes: string[], maxSizeMB: number = 10): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const file = control.value as File;
+        if (!file) {
+            return null;
+        }
+
+        // Check file type
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedTypes.map(t => t.toLowerCase()).includes(extension)) {
+            return { 
+                invalidFileType: { 
+                    allowed: allowedTypes.join(', '),
+                    actual: extension || 'unknown'
+                } 
+            };
+        }
+
+        // Check file size
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            return {
+                fileTooLarge: {
+                    maxSize: maxSizeMB,
+                    actualSize: Math.round(file.size / (1024 * 1024) * 100) / 100
+                }
+            };
+        }
+
+        return null;
+    };
+}
+
 
 interface PremiumCalculation {
     basePremium: number;
@@ -284,6 +340,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         invoiceUpload: null,
         idfUpload: null,
     };
+    private kycFileValidationErrors: { [key: string]: string } = {};
+    private fileUploadRefs: { [key: string]: HTMLInputElement } = {};
     private readonly TAX_RATES = { PHCF_RATE: 0.0025, TRAINING_LEVY: 0.0025, COMMISSION_RATE: 0.1 };
     readonly blacklistedCountries: string[] = ['Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia'];
     readonly allCountriesList: string[] = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe'];
@@ -360,16 +418,20 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
         this.setupFormSubscriptions();
         this.setDefaultDate();
+        this.setupKYCFileValidation();
     }
 
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
     }
+    
 
     // --- FORM SETUP AND MANAGEMENT ---
 
     private createQuotationForm(): FormGroup {
+        const allowedFileTypes = ['pdf', 'png', 'jpg', 'jpeg'];
+        const maxFileSize = 10; // in MB
         return this.fb.group({
             // Personal and Contact Details
             firstName: ['', [Validators.required, nameValidator]],
@@ -379,18 +441,18 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             idNumber: ['', [Validators.required, idNumberValidator]],
             kraPin: ['', [Validators.required, kraPinValidator]],
             
-            // KYC Document Uploads
+            // Enhanced KYC Document Uploads
             kycDocuments: this.fb.group({
-                kraPinUpload: [null, Validators.required],
-                nationalIdUpload: [null, Validators.required],
-                invoiceUpload: [null, Validators.required],
-                idfUpload: [null, Validators.required],
-            }, { validators: duplicateFileValidator }),
+                kraPinUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
+                nationalIdUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
+                invoiceUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
+                idfUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
+            }, { validators: enhancedDuplicateFileValidator }),
 
             // Shipment Details
             tradeType: ['import', Validators.required],
             modeOfShipment: ['', Validators.required],
-            marineProduct: ['ICC (A) All Risks'], // Set default value
+            marineProduct: ['ICC (A) All Risks'],
             marineCategory: ['ICC (A) All Risks', Validators.required],
             marineCargoType: ['', Validators.required],
             marinePackagingType: ['', Validators.required],
@@ -403,7 +465,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             ucrNumber: ['', ucrNumberValidator],
             idfNumber: ['', [Validators.required, idfNumberValidator]],
             
-            // --- Logged-In User Controls ---
+            // Logged-In User Controls
             estimatedArrivalDate: this.fb.control({ value: '', disabled: true }, [Validators.required, this.noPastDatesValidator]),
             loadingPort: this.fb.control({ value: '', disabled: true }, Validators.required),
             portOfDischarge: this.fb.control({ value: '', disabled: true }, Validators.required),
@@ -574,14 +636,218 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         }
     }
 
-    onFileSelected(event: Event, controlName: string) {
+    // --- ENHANCED KYC FILE HANDLING ---
+
+    onFileSelected(event: Event, controlName: string): void {
         const input = event.target as HTMLInputElement;
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            this.selectedFiles[controlName] = file;
-            this.kycDocuments.get(controlName)?.setValue(file);
-            this.kycDocuments.updateValueAndValidity();
+        
+        if (!input.files || input.files.length === 0) {
+            return;
         }
+    
+        const file = input.files[0];
+        const allowedTypes = ['pdf', 'png', 'jpg', 'jpeg'];
+        const maxSizeMB = 10;
+    
+        // Store reference to input element for clearing if needed
+        this.fileUploadRefs[controlName] = input;
+    
+        // Immediate file type validation
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        if (!extension || !allowedTypes.includes(extension)) {
+            this.handleFileValidationError(
+                controlName,
+                `Invalid file type. Only ${allowedTypes.join(', ').toUpperCase()} files are allowed.`,
+                input
+            );
+            return;
+        }
+    
+        // Immediate file size validation
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            const actualSizeMB = Math.round(file.size / (1024 * 1024) * 100) / 100;
+            this.handleFileValidationError(
+                controlName,
+                `File is too large (${actualSizeMB}MB). Maximum allowed size is ${maxSizeMB}MB.`,
+                input
+            );
+            return;
+        }
+    
+        // Clear any previous errors for this field
+        delete this.kycFileValidationErrors[controlName];
+    
+        // Set the file value
+        this.selectedFiles[controlName] = file;
+        this.kycDocuments.get(controlName)?.setValue(file);
+    
+        // Check for duplicates across all fields
+        this.checkForDuplicateFiles(controlName, file);
+    }
+    
+    private checkForDuplicateFiles(currentControl: string, currentFile: File): void {
+        const allFiles = Object.keys(this.selectedFiles)
+            .filter(key => key !== currentControl && this.selectedFiles[key])
+            .map(key => ({ control: key, file: this.selectedFiles[key]! }));
+    
+        // Check if current file matches any existing file
+        const duplicate = allFiles.find(({ file }) => 
+            file.name.toLowerCase() === currentFile.name.toLowerCase()
+        );
+    
+        if (duplicate) {
+            const input = this.fileUploadRefs[currentControl];
+            this.handleFileValidationError(
+                currentControl,
+                `This document has already been uploaded for "${this.getFieldDisplayName(duplicate.control)}". Please select a different document.`,
+                input
+            );
+            return;
+        }
+    
+        // Update form group validation
+        this.kycDocuments.updateValueAndValidity();
+    }
+    
+    private handleFileValidationError(controlName: string, errorMessage: string, inputElement: HTMLInputElement): void {
+        // Clear the file input
+        inputElement.value = '';
+        this.selectedFiles[controlName] = null;
+        this.kycDocuments.get(controlName)?.setValue(null);
+    
+        // Store the error message
+        this.kycFileValidationErrors[controlName] = errorMessage;
+    
+        // Show toast notification
+        this.showToast(errorMessage);
+    
+        // Clear error after 5 seconds
+        setTimeout(() => {
+            delete this.kycFileValidationErrors[controlName];
+        }, 5000);
+    
+        // Update form validation
+        this.kycDocuments.updateValueAndValidity();
+    }
+    
+    private getFieldDisplayName(controlName: string): string {
+        const displayNames: { [key: string]: string } = {
+            kraPinUpload: 'KRA PIN Certificate',
+            nationalIdUpload: 'National ID',
+            invoiceUpload: 'Commercial Invoice',
+            idfUpload: 'IDF Document'
+        };
+        return displayNames[controlName] || controlName;
+    }
+    
+    private setupKYCFileValidation(): void {
+        // Watch for changes in KYC documents FormGroup
+        this.kycDocuments.valueChanges
+            .pipe(
+                takeUntil(this.destroy$),
+                debounceTime(300) // Debounce to avoid excessive validation calls
+            )
+            .subscribe(() => {
+                // Check for duplicates when any file changes
+                this.validateAllKYCFiles();
+            });
+    
+        // Individual control validation
+        const kycControls = ['kraPinUpload', 'nationalIdUpload', 'invoiceUpload', 'idfUpload'];
+        
+        kycControls.forEach(controlName => {
+            const control = this.kycDocuments.get(controlName);
+            if (control) {
+                control.statusChanges
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe(status => {
+                        if (status === 'INVALID' && control.errors) {
+                            this.handleControlValidationErrors(controlName, control.errors);
+                        }
+                    });
+            }
+        });
+    }
+
+    private validateAllKYCFiles(): void {
+        const files: { name: string, control: string }[] = [];
+        
+        Object.keys(this.selectedFiles).forEach(controlName => {
+            const file = this.selectedFiles[controlName];
+            if (file instanceof File) {
+                files.push({ name: file.name.toLowerCase(), control: controlName });
+            }
+        });
+    
+        // Clear previous duplicate errors
+        Object.keys(this.kycFileValidationErrors).forEach(key => {
+            if (this.kycFileValidationErrors[key].includes('already been uploaded')) {
+                delete this.kycFileValidationErrors[key];
+            }
+        });
+    
+        // Check for duplicates
+        const seen = new Set<string>();
+        const duplicates = new Set<string>();
+        
+        files.forEach(({ name, control }) => {
+            if (seen.has(name)) {
+                duplicates.add(control);
+                const original = files.find(f => f.name === name && !duplicates.has(f.control));
+                if (original) {
+                    duplicates.add(original.control);
+                }
+            } else {
+                seen.add(name);
+            }
+        });
+    
+        // Set error messages for duplicated files
+        duplicates.forEach(controlName => {
+            this.kycFileValidationErrors[controlName] = 
+                `This document has been uploaded in multiple fields. Please use different documents for each field.`;
+        });
+    }
+    
+    private handleControlValidationErrors(controlName: string, errors: ValidationErrors): void {
+        if (errors['required']) {
+            return; // Don't show error message for required field until form submission
+        }
+    
+        if (errors['invalidFileType']) {
+            const { allowed, actual } = errors['invalidFileType'];
+            this.kycFileValidationErrors[controlName] = 
+                `Invalid file type "${actual}". Only ${allowed} files are allowed.`;
+        }
+    
+        if (errors['fileTooLarge']) {
+            const { maxSize, actualSize } = errors['fileTooLarge'];
+            this.kycFileValidationErrors[controlName] = 
+                `File is too large (${actualSize}MB). Maximum size is ${maxSize}MB.`;
+        }
+    }
+    
+    hasKYCValidationError(controlName: string): boolean {
+        return !!this.kycFileValidationErrors[controlName] || this.isFieldInvalid(this.kycDocuments, controlName);
+    }
+    
+    getKYCValidationError(controlName: string): string {
+        return this.kycFileValidationErrors[controlName] || this.getErrorMessage(this.kycDocuments, controlName);
+    }
+
+    clearAllKYCFiles(): void {
+        Object.keys(this.selectedFiles).forEach(key => {
+            this.selectedFiles[key] = null;
+            const input = this.fileUploadRefs[key];
+            if (input) {
+                input.value = '';
+            }
+        });
+        
+        this.kycDocuments.reset();
+        this.kycFileValidationErrors = {};
+        this.showToast('All uploaded documents have been cleared.');
     }
 
     // --- LOCAL STORAGE & STATE MANAGEMENT ---
@@ -639,14 +905,19 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     getErrorMessage(form: FormGroup, field: string): string {
+        // Check for custom, real-time validation errors first
+        if (field.includes('Upload') && this.kycFileValidationErrors[field]) {
+            return this.kycFileValidationErrors[field];
+        }
+    
         const control = form.get(field);
         
         if (field === 'kycDocuments' && control?.hasError('duplicateFiles')) {
-            return 'You uploaded the same document twice.';
+            return 'You cannot upload the same document for multiple fields. Please use different documents.';
         }
         
         if (!control || !control.errors) return '';
-
+    
         if (control.hasError('required')) return 'This field is required.';
         if (control.hasError('email')) return 'Please enter a valid email address.';
         if (control.hasError('requiredTrue')) return 'You must agree to proceed.';
@@ -660,7 +931,15 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (control.hasError('invalidUcrNumber')) return 'Invalid UCR. Format: 12ABC123456789D1234567890.';
         if (control.hasError('minWords')) return `A minimum of ${control.errors['minWords'].requiredWords} words is required.`;
         if (control.hasError('maxWords')) return `Maximum ${control.errors['maxWords'].maxWords} words allowed.`;
-
+        if (control.hasError('invalidFileType')) {
+            const { allowed } = control.errors['invalidFileType'];
+            return `Invalid format. Only ${allowed} are allowed.`;
+        }
+        if (control.hasError('fileTooLarge')) {
+            const { maxSize } = control.errors['fileTooLarge'];
+            return `File is too large. Maximum size is ${maxSize}MB.`;
+        }
+    
         return 'This field has an error.';
     }
     
