@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { forkJoin, Subject, takeUntil } from 'rxjs';
+import { forkJoin, Subject, takeUntil, debounceTime } from 'rxjs';
 import { AuthenticationService, StoredUser } from '../shared/services/auth.service';
 import { CargoTypeData, Category, MarineProduct, PackagingType, QuoteResult } from '../../../core/user/user.types';
 import { UserService } from '../../../core/user/user.service';
@@ -50,24 +50,24 @@ export const phoneNumberValidator: ValidatorFn = (control: AbstractControl): Val
     return phonePattern.test(control.value) ? null : { invalidPhoneNumber: true };
 };
 
-// Custom validator for ID number format
+// Custom validator for ID number format (5-15 alphanumeric characters)
 export const idNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const idPattern = /^[a-zA-Z0-9-]{5,15}$/;
+    const idPattern = /^[a-zA-Z0-9]{5,15}$/;
     return idPattern.test(control.value) ? null : { invalidIdNumber: true };
 };
 
-// Custom validator for IDF number format
+// Custom validator for IDF number format: 12MBAIM1234567891
 export const idfNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const idfPattern = /^\d{2}[A-Z]{2}\d+[A-Z]{2}\d+$/i;
+    const idfPattern = /^\d{2}[A-Z]{5}\d{10}$/i;
     return idfPattern.test(control.value) ? null : { invalidIdfNumber: true };
 };
 
-// Custom validator for UCR number format
+// Custom validator for UCR number format: 12VNP011111123X0012345678
 export const ucrNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const ucrPattern = /^\d{2}[A-Z]{2}\d+[A-Z]{2}\d+$/i;
+    const ucrPattern = /^\d{2}[A-Z]{3}\d{9}[A-Z]\d{10}$/i;
     return ucrPattern.test(control.value) ? null : { invalidUcrNumber: true };
 };
 
@@ -297,6 +297,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         'Tharaka-Nithi', 'Trans-Nzoia', 'Turkana', 'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'
     ].sort();
     isSaving = false;
+    private readonly quoteStorageKey = 'savedMarineQuote';
 
     constructor(
         private fb: FormBuilder,
@@ -352,6 +353,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             if (quoteId) {
                 this.editModeQuoteId = quoteId;
                 this.loadQuoteForEditing(quoteId);
+            } else {
+                this.loadQuoteFromLocalStorage();
             }
         });
 
@@ -387,12 +390,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             // Shipment Details
             tradeType: ['import', Validators.required],
             modeOfShipment: ['', Validators.required],
-            marineProduct: ['', Validators.required],
-            marineCategory: ['', Validators.required],
+            marineProduct: ['ICC (A) All Risks'], // Set default value
+            marineCategory: ['ICC (A) All Risks', Validators.required],
             marineCargoType: ['', Validators.required],
             marinePackagingType: ['', Validators.required],
             origin: ['', Validators.required],
-            destination: this.fb.control({ value: 'Kenya', disabled: true }),
+            destination: ['Kenya'],
             vesselName: [''],
             dateOfDispatch: ['', [Validators.required, this.noPastDatesValidator]],
             sumInsured: [null, [Validators.required, Validators.min(1)]],
@@ -401,7 +404,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             idfNumber: ['', [Validators.required, idfNumberValidator]],
             
             // --- Logged-In User Controls ---
-            // These are created from the start but are enabled/disabled based on login status.
             estimatedArrivalDate: this.fb.control({ value: '', disabled: true }, [Validators.required, this.noPastDatesValidator]),
             loadingPort: this.fb.control({ value: '', disabled: true }, Validators.required),
             portOfDischarge: this.fb.control({ value: '', disabled: true }, Validators.required),
@@ -433,10 +435,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
     onSubmit(): void {
         this.isSaving = true;
-        // Mark all controls as touched to trigger validation messages in the UI
         this.quotationForm.markAllAsTouched();
-
-        // Explicitly check the sub-group for documents as well
         this.kycDocuments.markAllAsTouched();
 
         if (!this.quotationForm.valid) {
@@ -446,14 +445,11 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // --- Prepare and Send Data ---
         const marineProductValue = this.quotationForm.get('marineProduct')?.value;
         const packagingType = this.quotationForm.get('marinePackagingType')?.value;
-        console.log('Selected Packaging Type:', packagingType);
         const category = this.quotationForm.get('marineCategory')?.value;
         const cargoType = this.quotationForm.get('marineCargoType')?.value;
         const selectedProduct = this.marineProducts.find(p => p.productdisplay === marineProductValue);
-      //  const selectedPackaging = this.marinePackagingTypes.find(p => p.packingtype === packagingType);
         const selectedCategory = this.marineCategories.find(p => p.catname === category);
         const selectedCargoType = this.marineCargoTypes.find(p => p.ctname === cargoType);
         const formattedDate = this.datePipe.transform(this.quotationForm.get('dateOfDispatch')?.value, 'dd MMM yyyy');
@@ -496,6 +492,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.quoteResult = res;
                 this.currentStep = 2;
                 this.isSaving = false;
+                localStorage.removeItem(this.quoteStorageKey);
             },
             error: (err) => {
                 console.error('Quote creation error:', err);
@@ -548,6 +545,13 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.showHighRiskModal = true;
             }
         });
+
+        this.quotationForm.valueChanges.pipe(
+            debounceTime(1000),
+            takeUntil(this.destroy$)
+        ).subscribe(value => {
+            this.saveQuoteToLocalStorage(value);
+        });
     }
 
     onCategorySelected(event: Event) {
@@ -575,13 +579,28 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
             this.selectedFiles[controlName] = file;
-            // Patch the value into the correct form control inside the kycDocuments group
             this.kycDocuments.get(controlName)?.setValue(file);
-            // Important: This triggers validation on the parent group to check for duplicates
-            this.kycDocuments.updateValueAndValidity(); 
+            this.kycDocuments.updateValueAndValidity();
         }
     }
-    
+
+    // --- LOCAL STORAGE & STATE MANAGEMENT ---
+
+    private saveQuoteToLocalStorage(formValue: any): void {
+        const valueToSave = { ...formValue };
+        delete valueToSave.kycDocuments;
+        localStorage.setItem(this.quoteStorageKey, JSON.stringify(valueToSave));
+    }
+
+    private loadQuoteFromLocalStorage(): void {
+        const savedQuoteJSON = localStorage.getItem(this.quoteStorageKey);
+        if (savedQuoteJSON) {
+            const savedQuote = JSON.parse(savedQuoteJSON);
+            this.quotationForm.patchValue(savedQuote);
+            this.showToast('Your previous progress has been restored.');
+        }
+    }
+
     // --- MODAL & UI HELPERS ---
 
     openTermsModal(event?: Event): void {
@@ -621,6 +640,11 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
     getErrorMessage(form: FormGroup, field: string): string {
         const control = form.get(field);
+        
+        if (field === 'kycDocuments' && control?.hasError('duplicateFiles')) {
+            return 'You uploaded the same document twice.';
+        }
+        
         if (!control || !control.errors) return '';
 
         if (control.hasError('required')) return 'This field is required.';
@@ -630,17 +654,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (control.hasError('min')) return 'Value must be greater than 0.';
         if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z.';
         if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: 0712345678.';
-        if (control.hasError('invalidIdNumber')) return 'Invalid ID Number. Use 5-15 alphanumeric characters.';
+        if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 5-15 alphanumeric characters.';
         if (control.hasError('invalidName')) return 'Name can only contain letters, spaces, and hyphens.';
-        if (control.hasError('invalidIdfNumber')) return 'Invalid IDF number format.';
-        if (control.hasError('invalidUcrNumber')) return 'Invalid UCR number format.';
+        if (control.hasError('invalidIdfNumber')) return 'Invalid IDF. Format: 12ABCDE1234567890.';
+        if (control.hasError('invalidUcrNumber')) return 'Invalid UCR. Format: 12ABC123456789D1234567890.';
         if (control.hasError('minWords')) return `A minimum of ${control.errors['minWords'].requiredWords} words is required.`;
         if (control.hasError('maxWords')) return `Maximum ${control.errors['maxWords'].maxWords} words allowed.`;
-        
-        // Check for error on the parent kycDocuments group
-        if (form.get('kycDocuments')?.hasError('duplicateFiles')) {
-            return 'Each uploaded document must be unique. Please select different files.';
-        }
 
         return 'This field has an error.';
     }
@@ -652,10 +671,11 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         return controlDate < today ? { pastDate: true } : null;
     }
 
-    // --- OTHER COMPONENT LOGIC (UNCHANGED) ---
+    // --- OTHER COMPONENT LOGIC ---
 
     private loadQuoteForEditing(quoteId: string): void {
         this.showToast(`Editing functionality for quote ${quoteId} is not yet implemented.`);
+        this.loadQuoteFromLocalStorage();
     }
 
     handlePayment(): void {
@@ -730,7 +750,9 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     private setDefaultDate(): void {
-        this.quotationForm.patchValue({ dateOfDispatch: this.getToday() });
+        if (!this.quotationForm.get('dateOfDispatch')?.value) {
+            this.quotationForm.patchValue({ dateOfDispatch: this.getToday() });
+        }
     }
 
     private resetPremiumCalculation(): PremiumCalculation {

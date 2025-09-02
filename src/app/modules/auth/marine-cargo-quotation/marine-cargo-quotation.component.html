@@ -74,7 +74,10 @@
                                 <!-- 1. KYC Document Uploads Section -->
                                 <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
                                 <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted formats: PDF, PNG, JPG.</p>
-                                <div *ngIf="isFieldInvalid(quotationForm, 'kycDocuments')" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"><p>{{ getErrorMessage(quotationForm, 'kycDocuments') }}</p></div>
+                                <!-- Group-level error for duplicate files -->
+                                <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                                    <p>{{ getErrorMessage(quotationForm, 'kycDocuments') }}</p>
+                                </div>
                                 <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2" formGroupName="kycDocuments">
                                     <div>
                                         <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span class="text-red-500">*</span></label>
@@ -98,8 +101,8 @@
                                     </div>
                                 </div>
 
-                                <!-- 2. Customer Information Section -->
-                                <h3 class="mb-4 mt-6 border-t pt-6 text-xl font-semibold text-gray-800">Customer Information</h3>
+                                <!-- 2. Importer Information Section -->
+                                <h3 class="mb-4 mt-6 border-t pt-6 text-xl font-semibold text-gray-800">Importer Information</h3>
                                 <p class="mb-4 text-sm text-gray-500">This is the person or entity purchasing the insurance policy.</p>
                                 <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">KRA PIN <span class="text-red-500">*</span></label><input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="Format: A123456789Z" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'kraPin')}"/><div *ngIf="isFieldInvalid(quotationForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'kraPin') }}</div></div>
@@ -125,15 +128,10 @@
                                     </div>
                                 </div>
 
-                                <!-- [OPTIMIZED] Aligned radio buttons with the select input -->
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
-                                        <label class="mb-2 block text-sm font-medium text-gray-700">Select Product <span class="text-red-500">*</span></label>
-                                        <select formControlName="marineProduct" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineProduct')}">
-                                            <option value="" disabled>Select a product</option>
-                                            <option *ngFor="let product of marineProducts" [value]="product.productdisplay">{{ product.productdisplay }}</option>
-                                        </select>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'marineProduct')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marineProduct') }}</div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700">Select Product</label>
+                                        <input type="text" formControlName="marineProduct" class="w-full rounded-md border-gray-300 bg-white px-3 py-2 font-bold text-gray-900" readonly/>
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Marine Packaging Type <span class="text-red-500">*</span></label>
@@ -147,7 +145,7 @@
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Select Category <span class="text-red-500">*</span></label>
-                                        <select formControlName="marineCategory" (change)="onCategorySelected($event)" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineCategory')}"><option value="" disabled>Select a category</option><option *ngFor="let category of marineCategories" [value]="category.catname">{{ category.catname }}</option></select>
+                                        <select formControlName="marineCategory" (change)="onCategorySelected($event)" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineCategory')}"><option value="" disabled>Select a category</option><option *ngFor="let category of marineCategories" [value]="category.catname">{{ category.catname }}</option></select>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'marineCategory')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marineCategory') }}</div>
                                     </div>
                                     <div>
@@ -164,12 +162,12 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Destination</label>
-                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2" readonly/>
+                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-white px-3 py-2 font-bold text-gray-900" readonly/>
                                     </div>
                                 </div>
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">UCR Number</label><input type="text" formControlName="ucrNumber" placeholder="e.g. 25MV65757585MU567" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'ucrNumber') }}</div></div>
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">IDF Number <span class="text-red-500">*</span></label><input type="text" formControlName="idfNumber" placeholder="e.g. 25MV65757585MU567" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idfNumber') }}</div></div>
+                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">UCR Number</label><input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'ucrNumber') }}</div></div>
+                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">IDF Number <span class="text-red-500">*</span></label><input type="text" formControlName="idfNumber" placeholder="e.g. 12MBAIM1234567891" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idfNumber') }}</div></div>
                                 </div>
 
                                 <!-- [RESTRUCTURED] Fields displayed based on login status -->
@@ -243,7 +241,7 @@
                         <div class="space-y-6">
                             <!-- Customer Details Summary -->
                             <div>
-                                <h3 class="mb-3 border-b pb-2 text-lg font-semibold text-gray-800">Customer Details</h3>
+                                <h3 class="mb-3 border-b pb-2 text-lg font-semibold text-gray-800">Importer Details</h3>
                                 <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
                                     <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.firstName }} {{ quotationForm.value.lastName }}</span>
                                     <span class="text-gray-500">Email</span><span class="font-medium text-gray-800">{{ quotationForm.value.email }}</span>

@@ -29,7 +29,6 @@
   background-color: var(--primary-color);
   color: white;
   transition: all 0.2s ease-in-out;
-  /* transition: all 0.2s ease-in-out; */ /* Temporarily disabled */
   border-radius: 0.375rem;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
@@ -47,13 +46,6 @@
   &:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: none;
-    /* transform: translateY(-2px); */ /* Temporarily disabled */
-    /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */ /* Temporarily disabled */
-  }
-
-  &:active:not(:disabled) {
-    /* transform: translateY(0); */ /* Temporarily disabled */
-    /* box-shadow: none; */ /* Temporarily disabled */
   }
 
   &:disabled {
