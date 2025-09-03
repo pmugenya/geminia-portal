@@ -85,7 +85,7 @@ export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractCon
     }
 
     const files: { name: string, control: string, file: File }[] = [];
-    
+
     // Collect all uploaded files with their control names
     Object.keys(control.controls).forEach(controlName => {
         const file = control.get(controlName)?.value;
@@ -101,7 +101,7 @@ export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractCon
     // Check for duplicate file names
     const duplicates: string[] = [];
     const seen = new Set<string>();
-    
+
     files.forEach(({ name, control }) => {
         if (seen.has(name)) {
             duplicates.push(control);
@@ -110,11 +110,11 @@ export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractCon
         }
     });
 
-    return duplicates.length > 0 ? { 
-        duplicateFiles: { 
+    return duplicates.length > 0 ? {
+        duplicateFiles: {
             duplicatedControls: duplicates,
             message: 'The same document cannot be uploaded to multiple fields'
-        } 
+        }
     } : null;
 };
 
@@ -129,11 +129,11 @@ export function enhancedFileTypeValidator(allowedTypes: string[], maxSizeMB: num
         // Check file type
         const extension = file.name.split('.').pop()?.toLowerCase();
         if (!extension || !allowedTypes.map(t => t.toLowerCase()).includes(extension)) {
-            return { 
-                invalidFileType: { 
+            return {
+                invalidFileType: {
                     allowed: allowedTypes.join(', '),
                     actual: extension || 'unknown'
-                } 
+                }
             };
         }
 
@@ -425,7 +425,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.destroy$.next();
         this.destroy$.complete();
     }
-    
+
 
     // --- FORM SETUP AND MANAGEMENT ---
 
@@ -440,7 +440,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             phoneNumber: ['', [Validators.required, phoneNumberValidator]],
             idNumber: ['', [Validators.required, idNumberValidator]],
             kraPin: ['', [Validators.required, kraPinValidator]],
-            
+
             // Enhanced KYC Document Uploads
             kycDocuments: this.fb.group({
                 kraPinUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
@@ -464,7 +464,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             descriptionOfGoods: ['', [Validators.required, minWords(3)]],
             ucrNumber: ['', ucrNumberValidator],
             idfNumber: ['', [Validators.required, idfNumberValidator]],
-            
+
             // Logged-In User Controls
             estimatedArrivalDate: this.fb.control({ value: '', disabled: true }, [Validators.required, this.noPastDatesValidator]),
             loadingPort: this.fb.control({ value: '', disabled: true }, Validators.required),
@@ -492,7 +492,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.quotationForm.get('finalDestinationCounty')?.disable();
         this.quotationForm.get('shippingItems')?.disable();
     }
-    
+
     // --- FORM SUBMISSION ---
 
     onSubmit(): void {
@@ -535,7 +535,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             coverDateFrom: formattedDate,
             dateFormat: 'dd MMM yyyy',
             locale: "en_US",
-            productId: selectedProduct?.id,
+            productId: 2416,
             packagetypeid: packagingType,
             categoryid: selectedCategory?.id,
             cargoId: selectedCargoType?.id,
@@ -593,14 +593,14 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     // --- DYNAMIC FORM LOGIC & SUBSCRIPTIONS ---
-    
+
     private setupFormSubscriptions(): void {
         this.quotationForm.get('tradeType')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((type) => {
-            if (type === 'export') { 
-                this.showExportModal = true; 
+            if (type === 'export') {
+                this.showExportModal = true;
             }
         });
-        
+
         this.quotationForm.get('origin')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((country) => {
             if (country && this.blacklistedCountries.includes(country)) {
                 this.highRiskRequestForm.patchValue({ originCountry: country });
@@ -640,18 +640,18 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
     onFileSelected(event: Event, controlName: string): void {
         const input = event.target as HTMLInputElement;
-        
+
         if (!input.files || input.files.length === 0) {
             return;
         }
-    
+
         const file = input.files[0];
         const allowedTypes = ['pdf', 'png', 'jpg', 'jpeg'];
         const maxSizeMB = 10;
-    
+
         // Store reference to input element for clearing if needed
         this.fileUploadRefs[controlName] = input;
-    
+
         // Immediate file type validation
         const extension = file.name.split('.').pop()?.toLowerCase();
         if (!extension || !allowedTypes.includes(extension)) {
@@ -662,7 +662,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             );
             return;
         }
-    
+
         // Immediate file size validation
         const maxSizeBytes = maxSizeMB * 1024 * 1024;
         if (file.size > maxSizeBytes) {
@@ -674,28 +674,28 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             );
             return;
         }
-    
+
         // Clear any previous errors for this field
         delete this.kycFileValidationErrors[controlName];
-    
+
         // Set the file value
         this.selectedFiles[controlName] = file;
         this.kycDocuments.get(controlName)?.setValue(file);
-    
+
         // Check for duplicates across all fields
         this.checkForDuplicateFiles(controlName, file);
     }
-    
+
     private checkForDuplicateFiles(currentControl: string, currentFile: File): void {
         const allFiles = Object.keys(this.selectedFiles)
             .filter(key => key !== currentControl && this.selectedFiles[key])
             .map(key => ({ control: key, file: this.selectedFiles[key]! }));
-    
+
         // Check if current file matches any existing file
-        const duplicate = allFiles.find(({ file }) => 
+        const duplicate = allFiles.find(({ file }) =>
             file.name.toLowerCase() === currentFile.name.toLowerCase()
         );
-    
+
         if (duplicate) {
             const input = this.fileUploadRefs[currentControl];
             this.handleFileValidationError(
@@ -705,32 +705,32 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             );
             return;
         }
-    
+
         // Update form group validation
         this.kycDocuments.updateValueAndValidity();
     }
-    
+
     private handleFileValidationError(controlName: string, errorMessage: string, inputElement: HTMLInputElement): void {
         // Clear the file input
         inputElement.value = '';
         this.selectedFiles[controlName] = null;
         this.kycDocuments.get(controlName)?.setValue(null);
-    
+
         // Store the error message
         this.kycFileValidationErrors[controlName] = errorMessage;
-    
+
         // Show toast notification
         this.showToast(errorMessage);
-    
+
         // Clear error after 5 seconds
         setTimeout(() => {
             delete this.kycFileValidationErrors[controlName];
         }, 5000);
-    
+
         // Update form validation
         this.kycDocuments.updateValueAndValidity();
     }
-    
+
     private getFieldDisplayName(controlName: string): string {
         const displayNames: { [key: string]: string } = {
             kraPinUpload: 'KRA PIN Certificate',
@@ -740,7 +740,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         };
         return displayNames[controlName] || controlName;
     }
-    
+
     private setupKYCFileValidation(): void {
         // Watch for changes in KYC documents FormGroup
         this.kycDocuments.valueChanges
@@ -752,10 +752,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 // Check for duplicates when any file changes
                 this.validateAllKYCFiles();
             });
-    
+
         // Individual control validation
         const kycControls = ['kraPinUpload', 'nationalIdUpload', 'invoiceUpload', 'idfUpload'];
-        
+
         kycControls.forEach(controlName => {
             const control = this.kycDocuments.get(controlName);
             if (control) {
@@ -772,25 +772,25 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
     private validateAllKYCFiles(): void {
         const files: { name: string, control: string }[] = [];
-        
+
         Object.keys(this.selectedFiles).forEach(controlName => {
             const file = this.selectedFiles[controlName];
             if (file instanceof File) {
                 files.push({ name: file.name.toLowerCase(), control: controlName });
             }
         });
-    
+
         // Clear previous duplicate errors
         Object.keys(this.kycFileValidationErrors).forEach(key => {
             if (this.kycFileValidationErrors[key].includes('already been uploaded')) {
                 delete this.kycFileValidationErrors[key];
             }
         });
-    
+
         // Check for duplicates
         const seen = new Set<string>();
         const duplicates = new Set<string>();
-        
+
         files.forEach(({ name, control }) => {
             if (seen.has(name)) {
                 duplicates.add(control);
@@ -802,36 +802,36 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 seen.add(name);
             }
         });
-    
+
         // Set error messages for duplicated files
         duplicates.forEach(controlName => {
-            this.kycFileValidationErrors[controlName] = 
+            this.kycFileValidationErrors[controlName] =
                 `This document has been uploaded in multiple fields. Please use different documents for each field.`;
         });
     }
-    
+
     private handleControlValidationErrors(controlName: string, errors: ValidationErrors): void {
         if (errors['required']) {
             return; // Don't show error message for required field until form submission
         }
-    
+
         if (errors['invalidFileType']) {
             const { allowed, actual } = errors['invalidFileType'];
-            this.kycFileValidationErrors[controlName] = 
+            this.kycFileValidationErrors[controlName] =
                 `Invalid file type "${actual}". Only ${allowed} files are allowed.`;
         }
-    
+
         if (errors['fileTooLarge']) {
             const { maxSize, actualSize } = errors['fileTooLarge'];
-            this.kycFileValidationErrors[controlName] = 
+            this.kycFileValidationErrors[controlName] =
                 `File is too large (${actualSize}MB). Maximum size is ${maxSize}MB.`;
         }
     }
-    
+
     hasKYCValidationError(controlName: string): boolean {
         return !!this.kycFileValidationErrors[controlName] || this.isFieldInvalid(this.kycDocuments, controlName);
     }
-    
+
     getKYCValidationError(controlName: string): string {
         return this.kycFileValidationErrors[controlName] || this.getErrorMessage(this.kycDocuments, controlName);
     }
@@ -844,7 +844,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 input.value = '';
             }
         });
-        
+
         this.kycDocuments.reset();
         this.kycFileValidationErrors = {};
         this.showToast('All uploaded documents have been cleared.');
@@ -882,7 +882,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     closePrivacyModal(): void { this.showPrivacyModal = false; }
-    
+
     private scrollToFirstError(): void {
         setTimeout(() => {
             const firstErrorElement = document.querySelector('.ng-invalid.ng-touched');
@@ -891,7 +891,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             }
         }, 100);
     }
-    
+
     private showToast(message: string): void {
         this.toastMessage = message;
         setTimeout(() => (this.toastMessage = ''), 5000);
@@ -909,15 +909,15 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (field.includes('Upload') && this.kycFileValidationErrors[field]) {
             return this.kycFileValidationErrors[field];
         }
-    
+
         const control = form.get(field);
-        
+
         if (field === 'kycDocuments' && control?.hasError('duplicateFiles')) {
             return 'You cannot upload the same document for multiple fields. Please use different documents.';
         }
-        
+
         if (!control || !control.errors) return '';
-    
+
         if (control.hasError('required')) return 'This field is required.';
         if (control.hasError('email')) return 'Please enter a valid email address.';
         if (control.hasError('requiredTrue')) return 'You must agree to proceed.';
@@ -939,10 +939,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             const { maxSize } = control.errors['fileTooLarge'];
             return `File is too large. Maximum size is ${maxSize}MB.`;
         }
-    
+
         return 'This field has an error.';
     }
-    
+
     noPastDatesValidator(control: AbstractControl): { [key: string]: boolean } | null {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -965,7 +965,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             setTimeout(() => { this.router.navigate(['/']); }, 2500);
         }
     }
-    
+
     private openPaymentModal(): void {
         const paymentData: MpesaPayment = {
             amount: this.premiumCalculation.totalPayable,
@@ -996,7 +996,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.showToast('You have been logged out successfully.');
         setTimeout(() => { this.router.navigate(['/']); }, 1500);
     }
-    
+
     private createModalForm(): FormGroup {
         return this.fb.group({
             kraPin: ['', [Validators.required, kraPinValidator]],
@@ -1026,8 +1026,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         return form;
     }
 
-    private createHighRiskRequestForm(): FormGroup { 
-        return this.createModalForm(); 
+    private createHighRiskRequestForm(): FormGroup {
+        return this.createModalForm();
     }
 
     private setDefaultDate(): void {
@@ -1044,8 +1044,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (this.exportRequestForm.valid) {
             this.closeAllModals();
             this.showToast('Export request submitted. Our underwriter will contact you.');
-        } else { 
-            this.showToast('Please fill in all required fields correctly.'); 
+        } else {
+            this.showToast('Please fill in all required fields correctly.');
         }
     }
 
@@ -1053,13 +1053,13 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         if (this.highRiskRequestForm.valid) {
             this.closeAllModals();
             this.showToast('High-risk request submitted for manual review.');
-        } else { 
-            this.showToast('Please fill in all required fields correctly.'); 
+        } else {
+            this.showToast('Please fill in all required fields correctly.');
         }
     }
 
     closeAllModals(): void {
-        this.showExportModal = false; 
+        this.showExportModal = false;
         this.showHighRiskModal = false;
         this.quotationForm.get('tradeType')?.setValue('import', { emitEvent: false });
         this.quotationForm.get('origin')?.setValue('', { emitEvent: false });
@@ -1067,17 +1067,17 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.highRiskRequestForm.reset();
     }
 
-    downloadQuote(): void { 
-        if (this.quotationForm.valid) { 
-            this.showToast('Quote download initiated successfully.'); 
-        } 
+    downloadQuote(): void {
+        if (this.quotationForm.valid) {
+            this.showToast('Quote download initiated successfully.');
+        }
     }
 
-    getToday(): string { 
-        return new Date().toISOString().split('T')[0]; 
+    getToday(): string {
+        return new Date().toISOString().split('T')[0];
     }
 
-    goToStep(step: number): void { 
-        this.currentStep = step; 
+    goToStep(step: number): void {
+        this.currentStep = step;
     }
 }
