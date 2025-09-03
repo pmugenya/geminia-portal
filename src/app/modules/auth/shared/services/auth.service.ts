@@ -1,7 +1,8 @@
 // src/app/shared/auth.service.ts
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpParams } from '@angular/common/http';
 
 // --- TYPE DEFINITIONS ---
 export interface StoredUser {
@@ -23,12 +24,12 @@ export interface StoredCredentials {
 }
 export interface PendingQuote {
     id: string;
-    title: string;
-    type: 'marine' | 'travel';
-    status: 'pending';
-    createdDate: string;
-    quoteDetails: any;
-    premium: any;
+    prodName: string;
+    refno: string;
+    status: string;
+    createDate: string;
+    description: any;
+    netprem: any;
 }
 
 
@@ -84,6 +85,7 @@ export class AuthenticationService {
             console.error('Failed to clear stored data:', error);
         }
     }
+
 
 
 }

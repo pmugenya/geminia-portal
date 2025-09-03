@@ -110,7 +110,7 @@
                 <div class="stats-card" *ngFor="let stat of [
                     { title: 'Active Claims', value: dashboardStats.activeClaims, prefix: '' },
                     { title: 'Marine Policies', value: dashboardStats.marinePolicies, prefix: '' },
-                    { title: 'Pending Quotes', value: dashboardStats.pendingQuotes, prefix: '' },
+                    { title: 'Pending Quotes', value: totalRecords, prefix: '' },
                     { title: 'Total Premium', value: (dashboardStats.totalPremium | number: '1.0-0'), prefix: 'KES' }
                 ]">
                     <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-600">{{ stat.title }}</h3>
@@ -132,23 +132,47 @@
                             </h3>
                         </div>
                         <div class="p-6">
-                            <div *ngIf="pendingQuotes.length > 0; else noQuotes" class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div *ngFor="let quote of pendingQuotes" class="quote-card group rounded-xl border border-gray-200 bg-gray-50 p-6">
+                            <div *ngIf="pendingQuotes.length > 0; else noQuotes"
+                                 class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+                                <div *ngFor="let quote of pendingQuotes"
+                                     class="quote-card group rounded-xl border border-gray-200 bg-gray-50 p-6">
+                                    <p class="text-xs text-gray-500">Ref No: {{ quote.refno }}</p>
                                     <div class="mb-4 flex items-center justify-between">
-                                        <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">{{ quote.status }}</span>
-                                        <p class="text-xs text-gray-500">Created: {{ quote.createdDate | date: 'shortDate' }}</p>
+                                      <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                                        {{ quote.status }}
+                                      </span>
+                                        <p class="text-xs text-gray-500">Created: {{ quote.createDate | date: 'shortDate' }}</p>
                                     </div>
-                                    <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.title">{{ quote.title }}</h4>
-                                    <p class="line-clamp-2 mb-4 text-sm text-gray-600" [title]="quote.quoteDetails.descriptionOfGoods">{{ quote.quoteDetails.descriptionOfGoods }}</p>
+
+                                    <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.prodName">{{ quote.prodName }}</h4>
+                                    <p class="line-clamp-2 mb-4 text-sm text-gray-600" [title]="quote.description">
+                                        {{ quote.description }}
+                                    </p>
+
                                     <div class="mb-6 flex items-center justify-between">
-                                        <div class="text-2xl font-bold text-pantone-dark-blue">KES {{ quote.premium.totalPayable | number: '1.0-0' }}</div>
+                                        <div class="text-2xl font-bold text-pantone-dark-blue">
+                                            KES {{ quote.netprem | number: '1.0-0' }}
+                                        </div>
                                     </div>
+
                                     <div class="flex space-x-3">
-                                        <button mat-stroked-button color="warn" (click)="deleteQuote(quote.id)" class="flex-1 rounded-xl !border-red-400 px-4 py-2 text-sm font-semibold !text-red-500">Delete</button>
-                                        <button mat-stroked-button [routerLink]="['/sign-up/marine-quote']" [queryParams]="{ editId: quote.id }" class="flex-1 rounded-xl !border-pantone-light-blue px-4 py-2 text-sm font-semibold !text-pantone-light-blue">Edit</button>
-                                        <button mat-raised-button (click)="initiatePayment(quote.id)" class="flex-1 rounded-xl bg-pantone-dark-blue px-4 py-2 text-sm font-semibold text-white">Pay Now</button>
+                                        <button mat-stroked-button color="warn" (click)="deleteQuote(quote.id)"
+                                                class="flex-1 rounded-xl !border-red-400 px-4 py-2 text-sm font-semibold !text-red-500">Delete</button>
+                                        <button mat-stroked-button [routerLink]="['/sign-up/marine-quote']"
+                                                [queryParams]="{ editId: quote.id }"
+                                                class="flex-1 rounded-xl !border-pantone-light-blue px-4 py-2 text-sm font-semibold !text-pantone-light-blue">Edit</button>
+                                        <button mat-raised-button (click)="initiatePayment(quote.id)"
+                                                class="flex-1 rounded-xl bg-pantone-dark-blue px-4 py-2 text-sm font-semibold text-white">Pay Now</button>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Pagination controls -->
+                            <div class="mt-6 flex justify-center space-x-4" *ngIf="pendingQuotes.length > 0">
+                                <button mat-stroked-button (click)="prevPage()" [disabled]="page === 0">Previous</button>
+                                <span class="px-2 py-1 text-sm">Page {{ page + 1 }} of {{ Math.ceil(totalRecords / pageSize) }}</span>
+                                <button mat-stroked-button (click)="nextPage()" [disabled]="(page + 1) * pageSize >= totalRecords">Next</button>
                             </div>
                             <ng-template #noQuotes>
                                 <p class="py-8 text-center text-gray-500">You have no saved quotes. Start a new one and it will appear here!</p>
