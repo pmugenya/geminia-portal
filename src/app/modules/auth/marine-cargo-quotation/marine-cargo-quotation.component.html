@@ -71,42 +71,43 @@
                         <form [formGroup]="quotationForm" (ngSubmit)="onSubmit()">
                             <fieldset [disabled]="showHighRiskModal || showExportModal">
 
-                                <!-- 1. KYC Document Uploads Section -->
-                                <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
-                                <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted formats: PDF, PNG, JPG.</p>
-                                <!-- Group-level error for duplicate files -->
-                                <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-                                    <p>{{ getErrorMessage(quotationForm, 'kycDocuments') }}</p>
-                                </div>
-                                <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2" formGroupName="kycDocuments">
-                                    <div>
-                                        <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span class="text-red-500">*</span></label>
-                                        <div class="mt-1"><input id="idfUpload" (change)="onFileSelected($event, 'idfUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'idfUpload')}"><span *ngIf="selectedFiles['idfUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['idfUpload']?.name }}</span></div>
-                                        <div *ngIf="isFieldInvalid(kycDocuments, 'idfUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'idfUpload') }}</div>
+                                <!-- 1. KYC Document Uploads Section (Logged-in users only) -->
+                                <ng-container *ngIf="isLoggedIn">
+                                    <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
+                                    <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted formats: PDF, PNG, JPG.</p>
+                                    <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                                        <p>{{ getErrorMessage(quotationForm, 'kycDocuments') }}</p>
                                     </div>
-                                    <div>
-                                        <label for="invoiceUpload" class="block text-sm font-medium text-gray-700">Invoice <span class="text-red-500">*</span></label>
-                                        <div class="mt-1"><input id="invoiceUpload" (change)="onFileSelected($event, 'invoiceUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'invoiceUpload')}"><span *ngIf="selectedFiles['invoiceUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['invoiceUpload']?.name }}</span></div>
-                                        <div *ngIf="isFieldInvalid(kycDocuments, 'invoiceUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'invoiceUpload') }}</div>
+                                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2" formGroupName="kycDocuments">
+                                        <div>
+                                            <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span class="text-red-500">*</span></label>
+                                            <div class="mt-1"><input id="idfUpload" (change)="onFileSelected($event, 'idfUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'idfUpload')}"><span *ngIf="selectedFiles['idfUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['idfUpload']?.name }}</span></div>
+                                            <div *ngIf="isFieldInvalid(kycDocuments, 'idfUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'idfUpload') }}</div>
+                                        </div>
+                                        <div>
+                                            <label for="invoiceUpload" class="block text-sm font-medium text-gray-700">Invoice <span class="text-red-500">*</span></label>
+                                            <div class="mt-1"><input id="invoiceUpload" (change)="onFileSelected($event, 'invoiceUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'invoiceUpload')}"><span *ngIf="selectedFiles['invoiceUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['invoiceUpload']?.name }}</span></div>
+                                            <div *ngIf="isFieldInvalid(kycDocuments, 'invoiceUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'invoiceUpload') }}</div>
+                                        </div>
+                                        <div>
+                                            <label for="kraPinUpload" class="block text-sm font-medium text-gray-700">KRA PIN Certificate <span class="text-red-500">*</span></label>
+                                            <div class="mt-1"><input id="kraPinUpload" (change)="onFileSelected($event, 'kraPinUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'kraPinUpload')}"><span *ngIf="selectedFiles['kraPinUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['kraPinUpload']?.name }}</span></div>
+                                            <div *ngIf="isFieldInvalid(kycDocuments, 'kraPinUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'kraPinUpload') }}</div>
+                                        </div>
+                                        <div>
+                                            <label for="nationalIdUpload" class="block text-sm font-medium text-gray-700">National ID <span class="text-red-500">*</span></label>
+                                            <div class="mt-1"><input id="nationalIdUpload" (change)="onFileSelected($event, 'nationalIdUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'nationalIdUpload')}"><span *ngIf="selectedFiles['nationalIdUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['nationalIdUpload']?.name }}</span></div>
+                                            <div *ngIf="isFieldInvalid(kycDocuments, 'nationalIdUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'nationalIdUpload') }}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="kraPinUpload" class="block text-sm font-medium text-gray-700">KRA PIN Certificate <span class="text-red-500">*</span></label>
-                                        <div class="mt-1"><input id="kraPinUpload" (change)="onFileSelected($event, 'kraPinUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'kraPinUpload')}"><span *ngIf="selectedFiles['kraPinUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['kraPinUpload']?.name }}</span></div>
-                                        <div *ngIf="isFieldInvalid(kycDocuments, 'kraPinUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'kraPinUpload') }}</div>
-                                    </div>
-                                    <div>
-                                        <label for="nationalIdUpload" class="block text-sm font-medium text-gray-700">National ID <span class="text-red-500">*</span></label>
-                                        <div class="mt-1"><input id="nationalIdUpload" (change)="onFileSelected($event, 'nationalIdUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'nationalIdUpload')}"><span *ngIf="selectedFiles['nationalIdUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['nationalIdUpload']?.name }}</span></div>
-                                        <div *ngIf="isFieldInvalid(kycDocuments, 'nationalIdUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'nationalIdUpload') }}</div>
-                                    </div>
-                                </div>
+                                </ng-container>
 
                                 <!-- 2. Importer Information Section -->
                                 <h3 class="mb-4 mt-6 border-t pt-6 text-xl font-semibold text-gray-800">Importer Information</h3>
                                 <p class="mb-4 text-sm text-gray-500">This is the person or entity purchasing the insurance policy.</p>
                                 <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">KRA PIN <span class="text-red-500">*</span></label><input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="Format: A123456789Z" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'kraPin')}"/><div *ngIf="isFieldInvalid(quotationForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'kraPin') }}</div></div>
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">ID Number</label><input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idNumber') }}</div></div>
+                                    <div *ngIf="isLoggedIn"><label class="mb-2 block text-sm font-medium text-gray-700">KRA PIN <span class="text-red-500">*</span></label><input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="Format: A123456789Z" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'kraPin')}"/><div *ngIf="isFieldInvalid(quotationForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'kraPin') }}</div></div>
+                                    <div *ngIf="isLoggedIn"><label class="mb-2 block text-sm font-medium text-gray-700">ID Number</label><input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idNumber') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label><input type="text" formControlName="firstName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'firstName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'firstName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'firstName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label><input type="text" formControlName="lastName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'lastName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'lastName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'lastName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label><input type="email" formControlName="email" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'email')}"/><div *ngIf="isFieldInvalid(quotationForm, 'email')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'email') }}</div></div>
@@ -131,7 +132,7 @@
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Product</label>
-                                        <input type="text" formControlName="marineProduct" class="w-full rounded-md border-gray-300 bg-white px-3 py-2 font-bold text-gray-900" readonly/>
+                                        <input type="text" formControlName="marineProduct" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2 font-bold text-gray-900" readonly/>
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Marine Packaging Type <span class="text-red-500">*</span></label>
@@ -165,10 +166,10 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Destination</label>
-                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-white px-3 py-2 font-bold text-gray-900" readonly/>
+                                        <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2 font-bold text-gray-900" readonly/>
                                     </div>
                                 </div>
-                                <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div *ngIf="isLoggedIn" class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">UCR Number</label><input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'ucrNumber') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">IDF Number <span class="text-red-500">*</span></label><input type="text" formControlName="idfNumber" placeholder="e.g. 12MBAIM1234567891" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idfNumber') }}</div></div>
                                 </div>
@@ -187,30 +188,23 @@
                                 </ng-container>
 
                                 <ng-template #notLoggedInFields>
-                                    <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                                        <div>
-                                            <label class="mb-2 block text-sm font-medium text-gray-700">Date of Dispatch <span class="text-red-500">*</span></label>
-                                            <input type="date" formControlName="dateOfDispatch" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'dateOfDispatch')}"/>
-                                            <div *ngIf="isFieldInvalid(quotationForm, 'dateOfDispatch')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'dateOfDispatch') }}</div>
-                                        </div>
-                                        <div>
-                                            <label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label>
-                                            <input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/>
-                                            <div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div>
-                                        </div>
+                                    <div class="mb-6">
+                                        <label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label>
+                                        <input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/>
+                                        <div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div>
                                     </div>
                                 </ng-template>
 
-                                <!-- 4. Description of Goods & Shipping Items -->
-                                <div class="mt-6 border-t pt-6">
-                                    <div class="grid grid-cols-1 gap-6" [ngClass]="{'lg:grid-cols-2': isLoggedIn}">
+                                <!-- 4. Description of Goods & Shipping Items (Logged-in users only) -->
+                                <div *ngIf="isLoggedIn" class="mt-6 border-t pt-6">
+                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                         <div class="mb-6">
                                             <label class="mb-2 block text-sm font-medium text-gray-700">Description of Goods <span class="text-red-500">*</span></label>
                                             <textarea formControlName="descriptionOfGoods" rows="4" placeholder="Describe the type of goods, their value, quantity, packaging details..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'descriptionOfGoods')}"></textarea>
                                             <div *ngIf="isFieldInvalid(quotationForm, 'descriptionOfGoods')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'descriptionOfGoods') }}</div>
                                         </div>
 
-                                        <div *ngIf="isLoggedIn" formArrayName="shippingItems">
+                                        <div formArrayName="shippingItems">
                                             <label class="mb-2 block text-sm font-medium text-gray-700">Shipping Items <span class="text-red-500">*</span></label>
                                             <div *ngFor="let item of shippingItems.controls; let i=index" [formGroupName]="i" class="mb-3 rounded-lg border bg-gray-50/50 p-3">
                                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -232,7 +226,7 @@
                                 </div>
 
                                 <!-- Submit Button -->
-                                <button type="submit" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors" [disabled]="isSaving"><span *ngIf="isSaving" class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>{{ isSaving ? 'Saving...' : 'Get Quote' }}</button>
+                                <button type="submit" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-primary/60" [disabled]="isSaving || quotationForm.invalid"><span *ngIf="isSaving" class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>{{ isSaving ? 'Saving...' : 'Get Quote' }}</button>
                             </fieldset>
                         </form>
                     </div>
@@ -249,22 +243,22 @@
                                     <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.firstName }} {{ quotationForm.value.lastName }}</span>
                                     <span class="text-gray-500">Email</span><span class="font-medium text-gray-800">{{ quotationForm.value.email }}</span>
                                     <span class="text-gray-500">Phone</span><span class="font-medium text-gray-800">{{ quotationForm.value.phoneNumber }}</span>
-                                    <span class="text-gray-500">KRA PIN</span><span class="font-medium text-gray-800">{{ quotationForm.value.kraPin }}</span>
-                                    <span class="text-gray-500">ID Number</span><span class="font-medium text-gray-800">{{ quotationForm.value.idNumber }}</span>
+                                    <span *ngIf="quotationForm.value.kraPin" class="text-gray-500">KRA PIN</span><span *ngIf="quotationForm.value.kraPin" class="font-medium text-gray-800">{{ quotationForm.value.kraPin }}</span>
+                                    <span *ngIf="quotationForm.value.idNumber" class="text-gray-500">ID Number</span><span *ngIf="quotationForm.value.idNumber" class="font-medium text-gray-800">{{ quotationForm.value.idNumber }}</span>
                                 </div>
                             </div>
                             <!-- Shipment Details Summary -->
                             <div>
                                 <h3 class="mb-3 border-b pb-2 text-lg font-semibold text-gray-800">Shipment Details</h3>
                                 <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-                                    <span class="text-gray-500">Trade / Cargo Type</span><span class="font-medium text-gray-800">{{ quotationForm.value.tradeType | titlecase }} / {{ quotationForm.value.cargoType | titlecase }}</span>
-                                    <span class="text-gray-500">Vessel Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.vesselName || 'N/A' }}</span>
+                                    <span class="text-gray-500">Trade / Cargo Type</span><span class="font-medium text-gray-800">{{ quotationForm.value.tradeType | titlecase }} / {{ quotationForm.value.marineCargoType | titlecase }}</span>
                                     <span class="text-gray-500">Origin / Destination</span><span class="font-medium text-gray-800">{{ quotationForm.value.origin }} to {{ quotationForm.value.destination }}</span>
-                                    <span class="text-gray-500">Date of Dispatch</span><span class="font-medium text-gray-800">{{ quotationForm.value.dateOfDispatch | date:'longDate' }}</span>
                                     <span class="text-gray-500">Sum Insured (KES)</span><span class="font-medium text-gray-800">{{ quotationForm.value.sumInsured | number:'1.2-2' }}</span>
-                                    <span class="text-gray-500">IDF Number</span><span class="font-medium text-gray-800">{{ quotationForm.value.idfNumber }}</span>
+                                    <span *ngIf="quotationForm.value.vesselName" class="text-gray-500">Vessel Name</span><span *ngIf="quotationForm.value.vesselName" class="font-medium text-gray-800">{{ quotationForm.value.vesselName }}</span>
+                                    <span *ngIf="quotationForm.value.dateOfDispatch" class="text-gray-500">Date of Dispatch</span><span *ngIf="quotationForm.value.dateOfDispatch" class="font-medium text-gray-800">{{ quotationForm.value.dateOfDispatch | date:'longDate' }}</span>
+                                    <span *ngIf="quotationForm.value.idfNumber" class="text-gray-500">IDF Number</span><span *ngIf="quotationForm.value.idfNumber" class="font-medium text-gray-800">{{ quotationForm.value.idfNumber }}</span>
                                 </div>
-                                <div class="mt-4 text-sm">
+                                <div *ngIf="quotationForm.value.descriptionOfGoods" class="mt-4 text-sm">
                                     <span class="text-gray-500">Description of Goods</span>
                                     <p class="mt-1 whitespace-pre-wrap rounded-md bg-gray-50 p-3 font-medium text-gray-800">{{ quotationForm.value.descriptionOfGoods }}</p>
                                 </div>
@@ -302,59 +296,74 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
 
-    <!-- MODALS SECTION -->
+    <!-- REFACTORED MODALS SECTION -->
     <div *ngIf="showExportModal || showHighRiskModal" (click)="closeAllModals()" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
         <div (click)="$event.stopPropagation()" class="max-h-[95vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-1 shadow-xl">
             <div class="p-7">
                 <h2 class="mb-4 text-2xl font-bold">{{ showExportModal ? 'Export Shipment Details' : 'High-Risk Shipment Details' }}</h2>
                 <p class="mb-6 text-gray-600">{{ showExportModal ? 'Please provide the following details for your export request.' : 'Shipments from this origin require manual underwriting. Please provide your details to proceed.' }}</p>
+                
                 <form [formGroup]="showExportModal ? exportRequestForm : highRiskRequestForm" (ngSubmit)="showExportModal ? onExportRequestSubmit() : onHighRiskRequestSubmit()">
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-                        <div><label class="mb-1 block text-sm font-medium">KRA PIN <span class="text-red-500">*</span></label><input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'kraPin')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'kraPin') }}</div></div>
+                        <!-- Personal Information -->
                         <div><label class="mb-1 block text-sm font-medium">First Name <span class="text-red-500">*</span></label><input type="text" formControlName="firstName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'firstName')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'firstName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'firstName') }}</div></div>
                         <div><label class="mb-1 block text-sm font-medium">Last Name <span class="text-red-500">*</span></label><input type="text" formControlName="lastName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'lastName')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'lastName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'lastName') }}</div></div>
                         <div><label class="mb-1 block text-sm font-medium">Email Address <span class="text-red-500">*</span></label><input type="email" formControlName="email" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'email')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'email')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'email') }}</div></div>
-                        <div class="md:col-span-2"><label class="mb-1 block text-sm font-medium">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber') }}</div></div>
-                        <div><label class="mb-1 block text-sm font-medium">Select Product <span class="text-red-500">*</span></label><input type="text" formControlName="marineProduct" list="marine-products-list-modal" placeholder="Search for a product..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineProduct')}"/><datalist id="marine-products-list-modal"><option *ngFor="let product of marineProducts" [value]="product.name"></option></datalist><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineProduct')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineProduct') }}</div></div>
-                        <div><label class="mb-1 block text-sm font-medium">Marine Cargo Type <span class="text-red-500">*</span></label><input type="text" formControlName="marineCargoType" list="cargo-type-list-modal" placeholder="Search for a cargo type..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType')}"/><datalist id="cargo-type-list-modal"><option *ngFor="let type of marineCargoTypes" [value]="type"></option></datalist><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType') }}</div></div>
-                        <div><label class="mb-1 block text-sm font-medium">IDF Number</label><input type="text" formControlName="idfNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber') }}</div></div>
-                        <div><label class="mb-1 block text-sm font-medium">UCR Number</label><input type="text" formControlName="ucrNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber') }}</div></div>
+                        <div><label class="mb-1 block text-sm font-medium">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'phoneNumber') }}</div></div>
 
-                        <!-- CORRECTED: Country of Origin in Modal -->
+                        <!-- Shipment Information -->
                         <div>
                             <label class="mb-1 block text-sm font-medium">Country of Origin <span class="text-red-500">*</span></label>
-                            <select formControlName="originCountry" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary font-semibold" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'originCountry')}">
+                            <input *ngIf="showExportModal" type="text" formControlName="originCountry" class="w-full rounded-md border bg-gray-100 px-3 py-2 font-semibold text-gray-700" readonly/>
+                            <select *ngIf="!showExportModal" formControlName="originCountry" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(highRiskRequestForm, 'originCountry')}">
                                 <option value="" disabled>Select a country</option>
                                 <option *ngFor="let country of allCountriesList" [value]="country">{{ country }}</option>
                             </select>
                             <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'originCountry')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'originCountry') }}</div>
                         </div>
 
-                        <!-- CORRECTED: Destination Country in Modal -->
                         <div>
                             <label class="mb-1 block text-sm font-medium">Destination Country <span class="text-red-500">*</span></label>
-                            <select formControlName="destinationCountry" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary font-semibold" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'destinationCountry')}">
+                            <!-- Input for High Risk Modal -->
+                            <input *ngIf="!showExportModal" type="text" formControlName="destinationCountry" class="w-full rounded-md border bg-gray-100 px-3 py-2 font-bold text-gray-900" readonly/>
+                            <!-- Select for Export Modal -->
+                            <select *ngIf="showExportModal" formControlName="destinationCountry" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(exportRequestForm, 'destinationCountry')}">
                                 <option value="" disabled>Select a country</option>
-                                <option *ngFor="let country of allCountriesList" [value]="country">{{ country }}</option>
+                                <option *ngFor="let country of exportDestinationCountries" [value]="country">{{ country }}</option>
                             </select>
                             <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'destinationCountry')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'destinationCountry') }}</div>
                         </div>
+                        
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Shipment Date <span class="text-red-500">*</span></label>
+                            <input type="date" formControlName="shipmentDate" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate')}"/>
+                            <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate') }}</div>
+                        </div>
 
-                        <div class="md:col-span-2"><label class="mb-1 block text-sm font-medium">Shipment Date <span class="text-red-500">*</span></label><input type="date" formControlName="shipmentDate" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate') }}</div></div>
-                        <div class="md:col-span-2"><label class="mb-1 block text-sm font-medium">Goods Description (Max 100 words) <span class="text-red-500">*</span></label><textarea formControlName="goodsDescription" rows="3" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription')}"></textarea><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription') }}</div></div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Sum Insured (KES) <span class="text-red-500">*</span></label>
+                            <input type="text" formControlName="sumInsured" appThousands placeholder="e.g., 1,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured')}"/>
+                            <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured') }}</div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="mb-1 block text-sm font-medium">Goods Description (Max 100 words) <span class="text-red-500">*</span></label>
+                            <textarea formControlName="goodsDescription" rows="3" placeholder="Describe the goods being shipped..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription')}"></textarea>
+                            <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription') }}</div>
+                        </div>
                     </div>
+
                     <div class="mt-6 space-y-2">
                         <label class="flex items-start"><input type="checkbox" formControlName="termsAndPolicyConsent" class="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus-ring-primary"/><span class="ml-3 text-sm text-gray-700">I agree to the <a (click)="openTermsModal($event)" class="cursor-pointer font-medium text-primary hover:underline">Terms of Use</a> and to the <a (click)="openPrivacyModal($event)" class="cursor-pointer font-medium text-primary hover:underline">Data Privacy Policy</a>.*</span></label>
                         <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'termsAndPolicyConsent')" class="ml-7 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'termsAndPolicyConsent') }}</div>
                     </div>
                     <div class="mt-8 flex justify-end gap-4 border-t pt-6">
                         <button type="button" (click)="closeAllModals()" class="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" [disabled]="(showExportModal ? exportRequestForm : highRiskRequestForm).invalid" class="btn-primary rounded-md px-4 py-2 font-medium text-white transition-colors">Submit Request</button>
+                        <button type="submit" [disabled]="(showExportModal ? exportRequestForm : highRiskRequestForm).invalid" class="btn-primary rounded-md px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-primary/60">Submit Request</button>
                     </div>
                 </form>
             </div>
