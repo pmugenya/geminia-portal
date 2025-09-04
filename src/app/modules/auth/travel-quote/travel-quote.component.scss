@@ -1,119 +1,172 @@
-:root {
-  --geminia-blue: #04b2e1; /* Pantone 306C */
-  --geminia-navy: #21275c; /* Pantone 2758C */
+// Define Geminia Insurance brand colors from the provided palette
+$geminia-blue: #04b2e1;
+$geminia-navy: #21275c;
+$geminia-white: #ffffff;
+
+// Neutral colors
+$neutral-dark-text: #1f2937;
+$neutral-medium-text: #6b7280;
+$neutral-light-gray: #f9fafb;
+$neutral-border-gray: #e5e7eb;
+
+
+// --- Rebranding the component ---
+
+// Header text
+h1 {
+  color: $geminia-navy;
 }
 
-/* Custom text color utilities */
-.text-geminia-blue {
-  color: var(--geminia-blue);
-}
-
-.text-geminia-navy {
-  color: var(--geminia-navy);
-}
-
-/* Product selection card styling with brand color borders */
-.product-selection-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.product-selection-card > div {
-  border: 2px solid var(--geminia-blue); /* Light blue border by default */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-.product-selection-card:hover > div {
-  border-color: var(--geminia-navy); /* Deep blue border on hover */
-  box-shadow: 0 10px 25px -5px rgba(33, 39, 92, 0.15), 0 4px 6px -2px rgba(33, 39, 92, 0.1);
-}
-
-.product-selection-card:hover {
-  transform: translateY(-4px); /* Slight lift on hover */
-}
-
-/*
-  Custom Button Styling:
-  - Base color is geminia-blue (#04b2e1)
-  - Hover color is geminia-navy (#21275c)
-  - This class now styles all primary action buttons for consistency.
-*/
-.btn-select-plan-custom {
-  background-color: var(--geminia-blue);
-  transition: background-color 0.3s ease-in-out;
-}
-
-.btn-select-plan-custom:hover {
-  background-color: var(--geminia-navy);
-}
-
-/* Enhanced popular badge styling */
-.product-selection-card:hover .text-geminia-blue {
-  color: var(--geminia-navy);
-  background-color: rgba(33, 39, 92, 0.1);
-}
-
-/* Modal animation */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
+/* --- Primary Button --- */
+.btn-primary {
+  background-color: $geminia-blue;
+  color: $geminia-white;
+  transition: all 0.3s ease;
+  &:hover:not(:disabled) {
+    background-color: $geminia-navy; // Change to navy on hover
+    transform: translateY(-2px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
   }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Form inputs with on-brand focus style */
-.form-input {
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: #fff;
-
+/* --- General Form Styles --- */
+input, select, textarea {
   &:focus {
     outline: none;
-    border-color: var(--geminia-blue);
-    box-shadow: 0 0 0 3px rgba(4, 178, 225, 0.3);
+    --tw-ring-color: #{$geminia-blue};
+    box-shadow: 0 0 0 2px var(--tw-ring-color);
+    border-color: transparent;
   }
 }
+input[type="checkbox"].text-geminia-blue { color: $geminia-blue; }
+input[type="checkbox"].focus\:ring-geminia-blue:focus { --tw-ring-color: #{$geminia-blue}; }
+.ng-invalid.ng-touched:not(form) { border-color: #f87171 !important; }
 
-/* Styling for select dropdown placeholder text */
-select.form-input:required:invalid {
-  color: #6b7280; /* text-gray-500 */
-}
+/* --- Step Progress Bar Styles --- */
+.text-geminia-blue { color: $geminia-blue; }
+.bg-geminia-blue { background-color: $geminia-blue; }
 
-option {
-  color: #111827; /* text-gray-900 */
-}
-
-
-/* Step Indicator styling */
-.step-indicator {
+/* --- NEW Plan Card Layout (from image) --- */
+.plan-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  background-color: #e5e7eb;
-  color: #6b7280;
-  font-weight: 600;
-  transition: all 0.3s ease-in-out;
+  flex-direction: column;
+  border: 1px solid $neutral-border-gray;
+  border-radius: 0.75rem;
+  background-color: $geminia-white;
+  transition: all 0.3s ease;
+  overflow: hidden;
 
-  &.active {
-    background-color: var(--geminia-navy);
-    color: white;
+  .plan-price {
+    text-align: center;
+    margin-bottom: 1rem;
+    .price-amount {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: $geminia-blue;
+    }
+    .price-period {
+      font-size: 0.875rem;
+      color: $neutral-medium-text;
+    }
+  }
+
+  .plan-tags {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    .plan-tag {
+      background-color: $neutral-light-gray;
+      color: $neutral-medium-text;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid $neutral-border-gray;
+      border-radius: 9999px;
+    }
+  }
+
+  .plan-benefits {
+    list-style: none; padding: 0; margin: 0;
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid $neutral-light-gray;
+      &:first-child { border-top: 1px solid $neutral-light-gray; }
+
+      .benefit-icon.included {
+        color: $geminia-navy; // Navy blue icon as requested
+        margin-top: 2px;
+        font-size: 1.1rem;
+      }
+      .benefit-text {
+        font-size: 0.9rem;
+        .benefit-name {
+          font-weight: 500;
+          color: $neutral-dark-text;
+        }
+        .benefit-details {
+          font-size: 0.8rem;
+          color: $neutral-medium-text;
+          .benefit-limit { font-weight: 600; }
+          .benefit-notes { margin-left: 0.25rem; }
+        }
+      }
+    }
+  }
+
+  .select-button {
+    display: block; width: 100%; text-align: center; padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    border: 2px solid $geminia-navy;
+    background-color: transparent;
+    color: $geminia-navy;
+    cursor: pointer; font-weight: 600;
+    transition: all 0.2s ease-in-out;
+  }
+
+  &.selected-plan {
+    border-color: $geminia-blue;
+    box-shadow: 0 4px 12px rgba($geminia-blue, 0.2);
   }
 }
+
+// Radio button hover/checked state for the new design
+input[type="radio"]:hover + .select-button {
+    background-color: $geminia-blue;
+    border-color: $geminia-blue;
+    color: $geminia-white;
+}
+input[type="radio"]:checked + .select-button {
+    background-color: $geminia-navy;
+    border-color: $geminia-navy;
+    color: $geminia-white;
+}
+input[type="radio"].sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+
+/* --- Summary & Review Section Styles --- */
+.summary-bg { background-color: rgba($geminia-blue, 0.1); }
+.total-payable-text { color: $geminia-blue; }
+.review-section {
+  h4 { font-size: 1rem; font-weight: 600; color: $geminia-navy; padding-bottom: 0.5rem; border-bottom: 1px solid $neutral-border-gray; margin-top: 1.5rem; margin-bottom: 1rem; }
+  .review-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 0.5rem 1rem; font-size: 0.9rem; .label { color: $neutral-medium-text; } .value { font-weight: 500; color: $neutral-dark-text; } }
+}
+.benefit-table {
+  width: 100%; border-collapse: collapse;
+  th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid $neutral-border-gray; }
+  th { background-color: $neutral-light-gray; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { font-size: 0.9rem; }
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.step-content { animation: fadeIn 0.4s ease-in-out; }
