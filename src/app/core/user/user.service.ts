@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, ReplaySubject, tap } from 'rxjs';
 import {
@@ -64,6 +64,14 @@ export class UserService {
 
     getCargoTypesByCategory(categoryId: number): Observable<CargoTypeData[]> {
         return this._httpClient.get<CargoTypeData[]>(`${this.baseUrl}/cargotypes/${categoryId}`);
+    }
+
+    getClientQuotes(offset: number, limit: number): Observable<any> {
+        let params = new HttpParams()
+            .set('offset', offset.toString())
+            .set('limit', limit.toString());
+
+        return this._httpClient.get<any>(`${this.baseUrl}/quote/clientquotes`, { params });
     }
 
 }

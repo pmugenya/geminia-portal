@@ -123,7 +123,7 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Trade Type <span class="text-red-500">*</span></label>
-                                        <select formControlName="tradeType" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'tradeType')}"><option value="import">Import</option><option value="export">Export</option></select>
+                                        <select formControlName="tradeType" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'tradeType')}"><option value="1">Import</option><option value="2">Export</option></select>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'tradeType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'tradeType') }}</div>
                                     </div>
                                 </div>
@@ -136,8 +136,8 @@
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Marine Packaging Type <span class="text-red-500">*</span></label>
                                         <div class="flex h-10 items-center gap-4">
-                                            <label class="flex items-center"><input type="radio" formControlName="marinePackagingType" value="containerized" class="h-4 w-4 border-gray-300 text-primary focus-ring-primary"/><span class="ml-2 text-sm text-gray-700">Containerized</span></label>
-                                            <label class="flex items-center"><input type="radio" formControlName="marinePackagingType" value="non-containerized" class="h-4 w-4 border-gray-300 text-primary focus-ring-primary"/><span class="ml-2 text-sm text-gray-700">Non-Containerized</span></label>
+                                            <label class="flex items-center"><input type="radio" formControlName="marinePackagingType" value="1" class="h-4 w-4 border-gray-300 text-primary focus-ring-primary"/><span class="ml-2 text-sm text-gray-700">Containerized</span></label>
+                                            <label class="flex items-center"><input type="radio" formControlName="marinePackagingType" value="2" class="h-4 w-4 border-gray-300 text-primary focus-ring-primary"/><span class="ml-2 text-sm text-gray-700">Non-Containerized</span></label>
                                         </div>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'marinePackagingType')" class="mt-2 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marinePackagingType') }}</div>
                                     </div>
@@ -185,7 +185,7 @@
                                     </div>
                                     <div class="mb-6"><label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label><input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/><div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div></div>
                                 </ng-container>
-                                
+
                                 <ng-template #notLoggedInFields>
                                     <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div>
@@ -200,7 +200,7 @@
                                         </div>
                                     </div>
                                 </ng-template>
-                                
+
                                 <!-- 4. Description of Goods & Shipping Items -->
                                 <div class="mt-6 border-t pt-6">
                                     <div class="grid grid-cols-1 gap-6" [ngClass]="{'lg:grid-cols-2': isLoggedIn}">
@@ -324,7 +324,7 @@
                         <div><label class="mb-1 block text-sm font-medium">Marine Cargo Type <span class="text-red-500">*</span></label><input type="text" formControlName="marineCargoType" list="cargo-type-list-modal" placeholder="Search for a cargo type..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType')}"/><datalist id="cargo-type-list-modal"><option *ngFor="let type of marineCargoTypes" [value]="type"></option></datalist><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'marineCargoType') }}</div></div>
                         <div><label class="mb-1 block text-sm font-medium">IDF Number</label><input type="text" formControlName="idfNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'idfNumber') }}</div></div>
                         <div><label class="mb-1 block text-sm font-medium">UCR Number</label><input type="text" formControlName="ucrNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'ucrNumber') }}</div></div>
-                        
+
                         <!-- CORRECTED: Country of Origin in Modal -->
                         <div>
                             <label class="mb-1 block text-sm font-medium">Country of Origin <span class="text-red-500">*</span></label>

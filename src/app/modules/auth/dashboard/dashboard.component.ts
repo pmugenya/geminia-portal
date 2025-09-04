@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AuthenticationService, PendingQuote, StoredUser } from '../shared/services/auth.service';
+import { UserService } from '../../../core/user/user.service';
 
 
 
@@ -225,6 +226,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   user: StoredUser | null = null;
   pendingQuotes: PendingQuote[] = [];
+    page = 0;
+    pageSize = 2;
+    totalRecords = 0;
   navigationItems: NavigationItem[] = [];
   dashboardStats: DashboardStats = { marinePolicies: 0, travelPolicies: 0, pendingQuotes: 0, totalPremium: 0, activeClaims: 0 };
 
@@ -247,7 +251,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     public router: Router,
     private snackBar: MatSnackBar,
-     private authService: AuthenticationService
+     private authService: AuthenticationService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -262,6 +267,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               this.router.navigate(['/sign-in']); // adjust your login route
           }
       });
+    this.loadDashboardData();
   }
 
   ngOnDestroy(): void {
@@ -269,17 +275,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // loadDashboardData(): void {
-  //   this.pendingQuotes = this.authService.getPendingQuotes();
-  //   this.dashboardStats = {
-  //     marinePolicies: this.activePolicies.filter(p => p.type === 'marine').length,
-  //     travelPolicies: this.activePolicies.filter(p => p.type === 'travel').length,
-  //     pendingQuotes: this.pendingQuotes.length,
-  //     totalPremium: this.activePolicies.reduce((sum, p) => sum + p.premium, 0),
-  //     activeClaims: this.claims.filter(c => c.status !== 'Settled' && c.status !== 'Rejected').length
-  //   };
-  // }
+  loadDashboardData(): void {
+      const offset = this.page * this.pageSize;
+      this.userService.getClientQuotes(offset, this.pageSize).subscribe({
+          next: (res) => {
+             console.log(res);
+              this.pendingQuotes = res.pageItems;
+              this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
+          },
+          error: (err) => console.error('Error loading quotes', err)
+      });
+  }
 
+    nextPage() {
+        if ((this.page + 1) * this.pageSize < this.totalRecords) {
+            this.page++;
+            this.loadDashboardData();
+        }
+    }
+
+    prevPage() {
+        if (this.page > 0) {
+            this.page--;
+            this.loadDashboardData();
+        }
+    }
 
     scrollToSection(sectionId: string): void {
         const element = document.getElementById(sectionId);
@@ -297,20 +317,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const quote = this.pendingQuotes.find((q) => q.id === quoteId);
     if (quote && this.user) {
       const paymentData: MpesaPayment = {
-        amount: quote.premium.totalPayable,
+        amount: quote.netprem,
         phoneNumber: this.user.phoneNumber || '',
         reference: quote.id,
-        description: quote.title
+        description: quote.description
       };
       const dialogRef = this.dialog.open(MpesaPaymentModalComponent, { data: paymentData, panelClass: 'payment-modal-panel', autoFocus: false });
       dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: PaymentResult | null) => {
         if (result?.success) {
-          this.snackBar.open(`Payment for "${quote.title}" was successful. Policy is now active.`, 'OK', {
+          this.snackBar.open(`Payment for "${quote.description}" was successful. Policy is now active.`, 'OK', {
             duration: 7000,
             panelClass: ['geminia-toast-panel']
           });
 
-          if (quote.type === 'marine') { this.activateMarinePolicy(quote); }
+          if (quote.prodName === 'marine') { this.activateMarinePolicy(quote); }
 
           // this.authService.removePendingQuote(quoteId);
           // this.loadDashboardData();
@@ -320,47 +340,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private activateMarinePolicy(quote: PendingQuote): void {
-    if (quote.type !== 'marine' || !quote.quoteDetails) {
-      console.error('Attempted to activate a non-marine quote or a quote with no details.');
-      return;
-    }
 
-    const details = quote.quoteDetails;
-    const policyNumber = `MAR/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const newPolicy: Policy = {
-      id: 'P' + Date.now().toString(36),
-      type: 'marine',
-      title: quote.title,
-      policyNumber: policyNumber,
-      status: 'active',
-      premium: quote.premium.totalPayable,
-      startDate: new Date(details.coverStartDate),
-      endDate: new Date(new Date(details.coverStartDate).setDate(new Date(details.coverStartDate).getDate() + 90)),
-      certificateUrl: `/simulated/${policyNumber}.pdf`,
-      marineDetails: {
-        vesselName: details.vesselName,
-        cargoType: details.cargoType,
-        tradeType: details.tradeType,
-        modeOfShipment: details.modeOfShipment,
-        marineProduct: details.marineProduct,
-        marineCargoType: details.marineCargoType,
-        origin: details.origin,
-        destination: details.destination,
-        sumInsured: details.sumInsured,
-        descriptionOfGoods: details.descriptionOfGoods,
-        ucrNumber: details.ucrNumber,
-        idfNumber: details.idfNumber,
-        clientInfo: {
-            name: `${details.firstName} ${details.lastName}`,
-            idNumber: details.idNumber,
-            kraPin: details.kraPin,
-            email: details.email,
-            phoneNumber: details.phoneNumber,
-        }
-      }
-    };
-    this.activePolicies.unshift(newPolicy);
   }
 
   deleteQuote(quoteId: string): void {
@@ -495,4 +475,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
     return statusMap[status] || '';
   }
+
+    protected readonly Math = Math;
 }
