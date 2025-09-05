@@ -45,16 +45,12 @@
             <div class="mb-6 sm:mb-8">
                 <div class="flex items-center justify-center space-x-4">
                     <!-- Step 1 Indicator -->
-                    <div class="flex items-center">
-                        <div [class]="currentStep >= 1 ? 'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-white' : 'flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-sm font-medium text-gray-600'">1</div>
-                        <span [class]="currentStep >= 1 ? 'ml-2 text-sm font-medium text-primary' : 'ml-2 text-sm text-gray-500'">Shipment Details</span>
-                    </div>
+                    <div [class]="currentStep >= 1 ? 'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-white' : 'flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-sm font-medium text-gray-600'">1</div>
+                    <span [class]="currentStep >= 1 ? 'ml-2 text-sm font-medium text-primary' : 'ml-2 text-sm text-gray-500'">Shipment Details</span>
                     <div class="h-px w-16 bg-gray-300"></div>
                     <!-- Step 2 Indicator -->
-                    <div class="flex items-center">
-                        <div [class]="currentStep >= 2 ? 'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-white' : 'flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-sm font-medium text-gray-600'">2</div>
-                        <span [class]="currentStep >= 2 ? 'ml-2 text-sm font-medium text-primary' : 'ml-2 text-sm text-gray-500'">Review & Pay</span>
-                    </div>
+                    <div [class]="currentStep >= 2 ? 'flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-white' : 'flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-sm font-medium text-gray-600'">2</div>
+                    <span [class]="currentStep >= 2 ? 'ml-2 text-sm font-medium text-primary' : 'ml-2 text-sm text-gray-500'">Review & Pay</span>
                 </div>
             </div>
 
@@ -71,50 +67,22 @@
                         <form [formGroup]="quotationForm" (ngSubmit)="onSubmit()">
                             <fieldset [disabled]="showHighRiskModal || showExportModal">
 
-                                <!-- 1. KYC Document Uploads Section (Logged-in users only) -->
-                                <ng-container *ngIf="isLoggedIn">
-                                    <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
-                                    <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted formats: PDF, PNG, JPG.</p>
-                                    <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-                                        <p>{{ getErrorMessage(quotationForm, 'kycDocuments') }}</p>
-                                    </div>
-                                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2" formGroupName="kycDocuments">
-                                        <div>
-                                            <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span class="text-red-500">*</span></label>
-                                            <div class="mt-1"><input id="idfUpload" (change)="onFileSelected($event, 'idfUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'idfUpload')}"><span *ngIf="selectedFiles['idfUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['idfUpload']?.name }}</span></div>
-                                            <div *ngIf="isFieldInvalid(kycDocuments, 'idfUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'idfUpload') }}</div>
-                                        </div>
-                                        <div>
-                                            <label for="invoiceUpload" class="block text-sm font-medium text-gray-700">Invoice <span class="text-red-500">*</span></label>
-                                            <div class="mt-1"><input id="invoiceUpload" (change)="onFileSelected($event, 'invoiceUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'invoiceUpload')}"><span *ngIf="selectedFiles['invoiceUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['invoiceUpload']?.name }}</span></div>
-                                            <div *ngIf="isFieldInvalid(kycDocuments, 'invoiceUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'invoiceUpload') }}</div>
-                                        </div>
-                                        <div>
-                                            <label for="kraPinUpload" class="block text-sm font-medium text-gray-700">KRA PIN Certificate <span class="text-red-500">*</span></label>
-                                            <div class="mt-1"><input id="kraPinUpload" (change)="onFileSelected($event, 'kraPinUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'kraPinUpload')}"><span *ngIf="selectedFiles['kraPinUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['kraPinUpload']?.name }}</span></div>
-                                            <div *ngIf="isFieldInvalid(kycDocuments, 'kraPinUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'kraPinUpload') }}</div>
-                                        </div>
-                                        <div>
-                                            <label for="nationalIdUpload" class="block text-sm font-medium text-gray-700">National ID <span class="text-red-500">*</span></label>
-                                            <div class="mt-1"><input id="nationalIdUpload" (change)="onFileSelected($event, 'nationalIdUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycDocuments, 'nationalIdUpload')}"><span *ngIf="selectedFiles['nationalIdUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['nationalIdUpload']?.name }}</span></div>
-                                            <div *ngIf="isFieldInvalid(kycDocuments, 'nationalIdUpload')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycDocuments, 'nationalIdUpload') }}</div>
-                                        </div>
-                                    </div>
-                                </ng-container>
-
-                                <!-- 2. Importer Information Section -->
-                                <h3 class="mb-4 mt-6 border-t pt-6 text-xl font-semibold text-gray-800">Importer Information</h3>
+                                <!-- 1. Importer Information Section -->
+                                <h3 class="mb-4 text-xl font-semibold text-gray-800">Importer Information</h3>
                                 <p class="mb-4 text-sm text-gray-500">This is the person or entity purchasing the insurance policy.</p>
                                 <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-                                    <div *ngIf="isLoggedIn"><label class="mb-2 block text-sm font-medium text-gray-700">KRA PIN <span class="text-red-500">*</span></label><input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="Format: A123456789Z" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'kraPin')}"/><div *ngIf="isFieldInvalid(quotationForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'kraPin') }}</div></div>
-                                    <div *ngIf="isLoggedIn"><label class="mb-2 block text-sm font-medium text-gray-700">ID Number</label><input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idNumber') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label><input type="text" formControlName="firstName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'firstName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'firstName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'firstName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label><input type="text" formControlName="lastName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'lastName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'lastName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'lastName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label><input type="email" formControlName="email" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'email')}"/><div *ngIf="isFieldInvalid(quotationForm, 'email')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'email') }}</div></div>
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="e.g. 0712345678" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'phoneNumber') }}</div></div>
+                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="e.g. +254712345678" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'phoneNumber') }}</div></div>
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
+                                        <input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idNumber')}"/>
+                                        <div *ngIf="isFieldInvalid(quotationForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idNumber') }}</div>
+                                    </div>
                                 </div>
 
-                                <!-- 3. Shipment Details Section -->
+                                <!-- 2. Shipment Details Section -->
                                 <h3 class="mb-4 mt-6 border-t pt-6 text-xl font-semibold text-gray-800">Shipment Details</h3>
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
@@ -169,54 +137,11 @@
                                         <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2 font-bold text-gray-900" readonly/>
                                     </div>
                                 </div>
-                                <div *ngIf="isLoggedIn" class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">UCR Number</label><input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'ucrNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'ucrNumber') }}</div></div>
-                                    <div><label class="mb-2 block text-sm font-medium text-gray-700">IDF Number <span class="text-red-500">*</span></label><input type="text" formControlName="idfNumber" placeholder="e.g. 12MBAIM1234567891" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idfNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idfNumber') }}</div></div>
-                                </div>
 
-                                <!-- [RESTRUCTURED] Fields displayed based on login status -->
-                                <ng-container *ngIf="isLoggedIn; else notLoggedInFields">
-                                    <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Loading Port <span class="text-red-500">*</span></label><input type="text" formControlName="loadingPort" placeholder="e.g., Port of Shanghai" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'loadingPort')}"/><div *ngIf="isFieldInvalid(quotationForm, 'loadingPort')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'loadingPort') }}</div></div>
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Port of Discharge <span class="text-red-500">*</span></label><select formControlName="portOfDischarge" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'portOfDischarge')}"><option value="" disabled>Select a port</option><option *ngFor="let port of portOptions" [value]="port">{{ port }}</option></select><div *ngIf="isFieldInvalid(quotationForm, 'portOfDischarge')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'portOfDischarge') }}</div></div>
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Final Destination County <span class="text-red-500">*</span></label><select formControlName="finalDestinationCounty" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'finalDestinationCounty')}"><option value="" disabled>Select a county</option><option *ngFor="let county of kenyanCounties" [value]="county">{{ county }}</option></select><div *ngIf="isFieldInvalid(quotationForm, 'finalDestinationCounty')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'finalDestinationCounty') }}</div></div>
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Vessel Name</label><input type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'vesselName')}" /><div *ngIf="isFieldInvalid(quotationForm, 'vesselName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'vesselName') }}</div></div>
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Date of Dispatch <span class="text-red-500">*</span></label><input type="date" formControlName="dateOfDispatch" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'dateOfDispatch')}"/><div *ngIf="isFieldInvalid(quotationForm, 'dateOfDispatch')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'dateOfDispatch') }}</div></div>
-                                        <div><label class="mb-2 block text-sm font-medium text-gray-700">Estimated Date of Arrival <span class="text-red-500">*</span></label><input type="date" formControlName="estimatedArrivalDate" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'estimatedArrivalDate')}"/><div *ngIf="isFieldInvalid(quotationForm, 'estimatedArrivalDate')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'estimatedArrivalDate') }}</div></div>
-                                    </div>
-                                    <div class="mb-6"><label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label><input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/><div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div></div>
-                                </ng-container>
-
-                                <ng-template #notLoggedInFields>
-                                    <div class="mb-6">
-                                        <label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label>
-                                        <input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div>
-                                    </div>
-                                </ng-template>
-
-                                <!-- 4. Description of Goods & Shipping Items (Logged-in users only) -->
-                                <div *ngIf="isLoggedIn" class="mt-6 border-t pt-6">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        <div class="mb-6">
-                                            <label class="mb-2 block text-sm font-medium text-gray-700">Description of Goods <span class="text-red-500">*</span></label>
-                                            <textarea formControlName="descriptionOfGoods" rows="4" placeholder="Describe the type of goods, their value, quantity, packaging details..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'descriptionOfGoods')}"></textarea>
-                                            <div *ngIf="isFieldInvalid(quotationForm, 'descriptionOfGoods')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'descriptionOfGoods') }}</div>
-                                        </div>
-
-                                        <div formArrayName="shippingItems">
-                                            <label class="mb-2 block text-sm font-medium text-gray-700">Shipping Items <span class="text-red-500">*</span></label>
-                                            <div *ngFor="let item of shippingItems.controls; let i=index" [formGroupName]="i" class="mb-3 rounded-lg border bg-gray-50/50 p-3">
-                                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                                    <div class="sm:col-span-3"><input type="text" formControlName="itemName" placeholder="Item Name" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary"></div>
-                                                    <div><input type="number" formControlName="quantity" placeholder="Qty" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary"></div>
-                                                    <div><input type="text" formControlName="unitCost" appThousands placeholder="Unit Cost (KES)" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary"></div>
-                                                    <div class="flex items-end"><button type="button" (click)="removeShippingItem(i)" [disabled]="shippingItems.length <= 1" class="flex h-9 w-9 items-center justify-center rounded-md bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clip-rule="evenodd" /></svg></button></div>
-                                                </div>
-                                            </div>
-                                            <button type="button" (click)="addShippingItem()" class="mt-2 flex items-center gap-2 rounded-md border border-dashed border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>Add Another Item</button>
-                                        </div>
-                                    </div>
+                                <div class="mb-6">
+                                    <label class="mb-2 block text-sm font-medium text-gray-700">Sum Insured (KES) <span class="text-red-500">*</span></label>
+                                    <input type="text" formControlName="sumInsured" appThousands placeholder="2,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'sumInsured')}"/>
+                                    <div *ngIf="isFieldInvalid(quotationForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'sumInsured') }}</div>
                                 </div>
 
                                 <!-- Terms and Policy Consent -->
@@ -226,7 +151,7 @@
                                 </div>
 
                                 <!-- Submit Button -->
-                                <button type="submit" class="btn-primary mt-8 w-full rounded-md px-4 py-3 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-primary/60" [disabled]="isSaving || quotationForm.invalid"><span *ngIf="isSaving" class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>{{ isSaving ? 'Saving...' : 'Get Quote' }}</button>
+                                <button type="submit" class="btn-primary mt-8 w-full" [disabled]="isSaving || quotationForm.invalid"><span *ngIf="isSaving" class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>{{ isSaving ? 'Getting Quote...' : 'Get Quote' }}</button>
                             </fieldset>
                         </form>
                     </div>
@@ -243,32 +168,24 @@
                                     <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.firstName }} {{ quotationForm.value.lastName }}</span>
                                     <span class="text-gray-500">Email</span><span class="font-medium text-gray-800">{{ quotationForm.value.email }}</span>
                                     <span class="text-gray-500">Phone</span><span class="font-medium text-gray-800">{{ quotationForm.value.phoneNumber }}</span>
-                                    <span *ngIf="quotationForm.value.kraPin" class="text-gray-500">KRA PIN</span><span *ngIf="quotationForm.value.kraPin" class="font-medium text-gray-800">{{ quotationForm.value.kraPin }}</span>
-                                    <span *ngIf="quotationForm.value.idNumber" class="text-gray-500">ID Number</span><span *ngIf="quotationForm.value.idNumber" class="font-medium text-gray-800">{{ quotationForm.value.idNumber }}</span>
+                                    <span class="text-gray-500">ID Number</span><span class="font-medium text-gray-800">{{ quotationForm.value.idNumber }}</span>
                                 </div>
                             </div>
                             <!-- Shipment Details Summary -->
                             <div>
                                 <h3 class="mb-3 border-b pb-2 text-lg font-semibold text-gray-800">Shipment Details</h3>
                                 <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-                                    <span class="text-gray-500">Trade / Cargo Type</span><span class="font-medium text-gray-800">{{ quotationForm.value.tradeType | titlecase }} / {{ quotationForm.value.marineCargoType | titlecase }}</span>
+                                    <span class="text-gray-500">Trade / Cargo Type</span><span class="font-medium text-gray-800">{{ quotationForm.value.tradeType === '1' ? 'Import' : 'Export' }} / {{ quotationForm.value.marineCargoType | titlecase }}</span>
                                     <span class="text-gray-500">Origin / Destination</span><span class="font-medium text-gray-800">{{ quotationForm.value.origin }} to {{ quotationForm.value.destination }}</span>
                                     <span class="text-gray-500">Sum Insured (KES)</span><span class="font-medium text-gray-800">{{ quotationForm.value.sumInsured | number:'1.2-2' }}</span>
-                                    <span *ngIf="quotationForm.value.vesselName" class="text-gray-500">Vessel Name</span><span *ngIf="quotationForm.value.vesselName" class="font-medium text-gray-800">{{ quotationForm.value.vesselName }}</span>
-                                    <span *ngIf="quotationForm.value.dateOfDispatch" class="text-gray-500">Date of Dispatch</span><span *ngIf="quotationForm.value.dateOfDispatch" class="font-medium text-gray-800">{{ quotationForm.value.dateOfDispatch | date:'longDate' }}</span>
-                                    <span *ngIf="quotationForm.value.idfNumber" class="text-gray-500">IDF Number</span><span *ngIf="quotationForm.value.idfNumber" class="font-medium text-gray-800">{{ quotationForm.value.idfNumber }}</span>
-                                </div>
-                                <div *ngIf="quotationForm.value.descriptionOfGoods" class="mt-4 text-sm">
-                                    <span class="text-gray-500">Description of Goods</span>
-                                    <p class="mt-1 whitespace-pre-wrap rounded-md bg-gray-50 p-3 font-medium text-gray-800">{{ quotationForm.value.descriptionOfGoods }}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-8 flex flex-col items-center gap-4 border-t pt-6 sm:flex-row sm:justify-between">
                             <button (click)="goToStep(1)" class="w-full rounded-md border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto">Back to Edit</button>
                             <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
+                                <!-- UPDATED: Changed btn-secondary to btn-primary -->
                                 <button (click)="downloadQuote()" class="btn-primary w-full sm:w-auto">Download Quote</button>
-                                <button (click)="handlePayment()" class="btn-primary w-full sm:w-auto">Proceed to Payment</button>
                             </div>
                         </div>
                     </div>
@@ -292,6 +209,7 @@
                                 <div class="mt-4 rounded-lg bg-primary p-4 text-white">
                                     <div class="flex items-center justify-between"><span class="text-lg font-semibold">Total Payable</span><span class="text-2xl font-bold">{{ premiumCalculation.currency }} {{ quoteResult.netprem | number: '1.2-2' }}</span></div>
                                 </div>
+                                <button *ngIf="currentStep === 2 && quoteResult?.netprem" (click)="handlePayment()" class="btn-primary mt-4 w-full">Buy Now</button>
                             </div>
                         </div>
                     </div>
@@ -300,13 +218,13 @@
         </div>
     </main>
 
-    <!-- REFACTORED MODALS SECTION -->
+    <!-- REFACTORED MODALS SECTION (Export/High Risk) -->
     <div *ngIf="showExportModal || showHighRiskModal" (click)="closeAllModals()" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
         <div (click)="$event.stopPropagation()" class="max-h-[95vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-1 shadow-xl">
             <div class="p-7">
                 <h2 class="mb-4 text-2xl font-bold">{{ showExportModal ? 'Export Shipment Details' : 'High-Risk Shipment Details' }}</h2>
                 <p class="mb-6 text-gray-600">{{ showExportModal ? 'Please provide the following details for your export request.' : 'Shipments from this origin require manual underwriting. Please provide your details to proceed.' }}</p>
-                
+
                 <form [formGroup]="showExportModal ? exportRequestForm : highRiskRequestForm" (ngSubmit)="showExportModal ? onExportRequestSubmit() : onHighRiskRequestSubmit()">
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                         <!-- Personal Information -->
@@ -337,7 +255,7 @@
                             </select>
                             <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'destinationCountry')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'destinationCountry') }}</div>
                         </div>
-                        
+
                         <div>
                             <label class="mb-1 block text-sm font-medium">Shipment Date <span class="text-red-500">*</span></label>
                             <input type="date" formControlName="shipmentDate" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'shipmentDate')}"/>
@@ -349,7 +267,7 @@
                             <input type="text" formControlName="sumInsured" appThousands placeholder="e.g., 1,500,000" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured')}"/>
                             <div *ngIf="isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(showExportModal ? exportRequestForm : highRiskRequestForm, 'sumInsured') }}</div>
                         </div>
-                        
+
                         <div class="md:col-span-2">
                             <label class="mb-1 block text-sm font-medium">Goods Description (Max 100 words) <span class="text-red-500">*</span></label>
                             <textarea formControlName="goodsDescription" rows="3" placeholder="Describe the goods being shipped..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(showExportModal ? exportRequestForm : highRiskRequestForm, 'goodsDescription')}"></textarea>
@@ -363,7 +281,7 @@
                     </div>
                     <div class="mt-8 flex justify-end gap-4 border-t pt-6">
                         <button type="button" (click)="closeAllModals()" class="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" [disabled]="(showExportModal ? exportRequestForm : highRiskRequestForm).invalid" class="btn-primary rounded-md px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-primary/60">Submit Request</button>
+                        <button type="submit" [disabled]="(showExportModal ? exportRequestForm : highRiskRequestForm).invalid" class="btn-primary">Submit Request</button>
                     </div>
                 </form>
             </div>
@@ -386,7 +304,7 @@
                     <p class="mb-4">We are committed to complying with the requirements of the Data Protection Act and the attendant regulations as well as best global best practices regarding the processing of your personal data. In this regard, you are required to acquaint yourselves with our data privacy statement which is intended to tell you how we use your personal data and describes how we collect and process your personal data during and after your relationship.</p>
                     <div class="mt-6 rounded-lg bg-blue-50 p-4"><p class="text-sm text-blue-800"><strong>External Link:</strong> For complete terms and conditions, please visit: <a href="https://geminia.co.ke/data-privacy-statement/" target="_blank" class="ml-1 font-medium text-blue-600 hover:underline">https://geminia.co.ke/data-privacy-statement/</a></p></div>
                 </div>
-                <div class="mt-8 flex justify-end border-t pt-4"><button (click)="closeTermsModal()" class="btn-primary rounded-md px-6 py-2 font-medium text-white">I Understand</button></div>
+                <div class="mt-8 flex justify-end border-t pt-4"><button (click)="closeTermsModal()" class="btn-primary">I Understand</button></div>
             </div>
         </div>
     </div>
@@ -407,7 +325,7 @@
                     <p class="mb-4">We are committed to complying with the requirements of the Data Protection Act and the attendant regulations as well as best global best practices regarding the processing of your personal data. In this regard, you are required to acquaint yourselves with our data privacy statement which is intended to tell you how we use your personal data and describes how we collect and process your personal data during and after your relationship.</p>
                     <div class="mt-6 rounded-lg bg-green-50 p-4"><p class="text-sm text-green-800"><strong>External Link:</strong> For complete privacy policy details, please visit: <a href="https://geminia.co.ke/data-privacy-statement/" target="_blank" class="ml-1 font-medium text-green-600 hover:underline">https://geminia.co.ke/data-privacy-statement/</a></p></div>
                 </div>
-                <div class="mt-8 flex justify-end border-t pt-4"><button (click)="closePrivacyModal()" class="btn-primary rounded-md px-6 py-2 font-medium text-white">I Understand</button></div>
+                <div class="mt-8 flex justify-end border-t pt-4"><button (click)="closePrivacyModal()" class="btn-primary">I Understand</button></div>
             </div>
         </div>
     </div>
