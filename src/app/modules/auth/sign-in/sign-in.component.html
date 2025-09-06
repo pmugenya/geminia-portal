@@ -68,8 +68,8 @@
     </div>
 </div>
 
-<!-- Main Container - Changed from h-screen to min-h-screen for better responsiveness -->
-<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Main Container - Fixed to viewport height with no scrolling -->
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
     <!-- Bottom Right Toast Alert -->
     <div class="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-50 max-w-[90vw] sm:max-w-none" *ngIf="showAlert">
         <fuse-alert class="login-toast show text-sm sm:text-base" [appearance]="'fill'" [showIcon]="true" [type]="alert.type">
@@ -77,81 +77,81 @@
         </fuse-alert>
     </div>
 
-    <div class="flex min-w-0 flex-auto flex-col lg:flex-row">
-        <!-- Geminia Get Quote Portal (Left) -->
-        <div class="relative flex min-h-[50vh] lg:min-h-screen w-full lg:w-1/2 flex-auto justify-center overflow-hidden p-4 sm:p-6 md:p-8 lg:p-16 xl:px-28" style="background-color: #04b2e1">
+    <div class="flex min-w-0 flex-auto flex-col lg:flex-row h-full">
+        <!-- Geminia Get Quote Portal (Left) - Fixed height with internal scrolling if needed -->
+        <div class="relative flex h-1/2 lg:h-full w-full lg:w-1/2 flex-auto justify-center overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12 xl:px-20" style="background-color: #04b2e1">
             <div class="absolute inset-0 overflow-hidden">
                 <div class="absolute -left-10 -top-10 h-32 w-32 sm:h-40 sm:w-40 animate-pulse rounded-full bg-white/10 blur-xl"></div>
                 <div class="absolute -right-20 top-1/3 h-48 w-48 sm:h-60 sm:w-60 animate-bounce rounded-full bg-white/5 blur-2xl" style="animation-duration: 3s"></div>
             </div>
             <div class="relative z-10 w-full max-w-2xl flex flex-col justify-center">
-                <div class="mb-4 sm:mb-6 flex justify-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROTKn0j9cVpA67LPdjPeYBR3KnWiwP1gsM3cS27rca-7m8BgvgUylY4uhBnOnVnXFx8Is&usqp=CAU" alt="Geminia Insurance Logo" class="h-8 w-auto sm:h-12 md:h-16 rounded-lg object-contain" style="mix-blend-mode: multiply; background: transparent;"/>
+                <div class="mb-3 sm:mb-4 flex justify-center">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROTKn0j9cVpA67LPdjPeYBR3KnWiwP1gsM3cS27rca-7m8BgvgUylY4uhBnOnVnXFx8Is&usqp=CAU" alt="Geminia Insurance Logo" class="h-6 w-auto sm:h-8 md:h-10 lg:h-12 rounded-lg object-contain" style="mix-blend-mode: multiply; background: transparent;"/>
                 </div>
                 <!-- Responsive title sizing -->
-                <div class="mb-2 text-center text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white">
+                <div class="mb-1 sm:mb-2 text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
                     <div class="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">Geminia Insurance</div>
                 </div>
                 <!-- Responsive subtitle -->
-                <div class="mt-3 sm:mt-6 max-w-lg mx-auto text-center text-base sm:text-lg md:text-xl leading-relaxed text-white/90">Get a quick quote —no login required.</div>
-                <div class="mt-6 sm:mt-10 space-y-4 sm:space-y-6">
-                    <div class="group rounded-2xl border border-white/20 bg-white/10 p-4 sm:p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/15">
-                        <div class="flex flex-col items-start justify-between gap-3 sm:gap-4 md:flex-row md:items-center md:gap-0">
+                <div class="mt-2 sm:mt-3 max-w-lg mx-auto text-center text-sm sm:text-base md:text-lg leading-relaxed text-white/90">Get a quick quote —no login required.</div>
+                <div class="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+                    <div class="group rounded-2xl border border-white/20 bg-white/10 p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 hover:bg-white/15">
+                        <div class="flex flex-col items-start justify-between gap-2 sm:gap-3 md:flex-row md:items-center md:gap-0">
                             <div>
-                                <h3 class="text-lg sm:text-xl font-semibold text-white">Marine Insurance</h3>
-                                <p class="text-sm sm:text-base text-white/70">Protect your vessels & cargo</p>
+                                <h3 class="text-base sm:text-lg font-semibold text-white">Marine Insurance</h3>
+                                <p class="text-xs sm:text-sm text-white/70">Protect your vessels & cargo</p>
                             </div>
-                            <a href="/sign-up/marine-quote" class="w-full cursor-pointer rounded-xl bg-black px-4 py-2 sm:px-6 sm:py-2.5 text-center text-sm sm:text-base font-medium text-white shadow-lg transition-all duration-200 hover:bg-gray-800 md:w-auto">Get Quote</a>
+                            <a href="/sign-up/marine-quote" class="w-full cursor-pointer rounded-xl bg-black px-3 py-1.5 sm:px-4 sm:py-2 text-center text-xs sm:text-sm font-medium text-white shadow-lg transition-all duration-200 hover:bg-gray-800 md:w-auto">Get Quote</a>
                         </div>
                     </div>
                     <!-- Travel Insurance Button -->
-                    <div class="group rounded-2xl border border-white/20 bg-white/10 p-4 sm:p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/15">
-                        <div class="flex flex-col items-start justify-between gap-3 sm:gap-4 md:flex-row md:items-center md:gap-0">
+                    <div class="group rounded-2xl border border-white/20 bg-white/10 p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 hover:bg-white/15">
+                        <div class="flex flex-col items-start justify-between gap-2 sm:gap-3 md:flex-row md:items-center md:gap-0">
                             <div>
-                                <h3 class="text-lg sm:text-xl font-semibold text-white">Travel Insurance</h3>
-                                <p class="text-sm sm:text-base text-white/70">Secure your journeys, near and far</p>
+                                <h3 class="text-base sm:text-lg font-semibold text-white">Travel Insurance</h3>
+                                <p class="text-xs sm:text-sm text-white/70">Secure your journeys, near and far</p>
                             </div>
-                            <a href="/sign-up/travel-quote" class="w-full cursor-pointer rounded-xl bg-black px-4 py-2 sm:px-6 sm:py-2.5 text-center text-sm sm:text-base font-medium text-white shadow-lg transition-all duration-200 hover:bg-gray-800 md:w-auto">Get Quote</a>
+                            <a href="/sign-up/travel-quote" class="w-full cursor-pointer rounded-xl bg-black px-3 py-1.5 sm:px-4 sm:py-2 text-center text-xs sm:text-sm font-medium text-white shadow-lg transition-all duration-200 hover:bg-gray-800 md:w-auto">Get Quote</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Login/Register Form (Right) -->
-        <div class="relative flex min-h-[50vh] lg:min-h-screen w-full lg:w-1/2 flex-auto flex-col items-center justify-center overflow-y-auto bg-white p-4 sm:p-6 md:p-8 lg:p-12">
+        <!-- Login/Register Form (Right) - Fixed height with internal scrolling -->
+        <div class="relative flex h-1/2 lg:h-full w-full lg:w-1/2 flex-auto flex-col items-center justify-center overflow-y-auto bg-white p-3 sm:p-4 md:p-6 lg:p-8">
             <div class="w-full max-w-md">
                 <!-- Login Form -->
                 <div *ngIf="formType === 'login'" class="animate-fade-in">
-                    <div class="mb-6 sm:mb-8 text-center">
-                        <div class="text-2xl sm:text-3xl font-bold text-gray-800">Geminia Insurance</div>
-                        <div class="mt-1 text-sm sm:text-base text-gray-500">Sign in to the Geminia Insurance Platform</div>
+                    <div class="mb-4 sm:mb-6 text-center">
+                        <div class="text-xl sm:text-2xl font-bold text-gray-800">Geminia Insurance</div>
+                        <div class="mt-1 text-xs sm:text-sm text-gray-500">Sign in to the Geminia Insurance Platform</div>
                     </div>
                     <form [formGroup]="signInForm">
                         <div *ngIf="loginState === 'credentials'">
-                            <div class="mb-3 sm:mb-4">
-                                <label class="mb-1 sm:mb-2 block text-sm sm:text-base font-medium text-gray-700">Email Address</label>
-                                <input type="email" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm sm:text-base shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="username" placeholder="your-email@geminia.com"/>
+                            <div class="mb-2 sm:mb-3">
+                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" class="w-full rounded-md border border-gray-300 px-3 py-1.5 sm:py-2 text-xs sm:text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="username" placeholder="your-email@geminia.com"/>
                             </div>
-                            <div class="mb-3 sm:mb-4">
-                                <label class="mb-1 sm:mb-2 block text-sm sm:text-base font-medium text-gray-700">Password</label>
+                            <div class="mb-2 sm:mb-3">
+                                <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Password</label>
                                 <div class="relative">
-                                    <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm sm:text-base shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="password" placeholder="Password"/>
+                                    <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border border-gray-300 px-3 py-1.5 sm:py-2 text-xs sm:text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="password" placeholder="Password"/>
                                     <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600" (click)="togglePasswordVisibility()">
-                                        <mat-icon class="text-lg sm:text-xl">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                        <mat-icon class="text-sm">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                                     </button>
                                 </div>
                             </div>
-                            <div class="mb-3 sm:mb-4 flex items-start">
-                                <mat-checkbox formControlName="agreementAccepted" id="signin-agreement" class="flex-shrink-0 mt-0.5"></mat-checkbox>
-                                <label for="signin-agreement" class="ml-2 text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
+                            <div class="mb-2 sm:mb-3 flex items-start">
+                                <mat-checkbox formControlName="agreementAccepted" id="signin-agreement" class="flex-shrink-0 mt-0.5 scale-75 sm:scale-100"></mat-checkbox>
+                                <label for="signin-agreement" class="ml-1 sm:ml-2 text-xs text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
                             </div>
                         </div>
                         <div *ngIf="loginState === 'otp'">
-                             <div class="mb-3 sm:mb-4">
-                                 <label class="mb-1 sm:mb-2 block text-sm sm:text-base font-medium text-gray-700">Enter OTP Code</label>
-                                 <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-center text-lg sm:text-xl tracking-[.3em] sm:tracking-[.5em] shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="otp" placeholder="_ _ _ _ _ _ _ _" maxlength="8"/>
-                                 <div class="mt-2 flex items-center justify-between text-xs sm:text-sm">
+                             <div class="mb-2 sm:mb-3">
+                                 <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Enter OTP Code</label>
+                                 <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-1.5 sm:py-2 text-center text-base sm:text-lg tracking-[.3em] shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="otp" placeholder="_ _ _ _ _ _ _ _" maxlength="8"/>
+                                 <div class="mt-2 flex items-center justify-between text-xs">
                                      <a (click)="backToCredentials()" class="cursor-pointer font-medium text-sky-500 hover:underline">Back to login</a>
                                      <a (click)="submitCredentials()" [class.pointer-events-none]="signInForm.disabled" [class.text-gray-400]="signInForm.disabled" class="cursor-pointer font-medium text-sky-500 hover:underline">
                                          <ng-container *ngIf="signInForm.disabled; else notSending"><span>Sending...</span></ng-container>
@@ -159,26 +159,26 @@
                                      </a>
                                  </div>
                              </div>
-                             <div class="mb-3 sm:mb-4 flex items-start">
-                                <mat-checkbox formControlName="agreementAccepted" id="otp-agreement" class="flex-shrink-0 mt-0.5"></mat-checkbox>
-                                <label for="otp-agreement" class="ml-2 text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
+                             <div class="mb-2 sm:mb-3 flex items-start">
+                                <mat-checkbox formControlName="agreementAccepted" id="otp-agreement" class="flex-shrink-0 mt-0.5 scale-75 sm:scale-100"></mat-checkbox>
+                                <label for="otp-agreement" class="ml-1 sm:ml-2 text-xs text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
                             </div>
                         </div>
-                        <button type="button" (click)="handleSignIn()" class="mt-4 sm:mt-6 w-full rounded-md py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" [ngClass]="{ 'bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500': signInForm.valid, 'cursor-not-allowed bg-gray-200 text-gray-500': signInForm.invalid || signInForm.disabled }" [disabled]="signInForm.invalid || signInForm.disabled">
+                        <button type="button" (click)="handleSignIn()" class="mt-3 sm:mt-4 w-full rounded-md py-2 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" [ngClass]="{ 'bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500': signInForm.valid, 'cursor-not-allowed bg-gray-200 text-gray-500': signInForm.invalid || signInForm.disabled }" [disabled]="signInForm.invalid || signInForm.disabled">
                             <ng-container *ngIf="!signInForm.disabled; else signingIn">
                                 <span *ngIf="loginState === 'credentials'">Sign In</span>
                                 <span *ngIf="loginState === 'otp'">Verify Code</span>
                             </ng-container>
                             <ng-template #signingIn>
                                 <div class="flex items-center justify-center">
-                                    <mat-progress-spinner [diameter]="20" mode="indeterminate" class="mr-2"></mat-progress-spinner>
+                                    <mat-progress-spinner [diameter]="16" mode="indeterminate" class="mr-2"></mat-progress-spinner>
                                     <span *ngIf="loginState === 'credentials'">Signing in...</span>
                                     <span *ngIf="loginState === 'otp'">Verifying...</span>
                                 </div>
                             </ng-template>
                         </button>
                     </form>
-                    <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 text-xs sm:text-sm md:text-base">
+                    <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 text-xs">
                         <a class="font-medium text-sky-500 hover:underline" routerLink="/forgot-password">Forgot password?</a>
                         <div class="text-center sm:text-right">
                             <span class="text-gray-600">No account?</span>
@@ -189,47 +189,47 @@
 
                 <!-- Registration Form -->
                 <div *ngIf="formType === 'register'" class="animate-fade-in">
-                    <div class="mb-3 sm:mb-4 text-center">
-                        <div class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Create Your Account</div>
-                        <div class="mt-1 text-xs sm:text-sm md:text-base text-gray-500">Fill in the details below to get started</div>
+                    <div class="mb-2 sm:mb-3 text-center">
+                        <div class="text-lg sm:text-xl font-bold text-gray-800">Create Your Account</div>
+                        <div class="mt-1 text-xs sm:text-sm text-gray-500">Fill in the details below to get started</div>
                     </div>
                     <form [formGroup]="registerForm" novalidate>
-                        <div class="mb-3">
-                            <label class="mb-1 block text-sm font-medium text-gray-700">Account Type</label>
-                            <mat-radio-group class="flex flex-col sm:flex-row gap-2 sm:gap-4" formControlName="accountType">
-                                <mat-radio-button value="C" class="text-sm">Individual</mat-radio-button>
-                                <mat-radio-button value="A" class="text-sm">Intermediary</mat-radio-button>
+                        <div class="mb-2">
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Account Type</label>
+                            <mat-radio-group class="flex flex-col sm:flex-row gap-1 sm:gap-2" formControlName="accountType">
+                                <mat-radio-button value="C" class="text-xs">Individual</mat-radio-button>
+                                <mat-radio-button value="A" class="text-xs">Intermediary</mat-radio-button>
                             </mat-radio-group>
                         </div>
                         <div *ngIf="registerForm.get('accountType').value === 'C'">
-                            <div class="grid grid-cols-1 gap-x-3 sm:gap-x-4 sm:grid-cols-2">
+                            <div class="grid grid-cols-1 gap-x-2 sm:gap-x-3 sm:grid-cols-2">
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Full Name</label>
-                                    <input type="text" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched" formControlName="fullName" placeholder="First Name Last Name"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">Full Name</label>
+                                    <input type="text" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched" formControlName="fullName" placeholder="First Name Last Name"/>
                                     <div *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched" class="mt-0.5 text-xs text-red-500">
                                         <span *ngIf="registerForm.get('fullName')?.errors?.['required']">Full name is required</span>
                                         <span *ngIf="registerForm.get('fullName')?.errors?.['fullNameInvalid']">Enter at least two names</span>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Email Address</label>
-                                    <input type="email" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" formControlName="email" placeholder="your-email@example.com"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">Email Address</label>
+                                    <input type="email" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" formControlName="email" placeholder="your-email@example.com"/>
                                     <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="mt-0.5 text-xs text-red-500">
                                         <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
                                         <span *ngIf="registerForm.get('email')?.errors?.['email']">Enter a valid email</span>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">KRA PIN</label>
-                                    <input type="text" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('kraPin')?.invalid && registerForm.get('kraPin')?.touched" formControlName="kraPin" placeholder="A123456789M" (input)="onKraPinChange($event)" maxlength="11"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">KRA PIN</label>
+                                    <input type="text" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('kraPin')?.invalid && registerForm.get('kraPin')?.touched" formControlName="kraPin" placeholder="A123456789M" (input)="onKraPinChange($event)" maxlength="11"/>
                                     <div *ngIf="registerForm.get('kraPin')?.invalid && registerForm.get('kraPin')?.touched" class="mt-0.5 text-xs text-red-500">
                                         <span *ngIf="registerForm.get('kraPin')?.errors?.['required']">KRA PIN is required</span>
                                         <span *ngIf="registerForm.get('kraPin')?.errors?.['kraPinInvalid']">Format: A123456789M</span>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Phone Number</label>
-                                    <input type="tel" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched" formControlName="phoneNumber" placeholder="+254712345678" (input)="onPhoneNumberChange($event)" maxlength="13"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">Phone Number</label>
+                                    <input type="tel" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched" formControlName="phoneNumber" placeholder="+254712345678" (input)="onPhoneNumberChange($event)" maxlength="13"/>
                                     <div *ngIf="registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched" class="mt-0.5 text-xs text-red-500">
                                         <span *ngIf="registerForm.get('phoneNumber')?.errors?.['required']">Phone is required</span>
                                         <span *ngIf="registerForm.get('phoneNumber')?.errors?.['phoneNumberInvalid']">Use +254 format</span>
@@ -238,75 +238,75 @@
                             </div>
                         </div>
                         <div *ngIf="registerForm.get('accountType').value === 'A'">
-                           <div class="grid grid-cols-1 gap-x-3 sm:gap-x-4 sm:grid-cols-2">
+                           <div class="grid grid-cols-1 gap-x-2 sm:gap-x-3 sm:grid-cols-2">
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Intermediary - IRA Number</label>
-                                    <input type="text" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="iraNumber" placeholder="IRA Number"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">Intermediary - IRA Number</label>
+                                    <input type="text" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="iraNumber" placeholder="IRA Number"/>
                                 </div>
                                 <div class="mb-2">
-                                    <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">PIN Number</label>
-                                    <input type="text" class="w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="pinNumber" placeholder="PIN Number"/>
+                                    <label class="mb-1 block text-xs font-medium text-gray-700">PIN Number</label>
+                                    <input type="text" class="w-full rounded-md border px-2 py-1.5 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" formControlName="pinNumber" placeholder="PIN Number"/>
                                 </div>
                            </div>
                         </div>
                         <div class="mb-2">
-                            <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Password</label>
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Password</label>
                             <div class="relative">
-                                <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border px-3 py-2 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="password?.invalid && password?.touched" formControlName="password" placeholder="Create a strong password" required/>
+                                <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border px-2 py-1.5 pr-6 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="password?.invalid && password?.touched" formControlName="password" placeholder="Create a strong password" required/>
                                 <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600" (click)="togglePasswordVisibility()">
-                                    <mat-icon class="text-sm sm:text-base">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                    <mat-icon class="text-xs">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                                 </button>
                             </div>
                             <div *ngIf="password?.touched && password?.value" class="mt-1">
                                 <ul class="space-y-0.5 text-xs text-gray-500">
                                     <li class="flex items-center" [class.text-green-600]="hasMinLength(password.value)">
-                                        <mat-icon class="text-sm mr-1">{{ hasMinLength(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
+                                        <mat-icon class="text-xs mr-1">{{ hasMinLength(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
                                         <span class="text-xs">At least 8 characters</span>
                                     </li>
                                     <li class="flex items-center" [class.text-green-600]="hasLowercase(password.value)">
-                                        <mat-icon class="text-sm mr-1">{{ hasLowercase(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
+                                        <mat-icon class="text-xs mr-1">{{ hasLowercase(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
                                         <span class="text-xs">One lowercase letter</span>
                                     </li>
                                     <li class="flex items-center" [class.text-green-600]="hasUppercase(password.value)">
-                                        <mat-icon class="text-sm mr-1">{{ hasUppercase(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
+                                        <mat-icon class="text-xs mr-1">{{ hasUppercase(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
                                         <span class="text-xs">One uppercase letter</span>
                                     </li>
                                     <li class="flex items-center" [class.text-green-600]="hasNumber(password.value)">
-                                        <mat-icon class="text-sm mr-1">{{ hasNumber(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
+                                        <mat-icon class="text-xs mr-1">{{ hasNumber(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
                                         <span class="text-xs">One number</span>
                                     </li>
                                     <li class="flex items-center" [class.text-green-600]="hasSpecialChar(password.value)">
-                                        <mat-icon class="text-sm mr-1">{{ hasSpecialChar(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
+                                        <mat-icon class="text-xs mr-1">{{ hasSpecialChar(password.value) ? 'check_circle' : 'cancel' }}</mat-icon>
                                         <span class="text-xs">One special character (&#64;$!%*?&)</span>
                                     </li>
                                 </ul>
                             </div>
                         </div>
                         <div class="mb-2">
-                            <label class="mb-1 block text-xs sm:text-sm font-medium text-gray-700">Confirm Password</label>
+                            <label class="mb-1 block text-xs font-medium text-gray-700">Confirm Password</label>
                             <div class="relative">
-                                <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border px-3 py-2 pr-8 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.errors?.['passwordMismatch'] && confirmPassword?.touched" formControlName="confirmPassword" placeholder="Confirm your password" required/>
+                                <input [type]="showPassword ? 'text' : 'password'" class="w-full rounded-md border px-2 py-1.5 pr-6 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500" [class.border-red-300]="registerForm.errors?.['passwordMismatch'] && confirmPassword?.touched" formControlName="confirmPassword" placeholder="Confirm your password" required/>
                                 <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600" (click)="togglePasswordVisibility()">
-                                    <mat-icon class="text-sm sm:text-base">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                                    <mat-icon class="text-xs">{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
                                 </button>
                             </div>
                             <p class="mt-1 text-xs text-red-600" *ngIf="registerForm.errors?.['passwordMismatch'] && confirmPassword?.touched">Passwords do not match</p>
                         </div>
-                        <div class="mb-3 flex items-start">
-                            <mat-checkbox formControlName="agreementAccepted" id="register-agreement" class="flex-shrink-0 mt-0.5"></mat-checkbox>
-                            <label for="register-agreement" class="ml-2 text-xs sm:text-sm text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
+                        <div class="mb-2 flex items-start">
+                            <mat-checkbox formControlName="agreementAccepted" id="register-agreement" class="flex-shrink-0 mt-0.5 scale-75 sm:scale-100"></mat-checkbox>
+                            <label for="register-agreement" class="ml-1 sm:ml-2 text-xs text-gray-600 leading-relaxed">I agree to the <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showTermsModal = true; $event.preventDefault()">Terms of Service</a> and <a href="#" class="font-medium text-sky-500 hover:underline" (click)="showDataPrivacyModal = true; $event.preventDefault()">Data Privacy Policy</a>.</label>
                         </div>
-                        <button type="button" (click)="register()" class="mt-3 sm:mt-4 w-full rounded-md py-2.5 text-sm sm:text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" [ngClass]="{ 'bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500': registerForm.valid, 'cursor-not-allowed bg-gray-200 text-gray-500': registerForm.invalid || registerForm.disabled }" [disabled]="registerForm.invalid || registerForm.disabled">
+                        <button type="button" (click)="register()" class="mt-2 sm:mt-3 w-full rounded-md py-2 text-xs sm:text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2" [ngClass]="{ 'bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-500': registerForm.valid, 'cursor-not-allowed bg-gray-200 text-gray-500': registerForm.invalid || registerForm.disabled }" [disabled]="registerForm.invalid || registerForm.disabled">
                             <ng-container *ngIf="!registerForm.disabled; else registering">Create Account</ng-container>
                             <ng-template #registering>
                                 <div class="flex items-center justify-center">
-                                    <mat-progress-spinner [diameter]="20" mode="indeterminate" class="mr-2"></mat-progress-spinner>
+                                    <mat-progress-spinner [diameter]="16" mode="indeterminate" class="mr-2"></mat-progress-spinner>
                                     <span>Creating account...</span>
                                 </div>
                             </ng-template>
                         </button>
                     </form>
-                    <div class="mt-3 sm:mt-4 text-center text-xs sm:text-sm md:text-base">
+                    <div class="mt-2 sm:mt-3 text-center text-xs">
                         <span class="text-gray-600">Already have an account?</span>
                         <a class="ml-1 cursor-pointer font-medium text-sky-500 hover:underline" (click)="formType = 'login'">Sign In</a>
                     </div>
