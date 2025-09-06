@@ -921,8 +921,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             lastName: ['', [Validators.required, nameValidator]],
             email: ['', [Validators.required, Validators.email]],
             phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator]],
-            idNumber: ['', [Validators.required, idNumberValidator]],
-            tradeType: ['1', Validators.required],
             modeOfShipment: ['', Validators.required],
             marineProduct: ['ICC (A) All Risks'],
             marineCategory: ['ICC (A) All Risks', Validators.required],

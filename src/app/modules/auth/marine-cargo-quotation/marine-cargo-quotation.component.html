@@ -75,11 +75,7 @@
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label><input type="text" formControlName="lastName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'lastName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'lastName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'lastName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label><input type="email" formControlName="email" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'email')}"/><div *ngIf="isFieldInvalid(quotationForm, 'email')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'email') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="e.g. +254712345678" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'phoneNumber') }}</div></div>
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
-                                        <input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'idNumber')}"/>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'idNumber') }}</div>
-                                    </div>
+                        
                                 </div>
 
                                 <!-- 2. Shipment Details Section -->
@@ -168,7 +164,7 @@
                                     <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.firstName }} {{ quotationForm.value.lastName }}</span>
                                     <span class="text-gray-500">Email</span><span class="font-medium text-gray-800">{{ quotationForm.value.email }}</span>
                                     <span class="text-gray-500">Phone</span><span class="font-medium text-gray-800">{{ quotationForm.value.phoneNumber }}</span>
-                                    <span class="text-gray-500">ID Number</span><span class="font-medium text-gray-800">{{ quotationForm.value.idNumber }}</span>
+                                    
                                 </div>
                             </div>
                             <!-- Shipment Details Summary -->
