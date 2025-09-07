@@ -19,8 +19,8 @@
                     <!-- Display User Info if Logged In -->
                     <div *ngIf="isLoggedIn" class="flex items-center gap-3 text-sm">
                         <div class="text-right">
-                            <span class="font-semibold text-gray-800">{{ displayUser.name }}</span>
-                            <span class="block text-xs text-gray-500">{{ displayUser.type | titlecase }}</span>
+                            <span class="font-semibold text-gray-800">{{ user.name }}</span>
+                            <span class="block text-xs text-gray-500">{{ user.userType | titlecase }}</span>
                         </div>
                         <button (click)="logout()" class="flex items-center gap-2 rounded-md border border-red-500 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition-colors duration-200 hover:bg-red-100" title="Logout">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -70,12 +70,24 @@
                                 <!-- 1. Importer Information Section -->
                                 <h3 class="mb-4 text-xl font-semibold text-gray-800">Importer Information</h3>
                                 <p class="mb-4 text-sm text-gray-500">This is the person or entity purchasing the insurance policy.</p>
-                                <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                                <div class="mb-4" *ngIf="user">
+                                    <label class="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
+                                        <input
+                                            type="checkbox"
+                                            formControlName="selfAsImporter"
+                                            value="self"
+                                            (change)="onSelfAsImporterChange($event)"
+                                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span>Self as Importer</span>
+                                    </label>
+                                </div>
+                                <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2" *ngIf="displayImporterForm">
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label><input type="text" formControlName="firstName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'firstName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'firstName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'firstName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label><input type="text" formControlName="lastName" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'lastName')}"/><div *ngIf="isFieldInvalid(quotationForm, 'lastName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'lastName') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label><input type="email" formControlName="email" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'email')}"/><div *ngIf="isFieldInvalid(quotationForm, 'email')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'email') }}</div></div>
                                     <div><label class="mb-2 block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label><input type="tel" formControlName="phoneNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="e.g. +254712345678" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'phoneNumber')}"/><div *ngIf="isFieldInvalid(quotationForm, 'phoneNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'phoneNumber') }}</div></div>
-                        
+
                                 </div>
 
                                 <!-- 2. Shipment Details Section -->
@@ -160,11 +172,15 @@
                             <!-- Customer Details Summary -->
                             <div>
                                 <h3 class="mb-3 border-b pb-2 text-lg font-semibold text-gray-800">Importer Details</h3>
-                                <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                                <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2" *ngIf="displayImporterForm">
                                     <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ quotationForm.value.firstName }} {{ quotationForm.value.lastName }}</span>
                                     <span class="text-gray-500">Email</span><span class="font-medium text-gray-800">{{ quotationForm.value.email }}</span>
                                     <span class="text-gray-500">Phone</span><span class="font-medium text-gray-800">{{ quotationForm.value.phoneNumber }}</span>
-                                    
+
+                                </div>
+                                <div class="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2" *ngIf="!displayImporterForm">
+                                    <span class="text-gray-500">Full Name</span><span class="font-medium text-gray-800">{{ user.name}}</span>
+
                                 </div>
                             </div>
                             <!-- Shipment Details Summary -->

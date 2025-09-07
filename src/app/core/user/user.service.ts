@@ -74,4 +74,10 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/quote/clientquotes`, { params });
     }
 
+    downloadQuote(quoteId: string) {
+        return this._httpClient.get(`${this.baseUrl}/quote/download/${quoteId}`, {
+            responseType: 'text'
+        });
+    }
+
 }
