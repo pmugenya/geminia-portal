@@ -30,13 +30,24 @@ import {
 
 // --- TYPE DEFINITIONS ---
 interface Policy {
-  id: string; type: 'marine' | 'travel'; title: string; policyNumber: string; status: 'active' | 'completed'; premium: number; startDate: Date; endDate: Date; certificateUrl?: string; hasClaim?: boolean;
-  marineDetails?: { vesselName: string; cargoType: string; tradeType: string; modeOfShipment: string; marineProduct: string; marineCargoType: string; origin: string; destination: string; sumInsured: number; descriptionOfGoods: string; ucrNumber: string; idfNumber: string; clientInfo: { name: string; idNumber: string; kraPin: string; email: string; phoneNumber: string; } }
+  id: number;
+  refno: string;
+  erprefno: string;
+  sumassured: number;
+  netpremium: number;
+  dateArrival: Date;
+  dischageDate: Date;
+  shippingModeName:string;
+  importerType:string;
+  vesselName:string;
+  originPortName:string;
+  destPortName:string;
+  ucrNumber:string;
 }
 type ClaimStatus = 'Submitted' | 'Under Review' | 'More Information Required' | 'Approved' | 'Settled' | 'Rejected';
 interface ClaimDocument { name: string; size: number; type: string; }
 interface Claim {
-  id: string; policyId: string; policyNumber: string; claimNumber: string; dateOfLoss: Date; typeOfLoss: string; description: string; estimatedLoss: number; status: ClaimStatus; submittedDate: Date; documents: ClaimDocument[];
+  id: string; policyId: number; policyNumber: string; claimNumber: string; dateOfLoss: Date; typeOfLoss: string; description: string; estimatedLoss: number; status: ClaimStatus; submittedDate: Date; documents: ClaimDocument[];
 }
 
 interface DashboardStats { marinePolicies: number; travelPolicies: number; pendingQuotes: number; totalPremium: number; activeClaims: number; }
@@ -120,7 +131,7 @@ export class MpesaPaymentModalComponent implements OnInit { stkForm: FormGroup; 
         <div class="header-icon-wrapper"><mat-icon>assignment_late</mat-icon></div>
         <div>
           <h1 mat-dialog-title class="modal-title">Register a New Claim</h1>
-          <p class="modal-subtitle">For Policy: {{ data.policy.policyNumber }}</p>
+          <p class="modal-subtitle">For Policy: {{ data.policy.erprefno }}</p>
         </div>
         <button mat-icon-button (click)="dialogRef.close()" class="close-button" aria-label="Close dialog"><mat-icon>close</mat-icon></button>
       </div>
@@ -268,8 +279,8 @@ export class ClaimRegistrationModalComponent {
       const formValue = this.claimForm.value;
       const newClaim: Claim = {
         id: 'CLM' + Date.now(),
-        policyId: this.data.policy.id,
-        policyNumber: this.data.policy.policyNumber,
+         policyId: this.data.policy.id,
+         policyNumber: this.data.policy.erprefno,
         claimNumber: `CLM/${new Date().getFullYear()}/${Math.floor(10000 + Math.random() * 90000)}`,
         dateOfLoss: formValue.dateOfLoss,
         typeOfLoss: formValue.typeOfLoss,
@@ -299,17 +310,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingQuotes: PendingQuote[] = [];
   page = 0;
   pageSize = 2;
+  currentIndex: number=0;
+  pageLength: number=2;
   toastMessage: string = '';
   totalRecords = 0;
+  totalPolicies = 0;
   navigationItems: NavigationItem[] = [];
   dashboardStats: DashboardStats = { marinePolicies: 0, travelPolicies: 0, pendingQuotes: 0, totalPremium: 0, activeClaims: 0 };
   private readonly STORAGE_KEYS = { USER_DATA: 'geminia_user_data' };
-  activePolicies: Policy[] = [ { id: 'P001', type: 'marine', title: 'Machinery Import', policyNumber: 'MAR/2024/7531', status: 'active', premium: 18500, startDate: new Date('2024-08-01'), endDate: new Date('2024-09-30'), certificateUrl: '/simulated/MAR-2024-7531.pdf', hasClaim: true, marineDetails: { vesselName: 'MSC Isabella', cargoType: 'Containerized', tradeType: 'Import', modeOfShipment: 'Sea', marineProduct: 'Institute Cargo Clauses (A) - All Risks', marineCargoType: 'Machinery', origin: 'Germany', destination: 'Mombasa, Kenya', sumInsured: 3500000, descriptionOfGoods: 'Industrial-grade printing press machine, packed in a 40ft container.', ucrNumber: 'UCR202408153', idfNumber: 'E2300012345', clientInfo: { name: 'Bonface Odhiambo', idNumber: '30123456', kraPin: 'A001234567Z', email: 'bonface@example.com', phoneNumber: '0712345678' } } }, { id: 'P002', type: 'travel', title: 'Schengen Visa Travel Insurance', policyNumber: 'TRV/2024/9102', status: 'active', premium: 4800, startDate: new Date('2024-09-01'), endDate: new Date('2025-08-31'), certificateUrl: '/simulated/TRV-2024-9102.pdf' } ];
-  claims: Claim[] = [ { id: 'CLM1678886400', policyId: 'P001', policyNumber: 'MAR/2024/7531', claimNumber: 'CLM/2024/83145', dateOfLoss: new Date('2024-08-15'), typeOfLoss: 'Damage', description: 'Container was dropped during offloading at the port, causing significant damage to the casing of the printing press.', estimatedLoss: 450000, status: 'Under Review', submittedDate: new Date('2024-08-18'), documents: [ { name: 'Damage_Photos.zip', size: 5242880, type: 'application/zip' }, { name: 'Survey_Report.pdf', size: 122880, type: 'application/pdf' } ] }];
+  activePolicies: Policy[] = [  ];
+  claims: Claim[] = [ ];
   recentActivities: Activity[] = [ { id: 'A001', title: 'Payment Successful', description: 'Travel Insurance for Europe', timestamp: new Date(Date.now() - 3600000), icon: 'payment', iconColor: '#04b2e1', relatedId: 'P003' }, { id: 'A002', title: 'Certificate Downloaded', description: 'Marine Cargo Policy MAR-2025-002', timestamp: new Date(Date.now() - 14400000), icon: 'download', iconColor: '#04b2e1', relatedId: 'P002' }, { id: 'A003', title: 'Profile Updated', description: 'Contact information updated', timestamp: new Date(Date.now() - 86400000), icon: 'person', iconColor: '#21275c' }];
   notifications: Notification[] = [ { id: 'N001', title: 'Quotes Awaiting Payment', message: 'You have quotes that need payment to activate your policy.', timestamp: new Date(), read: false, actionUrl: '#pending-quotes' }, { id: 'N002', title: 'Certificates Ready', message: 'Your new policy certificates are ready for download.', timestamp: new Date(), read: false, actionUrl: '#active-policies' } ];
   isMobileSidebarOpen = false;
-  expandedPolicyId: string | null = null;
+  expandedPolicyId: number | null = null;
   expandedClaimId: string | null = null;
 
   constructor(
@@ -353,14 +367,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
     updateDashboardStats(): void {
-        this.dashboardStats = {
-            marinePolicies: this.activePolicies.filter(p => p.type === 'marine').length,
-            travelPolicies: this.activePolicies.filter(p => p.type === 'travel').length,
-            pendingQuotes: this.totalRecords,
-            totalPremium: this.activePolicies.reduce((sum, p) => sum + p.premium, 0),
-            activeClaims: this.claims.filter(c => c.status !== 'Settled' && c.status !== 'Rejected').length
-        };
+
+        const offset = this.currentIndex * this.pageLength;
+        console.log('new offset...'+offset);
+        this.userService.getClientPolicies(offset, this.pageLength).subscribe({
+            next: (res) => {
+                if (this.currentIndex === 0) {
+                    this.activePolicies = res.pageItems;
+                } else {
+                    this.activePolicies = [...this.activePolicies, ...res.pageItems];
+                }
+                this.totalPolicies = res.totalFilteredRecords || res.totalElements || 0;
+            },
+            error: (err) => console.error('Error loading quotes', err)
+        });
     }
+
+    loadMore(): void {
+        this.currentIndex += this.pageLength-1;
+        this.updateDashboardStats();
+    }
+
+    loadLess(): void {
+        this.currentIndex = 0;
+        this.updateDashboardStats();
+    }
+
+    hasLess(): boolean {
+        return this.currentIndex > 0;
+    }
+
+    hasMore(): boolean {
+        return (this.currentIndex + 1) * this.pageLength < this.totalPolicies;
+    }
+
 
     nextPage() {
         if ((this.page + 1) * this.pageSize < this.totalRecords) {
@@ -477,9 +517,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (newClaim) {
         this.claims.unshift(newClaim);
         const policyToUpdate = this.activePolicies.find(p => p.id === newClaim.policyId);
-        if (policyToUpdate) {
-          policyToUpdate.hasClaim = true;
-        }
+        // if (policyToUpdate) {
+        //   policyToUpdate.hasClaim = true;
+        // }
         this.updateDashboardStats();
         this.snackBar.open(`Claim ${newClaim.claimNumber} has been submitted successfully.`, 'OK', {
           duration: 7000,
@@ -505,13 +545,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // --- Utility and Display Methods ---
   @HostListener('window:resize', ['$event'])
   onResize(event: Event) { if ((event.target as Window).innerWidth >= 1024) { this.isMobileSidebarOpen = false; } }
-  togglePolicyDetails(policyId: string): void { this.expandedPolicyId = this.expandedPolicyId === policyId ? null : policyId; }
+  togglePolicyDetails(policyId: number): void { this.expandedPolicyId = this.expandedPolicyId === policyId ? null : policyId; }
   toggleClaimDetails(claimId: string): void { this.expandedClaimId = this.expandedClaimId === claimId ? null : claimId; }
   getInitials(name: string): string { return name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || ''; }
   getUnreadNotificationCount(): number { return this.notifications.filter((n) => !n.read).length; }
   toggleNavItem(item: NavigationItem): void { if (item.children) item.isExpanded = !item.isExpanded; }
   toggleMobileSidebar(): void { this.isMobileSidebarOpen = !this.isMobileSidebarOpen; }
-  downloadCertificate(policyId: string): void { const policy = this.activePolicies.find((p) => p.id === policyId); if (policy?.certificateUrl) { const link = document.createElement('a'); link.href = policy.certificateUrl; link.download = `${policy.policyNumber}-certificate.pdf`; link.click(); } }
+  downloadCertificate(policyId: number): void {
+      // const policy = this.activePolicies.find((p) => p.id === policyId);
+      // if (policy?.certificateUrl) {
+      //     const link = document.createElement('a');
+      //     link.href = policy.certificateUrl;
+      //     link.download = `${policy.policyNumber}-certificate.pdf`;
+      //     link.click();
+      // }
+  }
   markNotificationAsRead(notification: Notification): void { notification.read = true; if (notification.actionUrl) { document.querySelector(notification.actionUrl)?.scrollIntoView({ behavior: 'smooth' }); } }
   getClaimStatusClass(status: ClaimStatus): string {
     const statusMap: { [key in ClaimStatus]: string } = {
