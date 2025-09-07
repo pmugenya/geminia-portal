@@ -74,6 +74,14 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/quote/clientquotes`, { params });
     }
 
+    getClientPolicies(offset: number, limit: number): Observable<any> {
+        let params = new HttpParams()
+            .set('offset', offset.toString())
+            .set('limit', limit.toString());
+
+        return this._httpClient.get<any>(`${this.baseUrl}/shippingapplication/approvedapplications`, { params });
+    }
+
     downloadQuote(quoteId: string) {
         return this._httpClient.get(`${this.baseUrl}/quote/download/${quoteId}`, {
             responseType: 'text'

@@ -109,7 +109,7 @@
             <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <div class="stats-card" *ngFor="let stat of [
                     { title: 'Active Claims', value: dashboardStats.activeClaims, prefix: '' },
-                    { title: 'Marine Policies', value: dashboardStats.marinePolicies, prefix: '' },
+                    { title: 'Marine Policies', value: totalPolicies, prefix: '' },
                     { title: 'Pending Quotes', value: totalRecords, prefix: '' },
                     { title: 'Total Premium', value: (dashboardStats.totalPremium | number: '1.0-0'), prefix: 'KES' }
                 ]">
@@ -193,32 +193,33 @@
                                     <div class="flex cursor-pointer items-center justify-between p-4" (click)="togglePolicyDetails(policy.id)">
                                         <div class="flex items-center space-x-4">
                                             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-pantone-light-blue/10">
-                                                <mat-icon class="text-pantone-light-blue">{{ policy.type === 'marine' ? 'directions_boat' : 'flight' }}</mat-icon>
+                                                <mat-icon class="text-pantone-light-blue">{{ 'directions_boat'}}</mat-icon>
                                             </div>
                                             <div>
-                                                <h4 class="text-lg font-bold text-pantone-dark-blue">{{ policy.title }}</h4>
-                                                <p class="text-sm text-gray-600">{{ policy.policyNumber }}</p>
+                                                <h4 class="text-lg font-bold text-pantone-dark-blue">{{ policy.refno }}</h4>
+                                                <p class="text-sm text-gray-600">{{ policy.erprefno }}</p>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-lg font-bold text-pantone-dark-blue">KES: {{policy.netpremium | number: '1.2-2' }}</h4>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-4">
-                                            <span *ngIf="policy.hasClaim" class="claim-filed-chip">Claim Filed</span>
-                                            <mat-icon class="text-gray-400 transition-transform" [class.rotate-180]="expandedPolicyId === policy.id">expand_more</mat-icon>
-                                        </div>
+<!--                                        <div class="flex items-center space-x-4">-->
+<!--                                            <span *ngIf="policy.hasClaim" class="claim-filed-chip">Claim Filed</span>-->
+<!--                                            <mat-icon class="text-gray-400 transition-transform" [class.rotate-180]="expandedPolicyId === policy.id">expand_more</mat-icon>-->
+<!--                                        </div>-->
                                     </div>
                                     <div class="policy-details-collapsible" [class.expanded]="expandedPolicyId === policy.id">
                                         <div class="px-6 pt-2 pb-4">
-                                            <div *ngIf="policy.type === 'marine' && policy.marineDetails as details">
                                                 <h4 class="detail-section-title">Shipment Details</h4>
                                                 <div class="policy-detail-grid">
-                                                    <div class="detail-item"><span class="detail-label">Mode of Shipment</span><span class="detail-value">{{ details.modeOfShipment | titlecase }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">Trade Type</span><span class="detail-value">{{ details.tradeType | titlecase }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">Vessel Name</span><span class="detail-value">{{ details.vesselName }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">Country of Origin</span><span class="detail-value">{{ details.origin }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">Destination</span><span class="detail-value">{{ details.destination }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">UCR Number</span><span class="detail-value">{{ details.ucrNumber }}</span></div>
-                                                    <div class="detail-item"><span class="detail-label">IDF Number</span><span class="detail-value">{{ details.idfNumber }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">Mode of Shipment</span><span class="detail-value">{{ policy.shippingModeName | titlecase }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">Trade Type</span><span class="detail-value">{{ policy.importerType | titlecase }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">Vessel Name</span><span class="detail-value">{{ policy.vesselName }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">Country of Origin</span><span class="detail-value">{{ policy.originPortName }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">Destination</span><span class="detail-value">{{ policy.destPortName }}</span></div>
+                                                    <div class="detail-item"><span class="detail-label">UCR Number</span><span class="detail-value">{{ policy.ucrNumber }}</span></div>
+<!--                                                    <div class="detail-item"><span class="detail-label">IDF Number</span><span class="detail-value">{{ policy.idfNumber }}</span></div>-->
                                                 </div>
-                                            </div>
                                             <div class="mt-6 flex items-center justify-between border-t pt-4">
                                                 <button mat-stroked-button (click)="openClaimModal(policy)" class="file-claim-button">
                                                     <mat-icon>assignment_late</mat-icon> File a Claim
@@ -228,6 +229,31 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="text-center mt-8 flex justify-center space-x-4" *ngIf="totalPolicies > 0">
+                                <!-- Load Less -->
+                                <button
+                                    mat-stroked-button
+                                    color="warn"
+                                    (click)="loadLess()"
+                                    *ngIf="hasLess()"
+                                    class="px-6 py-2 text-sm font-semibold rounded-xl"
+                                >
+                                    <mat-icon>expand_less</mat-icon>
+                                    Load Less
+                                </button>
+
+                                <!-- Load More -->
+                                <button
+                                    mat-raised-button
+                                    color="primary"
+                                    (click)="loadMore()"
+                                    *ngIf="hasMore()"
+                                    class="px-6 py-2 text-sm font-semibold rounded-xl"
+                                >
+                                    <mat-icon>expand_more</mat-icon>
+                                    Load More
+                                </button>
                             </div>
                         </div>
                     </div>
