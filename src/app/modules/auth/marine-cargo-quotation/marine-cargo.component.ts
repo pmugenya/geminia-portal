@@ -873,7 +873,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         private datePipe: DatePipe,
         private quotationService: QuoteService
     ) {
-        this.quotationForm = this.createQuotationForm();
+
         this.exportRequestForm = this.createExportRequestForm();
         this.highRiskRequestForm = this.createHighRiskRequestForm();
         this.filteredCountriesList = this.allCountriesList.filter(c => c !== 'Kenya');
@@ -881,10 +881,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.quotationForm = this.createQuotationForm();
         this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
             this.isLoggedIn = !!user;
             if (this.isLoggedIn) {
                 this.user = user as EnhancedStoredUser;
+                console.log(this.user);
             }
             else { this.user = null; }
         });
@@ -926,69 +928,95 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             marineCategory: ['ICC (A) All Risks', Validators.required],
             marineCargoType: ['', Validators.required],
             marinePackagingType: ['', Validators.required],
+            tradeType: ['', Validators.required],
             origin: ['', Validators.required],
             destination: ['Kenya'],
+            selfAsImporter: [false],
             sumInsured: [null, [Validators.required, Validators.min(1)]],
             termsAndPolicyConsent: [false, Validators.requiredTrue],
         });
     }
+
+
 
     onSubmit(): void {
         this.isSaving = true;
         this.quotationForm.markAllAsTouched();
 
         if (!this.quotationForm.valid) {
-            this.showToast('Please fill in all required fields correctly.');
+            this.showToast('Please fill in all required fields correctly');
             this.scrollToFirstError();
             this.isSaving = false;
             return;
         }
 
-        // Simulate API call delay
-        setTimeout(() => {
-            // MOCK DATA: Create a hardcoded quote result until the API is plugged in.
-            const sumInsuredValue = this.quotationForm.get('sumInsured')?.value || 2500000;
-            const basePremium = sumInsuredValue * 0.005; // Example rate: 0.5%
-            const phcf = basePremium * 0.0025;
-            const trainingLevy = basePremium * 0.0025;
-            const stampDuty = 40.00;
-            const totalPayable = basePremium + phcf + trainingLevy + stampDuty;
+        const marineProductValue = this.quotationForm.get('marineProduct')?.value;
+        const packagingType = this.quotationForm.get('marinePackagingType')?.value;
+        const category = this.quotationForm.get('marineCategory')?.value;
+        const cargoType = this.quotationForm.get('marineCargoType')?.value;
+        const selectedProduct = this.marineProducts.find(p => p.productdisplay === marineProductValue);
+        const selectedCategory = this.marineCategories.find(p => p.catname === category);
+        const selectedCargoType = this.marineCargoTypes.find(p => p.ctname === cargoType);
 
-            const mockQuoteResult: QuoteResult = {
-                id: `MOCK-${new Date().getTime()}`,
-                netprem: totalPayable,
-                premium: basePremium,
-                phcf: phcf,
-                tl: trainingLevy,
-                sd: stampDuty,
-                currency: 'KES',
-                result: 200
-            };
+        const metadata = {
+            suminsured: this.quotationForm.get('sumInsured')?.value,
+            firstName: this.quotationForm.get('firstName')?.value,
+            lastName: this.quotationForm.get('lastName')?.value,
+            email: this.quotationForm.get('email')?.value,
+            phoneNumber: this.quotationForm.get('phoneNumber')?.value,
+            shippingid: this.quotationForm.get('modeOfShipment')?.value,
+            tradeType: this.quotationForm.get('tradeType')?.value,
+            countryOrigin: this.quotationForm.get('origin')?.value,
+            destination: this.quotationForm.get('destination')?.value,
+            dateFormat: 'dd MMM yyyy',
+            locale: "en_US",
+            productId: 2416,
+            packagetypeid: packagingType,
+            categoryid: selectedCategory?.id,
+            cargoId: selectedCargoType?.id,
+        };
 
-            // Assign mock data to component properties
-            this.quoteResult = mockQuoteResult;
-            this.premiumCalculation = {
-                basePremium: mockQuoteResult.premium,
-                phcf: mockQuoteResult.phcf,
-                trainingLevy: mockQuoteResult.tl,
-                stampDuty: mockQuoteResult.sd,
-                commission: 0, // Not provided in mock
-                totalPayable: mockQuoteResult.netprem,
-                currency: mockQuoteResult.currency
-            };
+        const formData = new FormData();
+        // const kycDocs = this.kycDocuments.value;
+        // formData.append('kraPinUpload', kycDocs.kraPinUpload);
+        // formData.append('nationalIdUpload', kycDocs.nationalIdUpload);
+        // formData.append('invoiceUpload', kycDocs.invoiceUpload);
+        // formData.append('idfUpload', kycDocs.idfUpload);
+        formData.append('metadata', JSON.stringify(metadata));
 
-            // Save to dashboard if logged in (simulated)
-            if (this.isLoggedIn) {
-                this.saveQuoteToDashboard(this.quoteResult);
+        this.quotationService.createQuote(formData).subscribe({
+            next: (res) => {
+                this.quoteResult = res;
+                this.currentStep = 2;
+                this.isSaving = false;
+                localStorage.removeItem(this.quoteStorageKey);
+            },
+            error: (err) => {
+                console.error('Quote creation error:', err);
+                this.showToast('An error occurred while creating the quote. Please try again.');
+                this.isSaving = false;
             }
+        });
+    }
 
-            // Move to the next step
-            this.currentStep = 2;
-            this.isSaving = false; // Stop the spinner
-            localStorage.removeItem(this.quoteStorageKey); // Clear saved form data
-            this.showToast('Quote generated successfully!');
+    displayImporterForm = true;
 
-        }, 1500); // 1.5 second delay to simulate a real API call
+    onSelfAsImporterChange(event: Event) {
+        const checked = (event.target as HTMLInputElement).checked;
+        if (checked) {
+            this.displayImporterForm = false;
+            this.quotationForm.get('firstName')?.setValue('one', { emitEvent: false });
+            this.quotationForm.get('lastName')?.setValue('two', { emitEvent: false });
+            this.quotationForm.get('email')?.setValue('three@test.com', { emitEvent: false });
+            this.quotationForm.get('phoneNumber')?.setValue('+254722123456', { emitEvent: false });
+        }
+        else{
+            this.displayImporterForm = true;
+            this.quotationForm.get('firstName')?.setValue('', { emitEvent: false });
+            this.quotationForm.get('lastName')?.setValue('', { emitEvent: false });
+            this.quotationForm.get('email')?.setValue('', { emitEvent: false });
+            this.quotationForm.get('phoneNumber')?.setValue('', { emitEvent: false });
+        }
     }
 
     private setupFormSubscriptions(): void {
@@ -1044,12 +1072,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     private loadQuoteFromLocalStorage(): void {
-        const savedQuoteJSON = localStorage.getItem(this.quoteStorageKey);
-        if (savedQuoteJSON) {
-            const savedQuote = JSON.parse(savedQuoteJSON);
-            this.quotationForm.patchValue(savedQuote);
-            this.showToast('Your previous progress has been restored.');
-        }
+        // const savedQuoteJSON = localStorage.getItem(this.quoteStorageKey);
+        // if (savedQuoteJSON) {
+        //     const savedQuote = JSON.parse(savedQuoteJSON);
+        //     this.quotationForm.patchValue(savedQuote);
+        //     this.showToast('Your previous progress has been restored.');
+        // }
     }
 
     openTermsModal(event?: Event): void { if (event) { event.preventDefault(); event.stopPropagation(); } this.showTermsModal = true; }
@@ -1231,7 +1259,25 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     private resetPremiumCalculation(): PremiumCalculation { return { basePremium: 0, phcf: 0, trainingLevy: 0, stampDuty: 0, commission: 0, totalPayable: 0, currency: 'KES' }; }
     downloadQuote(): void {
         if (this.quoteResult?.id) {
-            this.showToast('Quote download initiated successfully. Check your dashboard for the document.');
+            this.userService.downloadQuote(this.quoteResult?.id).subscribe(base64String => {
+                console.log('Base64 response:', base64String);
+                const base64 = base64String.split(',')[1] || base64String;
+
+                const byteCharacters = atob(base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'quote.pdf'; // 👈 file name
+                a.click();
+                window.URL.revokeObjectURL(url);
+            });
+            this.showToast('Quote download initiated successfully. Check your downloads for the document.');
         } else {
             this.showToast('No quote available to download.');
         }

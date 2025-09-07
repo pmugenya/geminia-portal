@@ -21,6 +21,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AuthenticationService, PendingQuote, StoredUser } from '../shared/services/auth.service';
 import { UserService } from '../../../core/user/user.service';
+import {
+    KycShippingPaymentModalComponent,
+    KycShippingPaymentModalData,
+} from '../marine-cargo-quotation/marine-cargo.component';
 
 
 
@@ -295,6 +299,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingQuotes: PendingQuote[] = [];
   page = 0;
   pageSize = 2;
+  toastMessage: string = '';
   totalRecords = 0;
   navigationItems: NavigationItem[] = [];
   dashboardStats: DashboardStats = { marinePolicies: 0, travelPolicies: 0, pendingQuotes: 0, totalPremium: 0, activeClaims: 0 };
@@ -382,26 +387,58 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
   initiatePayment(quoteId: string): void {
-    const quote = this.pendingQuotes.find((q) => q.id === quoteId);
-    if (quote && this.user) {
-      const paymentData: MpesaPayment = {
-        amount: quote.netprem,
-        phoneNumber: this.user.phoneNumber || '',
-        reference: quote.id,
-        description: quote.description
-      };
-      const dialogRef = this.dialog.open(MpesaPaymentModalComponent, { data: paymentData, panelClass: 'payment-modal-panel', autoFocus: false });
-      dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: PaymentResult | null) => {
-        if (result?.success) {
-          this.snackBar.open(`Payment for "${quote.description}" was successful. Policy is now active.`, 'OK', {
-            duration: 7000,
-            panelClass: ['geminia-toast-panel']
-          });
-          this.loadDashboardData();
-        }
-      });
-    }
+
+      this.openKycShippingPaymentModal();
+
+    // const quote = this.pendingQuotes.find((q) => q.id === quoteId);
+    // if (quote && this.user) {
+    //   const paymentData: MpesaPayment = {
+    //     amount: quote.netprem,
+    //     phoneNumber: this.user.phoneNumber || '',
+    //     reference: quote.id,
+    //     description: quote.description
+    //   };
+    //   const dialogRef = this.dialog.open(MpesaPaymentModalComponent, { data: paymentData, panelClass: 'payment-modal-panel', autoFocus: false });
+    //   dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: PaymentResult | null) => {
+    //     if (result?.success) {
+    //       this.snackBar.open(`Payment for "${quote.description}" was successful. Policy is now active.`, 'OK', {
+    //         duration: 7000,
+    //         panelClass: ['geminia-toast-panel']
+    //       });
+    //       this.loadDashboardData();
+    //     }
+    //   });
+    // }
   }
+
+    private openKycShippingPaymentModal(): void {
+
+        const dialogData: {} = {
+
+        };
+        const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
+            width: '800px',
+            maxHeight: '90vh',
+            data: dialogData,
+            disableClose: true
+        });
+
+        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
+            if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
+                this.router.navigate(['/sign-up/dashboard']);
+                if (result === 'payment_success') {
+                    this.showToast('Payment successful! Redirecting to dashboard to access your documents.');
+                } else if (result === 'quote_saved_and_closed') {
+                    this.showToast('Your quote details have been saved to the dashboard. Redirecting to dashboard.');
+                } else if (result === 'payment_failed') {
+                    this.showToast('Payment failed. Your quote details have been saved to the dashboard.');
+                }
+            }
+        });
+    }
+
+    private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
+
 
   editQuote(quoteId: string): void {
     this.router.navigate(['/marine-quote'], { queryParams: { editId: quoteId } });
