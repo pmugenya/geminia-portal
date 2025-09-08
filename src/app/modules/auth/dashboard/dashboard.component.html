@@ -4,7 +4,7 @@
 
 <div *ngIf="user" class="flex min-h-screen w-full bg-gray-50">
     <!-- Sidebar -->
-    <div class="sidebar-bg fixed inset-y-0 left-0 z-50 flex w-64 transform flex-col text-white shadow-xl transition-transform duration-300 ease-in-out lg:relative lg:flex-shrink-0 lg:translate-x-0"
+    <div class="sidebar-bg fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full transform flex-col text-white shadow-xl transition-transform duration-300 ease-in-out lg:relative lg:flex-shrink-0 lg:translate-x-0"
          [class.translate-x-0]="isMobileSidebarOpen">
 
         <!-- Updated Logo and Tagline Section -->
@@ -135,35 +135,47 @@
                             <div *ngIf="pendingQuotes.length > 0; else noQuotes"
                                  class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-                                <div *ngFor="let quote of pendingQuotes"
-                                     class="quote-card group rounded-xl border border-gray-200 bg-gray-50 p-6">
-                                    <p class="text-xs text-gray-500">Ref No: {{ quote.refno }}</p>
-                                    <div class="mb-4 flex items-center justify-between">
-                                      <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                                        {{ quote.status }}
-                                      </span>
-                                        <p class="text-xs text-gray-500">Created: {{ quote.createDate | date: 'shortDate' }}</p>
-                                    </div>
+                                <div *ngFor="let quote of pendingQuotes; let i = index"
+                                     class="quote-card group flex flex-col rounded-xl border border-gray-200 bg-gray-50 p-6">
+                                    <div class="flex-grow">
+                                        <p class="text-xs text-gray-500">Ref No: {{ quote.refno }}</p>
+                                        <div class="mb-4 flex items-center justify-between">
+                                          <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                                            {{ quote.status }}
+                                          </span>
+                                            <p class="text-xs text-gray-500">Created: {{ quote.createDate | date: 'shortDate' }}</p>
+                                        </div>
 
-                                    <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.prodName">{{ quote.prodName }}</h4>
-                                    <p class="line-clamp-2 mb-4 text-sm text-gray-600" [title]="quote.description">
-                                        {{ quote.description }}
-                                    </p>
+                                        <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.prodName">{{ quote.prodName }}</h4>
+                                        <p class="line-clamp-2 mb-4 text-sm text-gray-600" [title]="quote.description">
+                                            {{ quote.description }}
+                                        </p>
 
-                                    <div class="mb-6 flex items-center justify-between">
-                                        <div class="text-2xl font-bold text-pantone-dark-blue">
-                                            KES {{ quote.netprem | number: '1.0-0' }}
+                                        <div class="mb-6 flex items-center justify-between">
+                                            <div class="text-2xl font-bold text-pantone-dark-blue">
+                                                KES {{ quote.netprem | number: '1.0-0' }}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div class="flex space-x-3">
-<!--                                        <button mat-stroked-button color="warn" (click)="deleteQuote(quote.id)"-->
-<!--                                                class="flex-1 rounded-xl !border-red-400 px-4 py-2 text-sm font-semibold !text-red-500">Delete</button>-->
-                                        <button mat-stroked-button [routerLink]="['/sign-up/marine-quote']"
+                                    <!-- Button container with proper spacing to prevent overlap -->
+                                    <div class="mt-auto flex items-stretch justify-end gap-1.5">
+                                        <button mat-stroked-button color="warn" (click)="deleteQuote(quote.id, i)"
+                                                class="flex items-center justify-center rounded-xl !border-red-400 px-2.5 py-1.5 text-xs font-medium !text-red-500 transition-colors hover:bg-red-50 whitespace-nowrap">
+                                            <mat-icon class="!h-4 !w-4">delete_outline</mat-icon>
+                                            <span class="hidden sm:inline ml-1">Delete</span>
+                                        </button>
+                                        <button mat-stroked-button [routerLink]="['/marine-quote']"
                                                 [queryParams]="{ editId: quote.id }"
-                                                class="flex-1 rounded-xl !border-pantone-light-blue px-4 py-2 text-sm font-semibold !text-pantone-light-blue">Edit</button>
+                                                class="flex items-center justify-center rounded-xl !border-pantone-light-blue px-2.5 py-1.5 text-xs font-medium !text-pantone-light-blue transition-colors hover:bg-blue-50 whitespace-nowrap">
+                                            <mat-icon class="!h-4 !w-4">edit</mat-icon>
+                                            <span class="hidden sm:inline ml-1">Edit</span>
+                                        </button>
                                         <button mat-raised-button (click)="initiatePayment(quote.id)"
-                                                class="flex-1 rounded-xl bg-pantone-dark-blue px-4 py-2 text-sm font-semibold text-white">Pay Now</button>
+                                                class="flex items-center justify-center rounded-xl bg-pantone-dark-blue px-3 py-1.5 text-xs font-medium text-white whitespace-nowrap">
+                                            <mat-icon class="!h-4 !w-4">credit_card</mat-icon>
+                                            <span class="ml-1">Pay Now</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -188,8 +200,19 @@
                             </h2>
                         </div>
                         <div class="p-6">
-                            <div class="space-y-4">
-                                <div *ngFor="let policy of activePolicies" class="policy-card group overflow-hidden rounded-xl border border-gray-200">
+                             <!-- Search Input for Policies -->
+                            <div class="mb-6">
+                                <mat-form-field appearance="outline" class="w-full md:max-w-sm compact-search-bar">
+                                    <mat-label>Search Active Policies</mat-label>
+                                    <input matInput [(ngModel)]="policySearchTerm" (input)="applyPolicyFilter()"
+                                           placeholder="e.g., Policy No, Vessel Name...">
+                                    <mat-icon matSuffix>search</mat-icon>
+                                </mat-form-field>
+                            </div>
+
+                            <div *ngIf="filteredPolicies.length > 0; else noPoliciesFound" class="space-y-4">
+                                <!-- Loop over filteredPolicies -->
+                                <div *ngFor="let policy of filteredPolicies" class="policy-card group overflow-hidden rounded-xl border border-gray-200">
                                     <div class="flex cursor-pointer items-center justify-between p-4" (click)="togglePolicyDetails(policy.id)">
                                         <div class="flex items-center space-x-4">
                                             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-pantone-light-blue/10">
@@ -203,10 +226,6 @@
                                                 <h4 class="text-lg font-bold text-pantone-dark-blue">KES: {{policy.netpremium | number: '1.2-2' }}</h4>
                                             </div>
                                         </div>
-<!--                                        <div class="flex items-center space-x-4">-->
-<!--                                            <span *ngIf="policy.hasClaim" class="claim-filed-chip">Claim Filed</span>-->
-<!--                                            <mat-icon class="text-gray-400 transition-transform" [class.rotate-180]="expandedPolicyId === policy.id">expand_more</mat-icon>-->
-<!--                                        </div>-->
                                     </div>
                                     <div class="policy-details-collapsible" [class.expanded]="expandedPolicyId === policy.id">
                                         <div class="px-6 pt-2 pb-4">
@@ -218,7 +237,6 @@
                                                     <div class="detail-item"><span class="detail-label">Country of Origin</span><span class="detail-value">{{ policy.originPortName }}</span></div>
                                                     <div class="detail-item"><span class="detail-label">Destination</span><span class="detail-value">{{ policy.destPortName }}</span></div>
                                                     <div class="detail-item"><span class="detail-label">UCR Number</span><span class="detail-value">{{ policy.ucrNumber }}</span></div>
-<!--                                                    <div class="detail-item"><span class="detail-label">IDF Number</span><span class="detail-value">{{ policy.idfNumber }}</span></div>-->
                                                 </div>
                                             <div class="mt-6 flex items-center justify-between border-t pt-4">
                                                 <button mat-stroked-button (click)="openClaimModal(policy)" class="file-claim-button">
@@ -230,29 +248,20 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-center mt-8 flex justify-center space-x-4" *ngIf="totalPolicies > 0">
-                                <!-- Load Less -->
-                                <button
-                                    mat-stroked-button
-                                    color="warn"
-                                    (click)="loadLess()"
-                                    *ngIf="hasLess()"
-                                    class="px-6 py-2 text-sm font-semibold rounded-xl"
-                                >
-                                    <mat-icon>expand_less</mat-icon>
-                                    Load Less
-                                </button>
+                            <!-- Message for no search results or no policies -->
+                            <ng-template #noPoliciesFound>
+                                <p class="py-8 text-center text-gray-500">
+                                  {{ policySearchTerm ? 'No policies found matching "' + policySearchTerm + '".' : 'You have no active policies.' }}
+                                </p>
+                            </ng-template>
 
-                                <!-- Load More -->
-                                <button
-                                    mat-raised-button
-                                    color="primary"
-                                    (click)="loadMore()"
-                                    *ngIf="hasMore()"
-                                    class="px-6 py-2 text-sm font-semibold rounded-xl"
-                                >
-                                    <mat-icon>expand_more</mat-icon>
-                                    Load More
+                            <!-- Pagination controls (hidden during search) -->
+                            <div class="text-center mt-8 flex justify-center space-x-4" *ngIf="totalPolicies > 0 && !policySearchTerm">
+                                <button mat-stroked-button color="warn" (click)="loadLess()" *ngIf="hasLess()" class="px-6 py-2 text-sm font-semibold rounded-xl">
+                                    <mat-icon>expand_less</mat-icon> Load Less
+                                </button>
+                                <button mat-raised-button color="primary" (click)="loadMore()" *ngIf="hasMore()" class="px-6 py-2 text-sm font-semibold rounded-xl">
+                                    <mat-icon>expand_more</mat-icon> Load More
                                 </button>
                             </div>
                         </div>
@@ -266,8 +275,19 @@
                             </h2>
                         </div>
                         <div class="p-6">
-                            <div class="space-y-4">
-                                <div *ngFor="let claim of claims" class="policy-card group overflow-hidden rounded-xl border border-gray-200">
+                            <!-- Search Input for Claims -->
+                            <div class="mb-6">
+                                <mat-form-field appearance="outline" class="w-full md:max-w-sm compact-search-bar">
+                                    <mat-label>Search My Claims</mat-label>
+                                    <input matInput [(ngModel)]="claimSearchTerm" (input)="applyClaimFilter()"
+                                           placeholder="e.g., Claim No, Policy No, Status...">
+                                    <mat-icon matSuffix>search</mat-icon>
+                                </mat-form-field>
+                            </div>
+
+                            <div *ngIf="filteredClaims.length > 0; else noClaimsFound" class="space-y-4">
+                                <!-- Loop over filteredClaims -->
+                                <div *ngFor="let claim of filteredClaims" class="policy-card group overflow-hidden rounded-xl border border-gray-200">
                                     <div class="flex cursor-pointer items-center justify-between p-4" (click)="toggleClaimDetails(claim.id)">
                                         <div class="flex items-center space-x-4">
                                             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-pantone-light-blue/10">
@@ -306,6 +326,12 @@
                                     </div>
                                 </div>
                             </div>
+                             <!-- Message for no search results or no claims -->
+                            <ng-template #noClaimsFound>
+                                <p class="py-8 text-center text-gray-500">
+                                  {{ claimSearchTerm ? 'No claims found matching "' + claimSearchTerm + '".' : 'You have no registered claims.' }}
+                                </p>
+                            </ng-template>
                         </div>
                     </div>
 

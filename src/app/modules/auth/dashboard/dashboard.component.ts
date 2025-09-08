@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms'; // <-- Import FormsModule
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -26,8 +26,7 @@ import {
     KycShippingPaymentModalData,
 } from '../marine-cargo-quotation/marine-cargo.component';
 
-
-
+// --- (All your interface and modal component definitions remain the same) ---
 // --- TYPE DEFINITIONS ---
 interface Policy {
   id: number;
@@ -49,7 +48,6 @@ interface ClaimDocument { name: string; size: number; type: string; }
 interface Claim {
   id: string; policyId: number; policyNumber: string; claimNumber: string; dateOfLoss: Date; typeOfLoss: string; description: string; estimatedLoss: number; status: ClaimStatus; submittedDate: Date; documents: ClaimDocument[];
 }
-
 interface DashboardStats { marinePolicies: number; travelPolicies: number; pendingQuotes: number; totalPremium: number; activeClaims: number; }
 interface MpesaPayment { amount: number; phoneNumber: string; reference: string; description: string; }
 interface NavigationItem { label: string; icon: string; route?: string;sectionId?: string; children?: NavigationItem[]; badge?: number; isExpanded?: boolean; }
@@ -57,12 +55,12 @@ interface Notification { id: string; title: string; message: string; timestamp: 
 interface Activity { id: string; title: string; description: string; timestamp: Date; icon: string; iconColor: string; amount?: number; relatedId?: string; }
 export interface PaymentResult { success: boolean; method: 'stk' | 'paybill' | 'card'; reference: string; mpesaReceipt?: string; }
 
-// --- EMBEDDED PAYMENT MODAL COMPONENT ---
+// --- (Your MpesaPaymentModalComponent and ClaimRegistrationModalComponent code remains here) ---
 @Component({
   selector: 'app-mpesa-payment-modal',
   standalone: true,
   imports: [ CommonModule, MatDialogModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule, MatTabsModule ],
-  template: `<div class="payment-modal-container"><div class="modal-header"><div class="header-icon-wrapper"><mat-icon>payment</mat-icon></div><div><h1 mat-dialog-title class="modal-title">Complete Your Payment</h1><p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p></div><button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog"><mat-icon>close</mat-icon></button></div><mat-dialog-content class="modal-content"><mat-tab-group (selectedTabChange)="selectedPaymentMethod = $event.index === 0 ? 'mpesa' : 'card'" animationDuration="300ms" mat-stretch-tabs="true" class="payment-tabs"><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>phone_iphone</mat-icon><span>M-PESA</span></div></ng-template><div class="tab-panel-content"><div class="sub-options"><button (click)="mpesaSubMethod = 'stk'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'stk'"><mat-icon>tap_and_play</mat-icon><span>STK Push</span></button><button (click)="mpesaSubMethod = 'paybill'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'paybill'"><mat-icon>article</mat-icon><span>Use Paybill</span></button></div><div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in"><p class="instruction-text">Enter your M-PESA phone number to receive a payment prompt.</p><form [formGroup]="stkForm"><mat-form-field appearance="outline"><mat-label>Phone Number</mat-label><input matInput formControlName="phoneNumber" placeholder="e.g., 0712345678" [disabled]="isProcessingStk"><mat-icon matSuffix>phone_iphone</mat-icon></mat-form-field></form><button class="btn-primary w-full" (click)="processStkPush()" [disabled]="stkForm.invalid || isProcessingStk"><mat-spinner *ngIf="isProcessingStk" diameter="24"></mat-spinner><span *ngIf="!isProcessingStk">Pay KES {{ data.amount | number: '1.0-0' }}</span></button></div><div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in"><p class="instruction-text">Use the details below on your M-PESA App to complete payment.</p><div class="paybill-details"><div class="detail-item"><span class="label">Paybill Number:</span><span class="value">853338</span></div><div class="detail-item"><span class="label">Account Number:</span><span class="value account-number">{{ data.reference }}</span></div></div><button class="btn-primary w-full" (click)="verifyPaybillPayment()" [disabled]="isVerifyingPaybill"><mat-spinner *ngIf="isVerifyingPaybill" diameter="24"></mat-spinner><span *ngIf="!isVerifyingPaybill">Verify Payment</span></button></div></div></mat-tab><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>credit_card</mat-icon><span>Credit/Debit Card</span></div></ng-template><div class="tab-panel-content animate-fade-in"><div class="card-redirect-info"><p class="instruction-text">You will be redirected to pay via <strong>I&M Bank</strong>, our reliable and trusted payment partner.</p><button class="btn-primary w-full" (click)="redirectToCardGateway()" [disabled]="isRedirectingToCard"><mat-spinner *ngIf="isRedirectingToCard" diameter="24"></mat-spinner><span *ngIf="!isRedirectingToCard">Pay Using Credit/Debit Card</span></button></div></div></mat-tab></mat-tab-group></mat-dialog-content></div>`,
+  template: `<div class="payment-modal-container"><div class="modal-header"><div class="header-icon-wrapper"><mat-icon>payment</mat-icon></div><div><h1 mat-dialog-title class="modal-title">Complete Your Payment</h1><p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p></div><button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog"><mat-icon>close</mat-icon></button></div><mat-dialog-content class="modal-content"><mat-tab-group (selectedTabChange)="selectedPaymentMethod = $event.index === 0 ? 'mpesa' : 'card'" animationDuration="300ms" mat-stretch-tabs="true" class="payment-tabs"><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>phone_iphone</mat-icon><span>M-PESA</span></div></ng-template><div class="tab-panel-content"><div class="sub-options"><button (click)="mpesaSubMethod = 'stk'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'stk'"><mat-icon>tap_and_play</mat-icon><span>STK Push</span></button><button (click)="mpesaSubMethod = 'paybill'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'paybill'"><mat-icon>article</mat-icon><span>Use Paybill</span></button></div><div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in"><p class="instruction-text">Enter your M-PESA phone number to receive a payment prompt.</p><form [formGroup]="stkForm"><mat-form-field appearance="outline"><mat-label>Phone Number</mat-label><input matInput formControlName="phoneNumber" placeholder="e.g., +254712345678" [disabled]="isProcessingStk"><mat-icon matSuffix>phone_iphone</mat-icon></mat-form-field></form><button class="btn-primary w-full" (click)="processStkPush()" [disabled]="stkForm.invalid || isProcessingStk"><mat-spinner *ngIf="isProcessingStk" diameter="24"></mat-spinner><span *ngIf="!isProcessingStk">Pay KES {{ data.amount | number: '1.0-0' }}</span></button></div><div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in"><p class="instruction-text">Use the details below on your M-PESA App to complete payment.</p><div class="paybill-details"><div class="detail-item"><span class="label">Paybill Number:</span><span class="value">853338</span></div><div class="detail-item"><span class="label">Account Number:</span><span class="value account-number">{{ data.reference }}</span></div></div><button class="btn-primary w-full" (click)="verifyPaybillPayment()" [disabled]="isVerifyingPaybill"><mat-spinner *ngIf="isVerifyingPaybill" diameter="24"></mat-spinner><span *ngIf="!isVerifyingPaybill">Verify Payment</span></button></div></div></mat-tab><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>credit_card</mat-icon><span>Credit/Debit Card</span></div></ng-template><div class="tab-panel-content animate-fade-in"><div class="card-redirect-info"><p class="instruction-text">You will be redirected to pay via <strong>I&M Bank</strong>, our reliable and trusted payment partner.</p><button class="btn-primary w-full" (click)="redirectToCardGateway()" [disabled]="isRedirectingToCard"><mat-spinner *ngIf="isRedirectingToCard" diameter="24"></mat-spinner><span *ngIf="!isRedirectingToCard">Pay Using Credit/Debit Card</span></button></div></div></mat-tab></mat-tab-group></mat-dialog-content></div>`,
   styles: [`
     :host { --pantone-306c: #04b2e1; --pantone-2758c: #21275c; --white-color: #ffffff; --light-gray: #f8f9fa; --medium-gray: #e9ecef; --dark-gray: #495057; }
     .payment-modal-container { background-color: var(--white-color); border-radius: 16px; overflow: hidden; max-width: 450px; }
@@ -117,10 +115,8 @@ export interface PaymentResult { success: boolean; method: 'stk' | 'paybill' | '
     ::ng-deep .payment-tabs .mat-mdc-tab-indicator-bar { background-color: var(--pantone-306c) !important; }
   `]
 })
-export class MpesaPaymentModalComponent implements OnInit { stkForm: FormGroup; selectedPaymentMethod: 'mpesa' | 'card' = 'mpesa'; mpesaSubMethod: 'stk' | 'paybill' = 'stk'; isProcessingStk = false; isVerifyingPaybill = false; isRedirectingToCard = false; constructor(private fb: FormBuilder, public dialogRef: MatDialogRef<MpesaPaymentModalComponent>, @Inject(MAT_DIALOG_DATA) public data: MpesaPayment) { this.stkForm = this.fb.group({ phoneNumber: [data.phoneNumber || '', [Validators.required, Validators.pattern(/^(07|01)\d{8}$/)]], }); } ngOnInit(): void {} closeDialog(result: PaymentResult | null = null): void { this.dialogRef.close(result); } processStkPush(): void { if (this.stkForm.invalid) return; this.isProcessingStk = true; setTimeout(() => { this.isProcessingStk = false; this.closeDialog({ success: true, method: 'stk', reference: this.data.reference, mpesaReceipt: 'S' + Math.random().toString(36).substring(2, 12).toUpperCase() }); }, 3000); } verifyPaybillPayment(): void { this.isVerifyingPaybill = true; setTimeout(() => { this.isVerifyingPaybill = false; this.closeDialog({ success: true, method: 'paybill', reference: this.data.reference }); }, 3500); } redirectToCardGateway(): void { this.isRedirectingToCard = true; setTimeout(() => { this.isRedirectingToCard = false; console.log('Redirecting to I&M Bank payment gateway...'); this.closeDialog({ success: true, method: 'card', reference: this.data.reference }); }, 2000); } }
+export class MpesaPaymentModalComponent implements OnInit { stkForm: FormGroup; selectedPaymentMethod: 'mpesa' | 'card' = 'mpesa'; mpesaSubMethod: 'stk' | 'paybill' = 'stk'; isProcessingStk = false; isVerifyingPaybill = false; isRedirectingToCard = false; constructor(private fb: FormBuilder, public dialogRef: MatDialogRef<MpesaPaymentModalComponent>, @Inject(MAT_DIALOG_DATA) public data: MpesaPayment) { this.stkForm = this.fb.group({ phoneNumber: [data.phoneNumber || '', [Validators.required, Validators.pattern(/^\+254[17]\d{8}$/)]], }); } ngOnInit(): void {} closeDialog(result: PaymentResult | null = null): void { this.dialogRef.close(result); } processStkPush(): void { if (this.stkForm.invalid) return; this.isProcessingStk = true; setTimeout(() => { this.isProcessingStk = false; this.closeDialog({ success: true, method: 'stk', reference: this.data.reference, mpesaReceipt: 'S' + Math.random().toString(36).substring(2, 12).toUpperCase() }); }, 3000); } verifyPaybillPayment(): void { this.isVerifyingPaybill = true; setTimeout(() => { this.isVerifyingPaybill = false; this.closeDialog({ success: true, method: 'paybill', reference: this.data.reference }); }, 3500); } redirectToCardGateway(): void { this.isRedirectingToCard = true; setTimeout(() => { this.isRedirectingToCard = false; console.log('Redirecting to I&M Bank payment gateway...'); this.closeDialog({ success: true, method: 'card', reference: this.data.reference }); }, 2000); } }
 
-
-// --- NEW CLAIM REGISTRATION MODAL COMPONENT ---
 @Component({
   selector: 'app-claim-registration-modal',
   standalone: true,
@@ -296,11 +292,27 @@ export class ClaimRegistrationModalComponent {
   }
 }
 
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ CommonModule, RouterModule, MatIconModule, MatButtonModule, MatMenuModule, MatDividerModule, MatChipsModule, MatCardModule, MatDialogModule, MatBadgeModule, MatSnackBarModule, MpesaPaymentModalComponent, ClaimRegistrationModalComponent ],
+  imports: [
+      CommonModule,
+      RouterModule,
+      MatIconModule,
+      MatButtonModule,
+      MatMenuModule,
+      MatDividerModule,
+      MatChipsModule,
+      MatCardModule,
+      MatDialogModule,
+      MatBadgeModule,
+      MatSnackBarModule,
+      MpesaPaymentModalComponent,
+      ClaimRegistrationModalComponent,
+      FormsModule, // <-- Add FormsModule for ngModel
+      MatFormFieldModule, // <-- Add modules for search input
+      MatInputModule
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -318,8 +330,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   navigationItems: NavigationItem[] = [];
   dashboardStats: DashboardStats = { marinePolicies: 0, travelPolicies: 0, pendingQuotes: 0, totalPremium: 0, activeClaims: 0 };
   private readonly STORAGE_KEYS = { USER_DATA: 'geminia_user_data' };
-  activePolicies: Policy[] = [  ];
-  claims: Claim[] = [ ];
+
+  // --- MODIFIED/NEW PROPERTIES FOR SEARCH ---
+  activePolicies: Policy[] = [];
+  filteredPolicies: Policy[] = []; // Used to display policies in the template
+  policySearchTerm: string = '';   // Bound to the policy search input
+
+  claims: Claim[] = [];
+  filteredClaims: Claim[] = []; // Used to display claims in the template
+  claimSearchTerm: string = '';   // Bound to the claim search input
+
   recentActivities: Activity[] = [ { id: 'A001', title: 'Payment Successful', description: 'Travel Insurance for Europe', timestamp: new Date(Date.now() - 3600000), icon: 'payment', iconColor: '#04b2e1', relatedId: 'P003' }, { id: 'A002', title: 'Certificate Downloaded', description: 'Marine Cargo Policy MAR-2025-002', timestamp: new Date(Date.now() - 14400000), icon: 'download', iconColor: '#04b2e1', relatedId: 'P002' }, { id: 'A003', title: 'Profile Updated', description: 'Contact information updated', timestamp: new Date(Date.now() - 86400000), icon: 'person', iconColor: '#21275c' }];
   notifications: Notification[] = [ { id: 'N001', title: 'Quotes Awaiting Payment', message: 'You have quotes that need payment to activate your policy.', timestamp: new Date(), read: false, actionUrl: '#pending-quotes' }, { id: 'N002', title: 'Certificates Ready', message: 'Your new policy certificates are ready for download.', timestamp: new Date(), read: false, actionUrl: '#active-policies' } ];
   isMobileSidebarOpen = false;
@@ -347,6 +367,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
       });
     this.loadDashboardData();
+    this.loadClaimsData(); // Load claims data on init
   }
 
   ngOnDestroy(): void {
@@ -367,9 +388,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
     updateDashboardStats(): void {
-
         const offset = this.currentIndex * this.pageLength;
-        console.log('new offset...'+offset);
         this.userService.getClientPolicies(offset, this.pageLength).subscribe({
             next: (res) => {
                 if (this.currentIndex === 0) {
@@ -378,9 +397,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
                     this.activePolicies = [...this.activePolicies, ...res.pageItems];
                 }
                 this.totalPolicies = res.totalFilteredRecords || res.totalElements || 0;
+                this.applyPolicyFilter(); // Apply filter after data is loaded
             },
-            error: (err) => console.error('Error loading quotes', err)
+            error: (err) => console.error('Error loading policies', err)
         });
+    }
+
+    // Example method to load claims data
+    loadClaimsData(): void {
+        // In a real app, this would be a service call. Here we use mock data.
+        this.claims = [ /* ... your mock claim objects ... */ ];
+        this.applyClaimFilter(); // Apply filter after data is loaded
+    }
+
+    // --- NEW SEARCH FILTER METHODS ---
+    applyPolicyFilter(): void {
+        const searchTerm = this.policySearchTerm.toLowerCase().trim();
+        if (!searchTerm) {
+            this.filteredPolicies = [...this.activePolicies];
+        } else {
+            this.filteredPolicies = this.activePolicies.filter(policy =>
+                policy.refno.toLowerCase().includes(searchTerm) ||
+                policy.erprefno.toLowerCase().includes(searchTerm) ||
+                policy.vesselName.toLowerCase().includes(searchTerm)
+            );
+        }
+    }
+
+    applyClaimFilter(): void {
+        const searchTerm = this.claimSearchTerm.toLowerCase().trim();
+        if (!searchTerm) {
+            this.filteredClaims = [...this.claims];
+        } else {
+            this.filteredClaims = this.claims.filter(claim =>
+                claim.claimNumber.toLowerCase().includes(searchTerm) ||
+                claim.policyNumber.toLowerCase().includes(searchTerm) ||
+                claim.status.toLowerCase().includes(searchTerm)
+            );
+        }
     }
 
     loadMore(): void {
@@ -393,14 +447,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.updateDashboardStats();
     }
 
-    hasLess(): boolean {
-        return this.currentIndex > 0;
-    }
-
-    hasMore(): boolean {
-        return (this.currentIndex + 1) * this.pageLength < this.totalPolicies;
-    }
-
+    hasLess(): boolean { return this.currentIndex > 0; }
+    hasMore(): boolean { return (this.currentIndex + 1) * this.pageLength < this.totalPolicies; }
 
     nextPage() {
         if ((this.page + 1) * this.pageSize < this.totalRecords) {
@@ -417,150 +465,131 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     scrollToSection(sectionId: string): void {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        if (this.isMobileSidebarOpen) {
-            this.isMobileSidebarOpen = false;
-        }
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (this.isMobileSidebarOpen) this.isMobileSidebarOpen = false;
     }
 
-  initiatePayment(quoteId: string): void {
-
-      this.openKycShippingPaymentModal();
-
-    // const quote = this.pendingQuotes.find((q) => q.id === quoteId);
-    // if (quote && this.user) {
-    //   const paymentData: MpesaPayment = {
-    //     amount: quote.netprem,
-    //     phoneNumber: this.user.phoneNumber || '',
-    //     reference: quote.id,
-    //     description: quote.description
-    //   };
-    //   const dialogRef = this.dialog.open(MpesaPaymentModalComponent, { data: paymentData, panelClass: 'payment-modal-panel', autoFocus: false });
-    //   dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: PaymentResult | null) => {
-    //     if (result?.success) {
-    //       this.snackBar.open(`Payment for "${quote.description}" was successful. Policy is now active.`, 'OK', {
-    //         duration: 7000,
-    //         panelClass: ['geminia-toast-panel']
-    //       });
-    //       this.loadDashboardData();
-    //     }
-    //   });
-    // }
-  }
+    initiatePayment(quoteId: string): void { this.openKycShippingPaymentModal(); }
 
     private openKycShippingPaymentModal(): void {
-
-        const dialogData: {} = {
-
-        };
         const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
-            width: '800px',
-            maxHeight: '90vh',
-            data: dialogData,
-            disableClose: true
+            width: '800px', maxHeight: '90vh', data: {}, disableClose: true
         });
 
         dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
             if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
                 this.router.navigate(['/sign-up/dashboard']);
-                if (result === 'payment_success') {
-                    this.showToast('Payment successful! Redirecting to dashboard to access your documents.');
-                } else if (result === 'quote_saved_and_closed') {
-                    this.showToast('Your quote details have been saved to the dashboard. Redirecting to dashboard.');
-                } else if (result === 'payment_failed') {
-                    this.showToast('Payment failed. Your quote details have been saved to the dashboard.');
-                }
+                if (result === 'payment_success') this.showToast('Payment successful! Redirecting to dashboard.');
+                else if (result === 'quote_saved_and_closed') this.showToast('Your quote has been saved. Redirecting to dashboard.');
+                else if (result === 'payment_failed') this.showToast('Payment failed. Your quote has been saved.');
             }
         });
     }
 
     private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
 
+    editQuote(quoteId: string): void {
+        this.router.navigate(['/marine-quote'], { queryParams: { editId: quoteId } });
+    }
 
-  editQuote(quoteId: string): void {
-    this.router.navigate(['/marine-quote'], { queryParams: { editId: quoteId } });
-  }
-
-  deleteQuote(quoteId: string): void {
-    if (confirm('Are you sure you want to delete this saved quote?')) {
-      // SIMULATED: In a real app, you would call a service here.
-      this.pendingQuotes = this.pendingQuotes.filter(q => q.id !== quoteId);
-      this.totalRecords = this.pendingQuotes.length;
-      this.updateDashboardStats();
+   deleteQuote(quoteId: string, quoteIndex?: number): void {
+  if (confirm('Are you sure you want to delete this saved quote?')) {
+    console.log('Deleting quote with ID:', quoteId, 'at index:', quoteIndex);
+    
+    if (quoteIndex !== undefined && quoteIndex >= 0 && quoteIndex < this.pendingQuotes.length) {
+      // Delete by index (more reliable when IDs are duplicated)
+      console.log('Deleting quote at index:', quoteIndex);
+      this.pendingQuotes.splice(quoteIndex, 1);
+      this.totalRecords = Math.max(0, this.totalRecords - 1);
+      
       this.snackBar.open('Quote deleted successfully.', 'OK', {
         duration: 3000,
         panelClass: ['geminia-toast-panel']
       });
+      
+      // Handle pagination
+      if (this.pendingQuotes.length === 0 && this.page > 0) {
+        this.page--;
+        this.loadDashboardData();
+      }
+    } else {
+      // Fallback: try to delete by ID but only the first match
+      console.log('No index provided, deleting first quote with ID:', quoteId);
+      const indexToDelete = this.pendingQuotes.findIndex(q => q.id === quoteId);
+      
+      if (indexToDelete !== -1) {
+        this.pendingQuotes.splice(indexToDelete, 1);
+        this.totalRecords = Math.max(0, this.totalRecords - 1);
+        
+        this.snackBar.open('Quote deleted successfully.', 'OK', {
+          duration: 3000,
+          panelClass: ['geminia-toast-panel']
+        });
+        
+        // Handle pagination
+        if (this.pendingQuotes.length === 0 && this.page > 0) {
+          this.page--;
+          this.loadDashboardData();
+        }
+      } else {
+        console.error('Quote not found');
+        this.snackBar.open('Quote not found.', 'OK', {
+          duration: 3000,
+          panelClass: ['geminia-toast-panel']
+        });
+      }
     }
   }
+}
 
   logout(): void {
      this.authService.logout();
      this.router.navigate(['/sign-in'], { replaceUrl: true });
   }
 
-    goToMarineQuote() {
-        this.router.navigate(['/marine-quote']);
-    }
+  goToMarineQuote() { this.router.navigate(['/marine-quote']); }
 
   openClaimModal(policy: Policy): void {
     const dialogRef = this.dialog.open(ClaimRegistrationModalComponent, {
-      data: { policy },
-      panelClass: 'claim-modal-panel',
-      autoFocus: false
+      data: { policy }, panelClass: 'claim-modal-panel', autoFocus: false
     });
 
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((newClaim: Claim | null) => {
       if (newClaim) {
         this.claims.unshift(newClaim);
-        const policyToUpdate = this.activePolicies.find(p => p.id === newClaim.policyId);
-        // if (policyToUpdate) {
-        //   policyToUpdate.hasClaim = true;
-        // }
+        this.applyClaimFilter(); // Re-apply filter to include the new claim if it matches
         this.updateDashboardStats();
-        this.snackBar.open(`Claim ${newClaim.claimNumber} has been submitted successfully.`, 'OK', {
-          duration: 7000,
-          panelClass: ['geminia-toast-panel']
+        this.snackBar.open(`Claim ${newClaim.claimNumber} submitted successfully.`, 'OK', {
+          duration: 7000, panelClass: ['geminia-toast-panel']
         });
       }
     });
   }
 
-    setupNavigationBasedOnRole(role: 'C' | 'A'): void {
-        this.navigationItems = [
-            { label: 'Dashboard', icon: 'dashboard', sectionId: 'main-dashboard-area' },
-            { label: 'My Claims', icon: 'assignment_late', sectionId: 'my-claims-section' },
-            {
-                label: 'Marine Insurance', icon: 'directions_boat', isExpanded: true,
-                children: [ { label: 'New Quote', route: '/marine-quote', icon: 'add_circle' } ]
-            },
-            { label: 'My Policies', icon: 'shield', sectionId: 'my-policies-section' },
-            { label: 'Receipts', icon: 'receipt_long', route: '/receipts' }
-        ];
-    }
+  setupNavigationBasedOnRole(role: 'C' | 'A'): void {
+    this.navigationItems = [
+        { label: 'Dashboard', icon: 'dashboard', sectionId: 'main-dashboard-area' },
+        { label: 'My Claims', icon: 'assignment_late', sectionId: 'my-claims-section' },
+        {
+            label: 'Marine Insurance', icon: 'directions_boat', isExpanded: true,
+            children: [ { label: 'New Quote', route: '/marine-quote', icon: 'add_circle' } ]
+        },
+        { label: 'My Policies', icon: 'shield', sectionId: 'my-policies-section' },
+        { label: 'Receipts', icon: 'receipt_long', route: '/receipts' }
+    ];
+  }
 
   // --- Utility and Display Methods ---
   @HostListener('window:resize', ['$event'])
-  onResize(event: Event) { if ((event.target as Window).innerWidth >= 1024) { this.isMobileSidebarOpen = false; } }
+  onResize(event: Event) { if ((event.target as Window).innerWidth >= 1024) this.isMobileSidebarOpen = false; }
   togglePolicyDetails(policyId: number): void { this.expandedPolicyId = this.expandedPolicyId === policyId ? null : policyId; }
   toggleClaimDetails(claimId: string): void { this.expandedClaimId = this.expandedClaimId === claimId ? null : claimId; }
   getInitials(name: string): string { return name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || ''; }
   getUnreadNotificationCount(): number { return this.notifications.filter((n) => !n.read).length; }
   toggleNavItem(item: NavigationItem): void { if (item.children) item.isExpanded = !item.isExpanded; }
   toggleMobileSidebar(): void { this.isMobileSidebarOpen = !this.isMobileSidebarOpen; }
-  downloadCertificate(policyId: number): void {
-      // const policy = this.activePolicies.find((p) => p.id === policyId);
-      // if (policy?.certificateUrl) {
-      //     const link = document.createElement('a');
-      //     link.href = policy.certificateUrl;
-      //     link.download = `${policy.policyNumber}-certificate.pdf`;
-      //     link.click();
-      // }
-  }
-  markNotificationAsRead(notification: Notification): void { notification.read = true; if (notification.actionUrl) { document.querySelector(notification.actionUrl)?.scrollIntoView({ behavior: 'smooth' }); } }
+  downloadCertificate(policyId: number): void { /* ... download logic ... */ }
+  markNotificationAsRead(notification: Notification): void { notification.read = true; if (notification.actionUrl) document.querySelector(notification.actionUrl)?.scrollIntoView({ behavior: 'smooth' }); }
   getClaimStatusClass(status: ClaimStatus): string {
     const statusMap: { [key in ClaimStatus]: string } = {
       'Submitted': 'status-submitted', 'Under Review': 'status-review', 'More Information Required': 'status-info-required', 'Approved': 'status-approved', 'Settled': 'status-settled', 'Rejected': 'status-rejected'

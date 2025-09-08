@@ -185,3 +185,83 @@ $white: #ffffff;
         font-weight: 700;
     }
 }
+.sidebar-bg {
+  background-color: #04b2e1; // This corresponds to your --pantone-2758c variable
+}
+/* Add these styles to your dashboard.component.scss file */
+
+// General styling for all action buttons on the quote card
+.quote-card [mat-button], .quote-card [mat-stroked-button], .quote-card [mat-raised-button] {
+  border-radius: 12px !important;
+  padding: 0 16px !important;
+  min-height: 40px;
+  
+  .mat-icon {
+    margin-right: 6px;
+    font-size: 20px;
+  }
+}
+
+// Style for the DELETE button
+.quote-action-delete {
+  color: #ef4444; // Red text and icon
+  border-color: #ef4444; // Red border
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.05); // Light red on hover
+  }
+}
+
+// Style for the EDIT button
+.quote-action-edit {
+  color: var(--pantone-light-blue); // Theme light blue text and icon
+  border-color: var(--pantone-light-blue); // Theme light blue border
+
+  &:hover {
+    background-color: rgba(4, 178, 225, 0.05); // Light blue on hover
+  }
+}
+
+// Style for the PAY NOW button
+.quote-action-pay {
+  background-color: var(--pantone-dark-blue) !important; // Theme dark blue background
+  color: white !important;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: lighten(#21275c, 5%) !important; // Slightly lighter on hover
+  }
+}
+
+.sidebar-bg {
+  background-color: #04b2e1; 
+}
+
+
+/* Custom styles for a more compact search bar */
+::ng-deep .compact-search-bar {
+
+  // Reduce the overall height of the form field container
+  .mat-mdc-form-field-flex {
+    height: 48px;
+  }
+
+  // Reduce the top and bottom padding inside the form field
+  .mat-mdc-form-field-infix {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  // Ensure the floating label position is correct for the new height
+  .mdc-floating-label--float-above {
+    transform: translateY(-118%) scale(0.75);
+  }
+
+  // Optionally, reduce the font size for a more compact feel
+  .mat-mdc-text-field-wrapper,
+  input.mat-mdc-input-element,
+  .mdc-floating-label {
+    font-size: 14px;
+  }
+}
+
