@@ -370,11 +370,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadClaimsData(); // Load claims data on init
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   loadDashboardData(): void {
       const offset = this.page * this.pageSize;
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
@@ -472,19 +467,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
     initiatePayment(quoteId: string): void { this.openKycShippingPaymentModal(); }
 
     private openKycShippingPaymentModal(): void {
-        const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
-            width: '800px', maxHeight: '90vh', data: {}, disableClose: true
-        });
+  const isMobile = window.innerWidth <= 480;
+  
+  // Add body class to prevent background scrolling on mobile
+  if (isMobile) {
+    document.body.classList.add('modal-open');
+  }
+  
+  const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
+    width: isMobile ? '100vw' : '800px',
+    maxWidth: isMobile ? '100vw' : '90vw',
+    height: isMobile ? '100vh' : 'auto',
+    maxHeight: isMobile ? '100vh' : '90vh',
+    panelClass: ['payment-modal', ...(isMobile ? ['mobile-modal'] : [])],
+    data: {},
+    disableClose: true,
+    hasBackdrop: true,
+    backdropClass: 'payment-modal-backdrop',
+    // Add these mobile-specific options
+    ...(isMobile && {
+      position: { top: '0px', left: '0px' },
+      autoFocus: false,
+      restoreFocus: false
+    })
+  });
 
-        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
-            if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
-                this.router.navigate(['/sign-up/dashboard']);
-                if (result === 'payment_success') this.showToast('Payment successful! Redirecting to dashboard.');
-                else if (result === 'quote_saved_and_closed') this.showToast('Your quote has been saved. Redirecting to dashboard.');
-                else if (result === 'payment_failed') this.showToast('Payment failed. Your quote has been saved.');
-            }
-        });
+  dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
+    // Remove body class when modal closes
+    if (isMobile) {
+      document.body.classList.remove('modal-open');
     }
+    
+    if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
+      this.router.navigate(['/sign-up/dashboard']);
+      if (result === 'payment_success') this.showToast('Payment successful! Redirecting to dashboard.');
+      else if (result === 'quote_saved_and_closed') this.showToast('Your quote has been saved. Redirecting to dashboard.');
+      else if (result === 'payment_failed') this.showToast('Payment failed. Your quote has been saved.');
+    }
+  });
+}
 
     private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
 
@@ -550,22 +571,75 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goToMarineQuote() { this.router.navigate(['/marine-quote']); }
 
   openClaimModal(policy: Policy): void {
-    const dialogRef = this.dialog.open(ClaimRegistrationModalComponent, {
-      data: { policy }, panelClass: 'claim-modal-panel', autoFocus: false
-    });
+  const isMobile = window.innerWidth <= 480;
+  
+  // Add body class to prevent background scrolling on mobile
+  if (isMobile) {
+    document.body.classList.add('modal-open');
+  }
+  
+  const dialogRef = this.dialog.open(ClaimRegistrationModalComponent, {
+    data: { policy },
+    panelClass: ['claim-modal-panel', ...(isMobile ? ['mobile-modal'] : [])],
+    width: isMobile ? '100vw' : '650px',
+    maxWidth: isMobile ? '100vw' : '90vw',
+    height: isMobile ? '100vh' : 'auto',
+    maxHeight: isMobile ? '100vh' : '90vh',
+    autoFocus: false,
+    // Add these mobile-specific options
+    ...(isMobile && {
+      position: { top: '0px', left: '0px' },
+      restoreFocus: false,
+      disableClose: false
+    })
+  });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((newClaim: Claim | null) => {
-      if (newClaim) {
-        this.claims.unshift(newClaim);
-        this.applyClaimFilter(); // Re-apply filter to include the new claim if it matches
-        this.updateDashboardStats();
-        this.snackBar.open(`Claim ${newClaim.claimNumber} submitted successfully.`, 'OK', {
-          duration: 7000, panelClass: ['geminia-toast-panel']
-        });
-      }
-    });
+  dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((newClaim: Claim | null) => {
+    // Remove body class when modal closes
+    if (isMobile) {
+      document.body.classList.remove('modal-open');
+    }
+    
+    if (newClaim) {
+      this.claims.unshift(newClaim);
+      this.applyClaimFilter();
+      this.updateDashboardStats();
+      this.snackBar.open(`Claim ${newClaim.claimNumber} submitted successfully.`, 'OK', {
+        duration: 7000, panelClass: ['geminia-toast-panel']
+      });
+    }
+  });
+}
+
+// Also add this method to handle mobile back button/escape key
+@HostListener('window:resize', ['$event'])
+onResize(event: Event) {
+  const newWidth = (event.target as Window).innerWidth;
+
+  if (newWidth >= 1024) {
+    this.isMobileSidebarOpen = false;
   }
 
+  if (this.dialog.openDialogs.length > 0) {
+    // The variable was likely just mistyped.
+    const wasMobile = newWidth > 480 && window.innerWidth <= 480; // Example of a state change
+    const isMobile = newWidth <= 480;
+
+
+    if (wasMobile) { // A simplified logic to check if a change occurred
+      this.dialog.closeAll();
+    }
+  }
+}
+
+// Add this lifecycle hook to clean up when component is destroyed
+ngOnDestroy(): void {
+  // Remove body class if component is destroyed while modal is open
+  document.body.classList.remove('modal-open');
+  
+  this.destroy$.next();
+  this.destroy$.complete();
+}
   setupNavigationBasedOnRole(role: 'C' | 'A'): void {
     this.navigationItems = [
         { label: 'Dashboard', icon: 'dashboard', sectionId: 'main-dashboard-area' },
@@ -581,7 +655,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // --- Utility and Display Methods ---
   @HostListener('window:resize', ['$event'])
-  onResize(event: Event) { if ((event.target as Window).innerWidth >= 1024) this.isMobileSidebarOpen = false; }
   togglePolicyDetails(policyId: number): void { this.expandedPolicyId = this.expandedPolicyId === policyId ? null : policyId; }
   toggleClaimDetails(claimId: string): void { this.expandedClaimId = this.expandedClaimId === claimId ? null : claimId; }
   getInitials(name: string): string { return name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || ''; }
