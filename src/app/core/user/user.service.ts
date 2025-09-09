@@ -82,6 +82,15 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/shippingapplication/approvedapplications`, { params });
     }
 
+    getCountries(offset: number, limit: number,type: number): Observable<any> {
+        let params = new HttpParams()
+            .set('offset', offset.toString())
+            .set('limit', limit.toString())
+            .set('type', type.toString());
+
+        return this._httpClient.get<any>(`${this.baseUrl}/self/countries`, { params });
+    }
+
     downloadQuote(quoteId: string) {
         return this._httpClient.get(`${this.baseUrl}/quote/download/${quoteId}`, {
             responseType: 'text'

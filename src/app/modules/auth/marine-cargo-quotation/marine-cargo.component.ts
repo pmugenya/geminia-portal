@@ -9,9 +9,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { forkJoin, Subject, takeUntil, debounceTime, Observable, of } from 'rxjs';
+import { forkJoin, Subject, takeUntil, debounceTime, Observable, of, map } from 'rxjs';
 import { AuthenticationService, StoredUser } from '../shared/services/auth.service';
-import { CargoTypeData, Category, MarineProduct, PackagingType, QuoteResult as CoreQuoteResult } from '../../../core/user/user.types';
+import {
+    CargoTypeData,
+    Category,
+    Country,
+    MarineProduct,
+    PackagingType,
+    QuoteResult as CoreQuoteResult,
+} from '../../../core/user/user.types';
 import { UserService } from '../../../core/user/user.service';
 import { ThousandsSeparatorValueAccessor } from '../directives/thousands-separator-value-accessor';
 import { QuoteService } from '../shared/services/quote.service';
@@ -842,6 +849,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     showTermsModal: boolean = false;
     showPrivacyModal: boolean = false;
     toastMessage: string = '';
+    page = 0;
+    pageSize = 200;
     premiumCalculation: PremiumCalculation = this.resetPremiumCalculation();
     private editModeQuoteId: string | null = null;
     user: EnhancedStoredUser | null = null;
@@ -856,7 +865,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     marineCargoTypes: CargoTypeData[] = [];
     readonly blacklistedCountries: string[] = ['Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia'];
     readonly allCountriesList: string[] = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe'].sort();
-    filteredCountriesList: string[] = [];
+    filteredCountriesList: Country[]= [];
     exportDestinationCountries: string[] = [];
     readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
     readonly kenyanCounties: string[] = ['Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay', 'Isiolo', 'Kajiado', 'Kakamega', 'Kericho', 'Kiambu', 'Kilifi', 'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale', 'Laikipia', 'Lamu', 'Machakos', 'Makueni', 'Mandera', 'Marsabit', 'Meru', 'Migori', 'Mombasa', 'Murang\'a', 'Nairobi', 'Nakuru', 'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu', 'Siaya', 'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans-Nzoia', 'Turkana', 'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'].sort();
@@ -876,7 +885,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
 
         this.exportRequestForm = this.createExportRequestForm();
         this.highRiskRequestForm = this.createHighRiskRequestForm();
-        this.filteredCountriesList = this.allCountriesList.filter(c => c !== 'Kenya');
         this.exportDestinationCountries = this.allCountriesList.filter(c => c !== 'Kenya');
     }
 
@@ -1035,6 +1043,22 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         });
         this.quotationForm.valueChanges.pipe(debounceTime(1000), takeUntil(this.destroy$)).subscribe(value => {
             this.saveQuoteToLocalStorage(value);
+        });
+
+        this.quotationForm.get('modeOfShipment')?.valueChanges.subscribe((mode: number) => {
+            if (mode) {
+                console.log('Mode of Shipment selected:', mode);
+
+                // Example: Call your API with mode as "type"
+                this.userService.getCountries(0, 300, mode).subscribe({
+                    next: (res) => {
+                        this.filteredCountriesList = res.pageItems;
+                    },
+                    error: (err) => {
+                        console.error('Error loading countries:', err);
+                    }
+                });
+            }
         });
     }
 
