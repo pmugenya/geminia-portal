@@ -33,6 +33,11 @@ export interface MarineProduct {
     productdisplay: number;
 }
 
+export interface Country {
+    id: number;
+    countryname:string;
+}
+
 export interface PackagingType {
     id: number;
     packingtype: string

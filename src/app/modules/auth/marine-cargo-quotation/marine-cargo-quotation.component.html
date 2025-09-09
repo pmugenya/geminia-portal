@@ -136,7 +136,7 @@
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Country of Origin <span class="text-red-500">*</span></label>
                                         <select formControlName="origin" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'origin')}">
                                             <option value="" disabled>Select a country</option>
-                                            <option *ngFor="let country of filteredCountriesList" [value]="country">{{ country }}</option>
+                                            <option *ngFor="let country of filteredCountriesList" [value]="country.id">{{ country.countryname }}</option>
                                         </select>
                                         <div *ngIf="isFieldInvalid(quotationForm, 'origin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'origin') }}</div>
                                     </div>
