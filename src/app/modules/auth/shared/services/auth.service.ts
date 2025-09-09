@@ -23,13 +23,21 @@ export interface StoredCredentials {
   type: 'individual' | 'intermediary';
 }
 export interface PendingQuote {
+    quoteId: number;
+    shippingmodeId: number;
     id: string;
     prodName: string;
     refno: string;
     status: string;
     createDate: string;
     description: any;
+    originCountry: any;
     netprem: any;
+}
+
+export  interface PortData {
+    id: number,
+    portName:string
 }
 
 

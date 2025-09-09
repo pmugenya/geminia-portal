@@ -91,10 +91,34 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/self/countries`, { params });
     }
 
+    getCounties(offset: number, limit: number): Observable<any> {
+        let params = new HttpParams()
+            .set('offset', offset.toString())
+            .set('limit', limit.toString());
+
+        return this._httpClient.get<any>(`${this.baseUrl}/ports/counties`, { params });
+    }
+
     downloadQuote(quoteId: string) {
         return this._httpClient.get(`${this.baseUrl}/quote/download/${quoteId}`, {
             responseType: 'text'
         });
+    }
+
+    getPorts(countryId: number, type: string, offset: number, limit: number, sqlSearch?: string
+    ): Observable<any> {
+        let params = new HttpParams()
+            .set('type', type)
+            .set('offset', offset.toString())
+            .set('limit', limit.toString());
+
+        if (sqlSearch) {
+            params = params.set('sqlSearch', sqlSearch);
+        }
+        return this._httpClient.get<any>(
+            `${this.baseUrl}/ports/${countryId}`,
+            { params }
+        );
     }
 
 }

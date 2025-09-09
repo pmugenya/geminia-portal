@@ -15,6 +15,7 @@ export class JwtService {
 
     isTokenExpired(token?: string): boolean {
         if (!token) token = this.getToken()!;
+        console.log(token);
         return !token || this.jwtHelper.isTokenExpired(token);
     }
 
