@@ -375,6 +375,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
           next: (res) => {
              this.pendingQuotes = res.pageItems;
+             console.log( this.pendingQuotes );
              this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
              this.updateDashboardStats();
           },
@@ -464,23 +465,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (this.isMobileSidebarOpen) this.isMobileSidebarOpen = false;
     }
 
-    initiatePayment(quoteId: string): void { this.openKycShippingPaymentModal(); }
+    initiatePayment(quoteId: number,originCountry:string,shippingmodeId:number): void {
+      this.openKycShippingPaymentModal(quoteId,originCountry,shippingmodeId);
+  }
 
-    private openKycShippingPaymentModal(): void {
+    private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number): void {
   const isMobile = window.innerWidth <= 480;
-  
+
   // Add body class to prevent background scrolling on mobile
   if (isMobile) {
     document.body.classList.add('modal-open');
   }
-  
+
   const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
     width: isMobile ? '100vw' : '800px',
     maxWidth: isMobile ? '100vw' : '90vw',
     height: isMobile ? '100vh' : 'auto',
     maxHeight: isMobile ? '100vh' : '90vh',
     panelClass: ['payment-modal', ...(isMobile ? ['mobile-modal'] : [])],
-    data: {},
+    data: {quoteId:quoteId,originCountry:originCountry,shippingmodeId:shippingmodeId},
     disableClose: true,
     hasBackdrop: true,
     backdropClass: 'payment-modal-backdrop',
@@ -497,7 +500,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (isMobile) {
       document.body.classList.remove('modal-open');
     }
-    
+
     if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
       this.router.navigate(['/sign-up/dashboard']);
       if (result === 'payment_success') this.showToast('Payment successful! Redirecting to dashboard.');
@@ -516,18 +519,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
    deleteQuote(quoteId: string, quoteIndex?: number): void {
   if (confirm('Are you sure you want to delete this saved quote?')) {
     console.log('Deleting quote with ID:', quoteId, 'at index:', quoteIndex);
-    
+
     if (quoteIndex !== undefined && quoteIndex >= 0 && quoteIndex < this.pendingQuotes.length) {
       // Delete by index (more reliable when IDs are duplicated)
       console.log('Deleting quote at index:', quoteIndex);
       this.pendingQuotes.splice(quoteIndex, 1);
       this.totalRecords = Math.max(0, this.totalRecords - 1);
-      
+
       this.snackBar.open('Quote deleted successfully.', 'OK', {
         duration: 3000,
         panelClass: ['geminia-toast-panel']
       });
-      
+
       // Handle pagination
       if (this.pendingQuotes.length === 0 && this.page > 0) {
         this.page--;
@@ -537,16 +540,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Fallback: try to delete by ID but only the first match
       console.log('No index provided, deleting first quote with ID:', quoteId);
       const indexToDelete = this.pendingQuotes.findIndex(q => q.id === quoteId);
-      
+
       if (indexToDelete !== -1) {
         this.pendingQuotes.splice(indexToDelete, 1);
         this.totalRecords = Math.max(0, this.totalRecords - 1);
-        
+
         this.snackBar.open('Quote deleted successfully.', 'OK', {
           duration: 3000,
           panelClass: ['geminia-toast-panel']
         });
-        
+
         // Handle pagination
         if (this.pendingQuotes.length === 0 && this.page > 0) {
           this.page--;
@@ -572,12 +575,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   openClaimModal(policy: Policy): void {
   const isMobile = window.innerWidth <= 480;
-  
+
   // Add body class to prevent background scrolling on mobile
   if (isMobile) {
     document.body.classList.add('modal-open');
   }
-  
+
   const dialogRef = this.dialog.open(ClaimRegistrationModalComponent, {
     data: { policy },
     panelClass: ['claim-modal-panel', ...(isMobile ? ['mobile-modal'] : [])],
@@ -599,7 +602,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (isMobile) {
       document.body.classList.remove('modal-open');
     }
-    
+
     if (newClaim) {
       this.claims.unshift(newClaim);
       this.applyClaimFilter();
@@ -636,7 +639,7 @@ onResize(event: Event) {
 ngOnDestroy(): void {
   // Remove body class if component is destroyed while modal is open
   document.body.classList.remove('modal-open');
-  
+
   this.destroy$.next();
   this.destroy$.complete();
 }

@@ -38,6 +38,11 @@ export interface Country {
     countryname:string;
 }
 
+export interface County {
+    id: number;
+    portName:string;
+}
+
 export interface PackagingType {
     id: number;
     packingtype: string

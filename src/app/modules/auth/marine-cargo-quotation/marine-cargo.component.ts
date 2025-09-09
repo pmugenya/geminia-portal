@@ -10,11 +10,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { forkJoin, Subject, takeUntil, debounceTime, Observable, of, map } from 'rxjs';
-import { AuthenticationService, StoredUser } from '../shared/services/auth.service';
+import { AuthenticationService, PortData, StoredUser } from '../shared/services/auth.service';
 import {
     CargoTypeData,
     Category,
-    Country,
+    Country, County,
     MarineProduct,
     PackagingType,
     QuoteResult as CoreQuoteResult,
@@ -404,14 +404,17 @@ export class PaymentModalComponent implements OnInit {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Loading Port <span class="text-red-500">*</span></label>
-                            <input type="text" formControlName="loadingPort" placeholder="e.g., Port of Shanghai" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'loadingPort')}"/>
+                            <select formControlName="loadingPort" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'loadingPort')}">
+                                <option value="" disabled>Select a port</option>
+                                <option *ngFor="let port of loadingPortOptions" [value]="port.id">{{ port.portName }}</option>
+                            </select>
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'loadingPort')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'loadingPort') }}</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Port of Discharge <span class="text-red-500">*</span></label>
                             <select formControlName="portOfDischarge" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'portOfDischarge')}">
                                 <option value="" disabled>Select a port</option>
-                                <option *ngFor="let port of portOptions" [value]="port">{{ port }}</option>
+                                <option *ngFor="let port of dischargePortOptions" [value]="port.id">{{ port.portName }}</option>
                             </select>
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'portOfDischarge')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'portOfDischarge') }}</div>
                         </div>
@@ -424,7 +427,7 @@ export class PaymentModalComponent implements OnInit {
                             <label class="block text-sm font-medium text-gray-700">Final Destination (County in Kenya) <span class="text-red-500">*</span></label>
                             <select formControlName="finalDestinationCounty" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'finalDestinationCounty')}">
                                 <option value="" disabled>Select a county</option>
-                                <option *ngFor="let county of kenyanCounties" [value]="county">{{ county }}</option>
+                                <option *ngFor="let county of kenyanCounties" [value]="county.id">{{ county.portName }}</option>
                             </select>
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'finalDestinationCounty')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'finalDestinationCounty') }}</div>
                         </div>
@@ -512,16 +515,18 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     isSubmitting: boolean = false;
     selectedFiles: { [key: string]: File | null } = { kraPinUpload: null, nationalIdUpload: null, invoiceUpload: null, idfUpload: null };
     private kycFileValidationErrors: { [key: string]: string } = {};
-    readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
-    readonly kenyanCounties: string[] = ['Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay', 'Isiolo', 'Kajiado', 'Kakamega', 'Kericho', 'Kiambu', 'Kilifi', 'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale', 'Laikipia', 'Lamu', 'Machakos', 'Makueni', 'Mandera', 'Marsabit', 'Meru', 'Migori', 'Mombasa', 'Murang\'a', 'Nairobi', 'Nakuru', 'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu', 'Siaya', 'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans-Nzoia', 'Turkana', 'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'].sort();
+     loadingPortOptions: PortData[] = [];
+     dischargePortOptions: PortData[] = [];
+     kenyanCounties: County[] = [];
 
     constructor(
         private fb: FormBuilder,
         public dialogRef: MatDialogRef<KycShippingPaymentModalComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: KycShippingPaymentModalData,
+        @Inject(MAT_DIALOG_DATA) public data: any,
         public dialog: MatDialog,
         private datePipe: DatePipe,
         private quotationService: QuoteService,
+        private userService: UserService,
         private router: Router
     ) {
         this.kycShippingForm = this.createKycShippingForm();
@@ -531,6 +536,31 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         this.patchFormWithQuoteData();
         this.setupKYCFileValidation();
         this.setDefaultDates();
+        this.userService.getCounties(0, 100).subscribe({
+            next: (res) => {
+                this.kenyanCounties = res.pageItems;
+            },
+            error: (err) => {
+                console.error('Error loading counties:', err);
+            }
+        });
+
+        let countryId: number = this.data.shippingmodeId===1 ? 116 : 43;
+        forkJoin({
+            countis: this.userService.getCounties(0, 100),
+            ports: this.userService.getPorts(this.data.originCountry, this.data.shippingmodeId,0,800),
+            destports: this.userService.getPorts(countryId, this.data.shippingmodeId,0,500),
+        }).subscribe({
+            next: (data) => {
+                this.kenyanCounties = data.countis.pageItems || [];
+                this.loadingPortOptions = data.ports.pageItems || [];
+                this.dischargePortOptions = data.destports.pageItems || [];
+            },
+            error: (err) => { console.error('Error loading marine data:', err); }
+        });
+
+
+        console.log(this.data);
     }
 
     ngOnDestroy(): void {
@@ -868,7 +898,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     filteredCountriesList: Country[]= [];
     exportDestinationCountries: string[] = [];
     readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
-    readonly kenyanCounties: string[] = ['Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay', 'Isiolo', 'Kajiado', 'Kakamega', 'Kericho', 'Kiambu', 'Kilifi', 'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale', 'Laikipia', 'Lamu', 'Machakos', 'Makueni', 'Mandera', 'Marsabit', 'Meru', 'Migori', 'Mombasa', 'Murang\'a', 'Nairobi', 'Nakuru', 'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu', 'Siaya', 'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans-Nzoia', 'Turkana', 'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'].sort();
+    kenyanCounties: County[] = [];
     isSaving = false;
     private readonly quoteStorageKey = 'savedMarineQuote';
 
