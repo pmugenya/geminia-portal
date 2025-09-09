@@ -115,6 +115,9 @@ export class AuthService {
                 // Save final JWT from the correct property in the response
                 this.accessToken = response.base64EncodedAuthenticationKey || response.token || '';
                 this.authenticationService.setCurrentUser(response, this.accessToken);
+
+                const token = this.accessToken;
+                console.log('Received access token:', token);
                 // Save user info if backend provides it
                     this._userService.user = response;
 

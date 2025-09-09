@@ -1,4 +1,4 @@
-<div class="min-h-screen w-screen bg-gray-50">
+ <div class="min-h-screen w-screen bg-gray-50">
     <!-- Header -->
     <header class="sticky top-0 z-10 bg-white shadow-sm">
         <div class="mx-auto max-w-7xl px-6">
@@ -65,7 +65,7 @@
     
                             <div *ngIf="qf.duration.value" class="mt-8">
                                 <h3 class="mb-4 text-xl font-semibold text-gray-800">Select a Plan</h3>
-                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                                <div class="grid grid-cols-3 gap-6">
                                     <div *ngFor="let plan of displayedPlans" class="plan-card" [ngClass]="{'selected-plan': qf.plan.value === plan.id}">
                                         <div class="p-6">
                                             <div class="plan-price">
