@@ -138,10 +138,19 @@
                                 <div class="flex-grow">
                                     <p class="text-xs text-gray-500">Ref No: {{ quote.refno }}</p>
                                     <div class="mb-4 flex items-center justify-between">
-                                      <span class="rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                                        {{ quote.status }}
+                                      <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white"
+                                            [ngClass]="{
+                                              'bg-amber-500': quote.status === 'PAID',
+                                              'bg-yellow-500': quote.status === 'DRAFT',
+                                              'bg-green-600': quote.status === 'FINAL',
+                                              'bg-blue-600': quote.status === 'PROCESSING'
+                                            }">
+                                        {{ quote.status === 'PAID' ? 'PROCESSING...' : quote.status }}
                                       </span>
-                                        <p class="text-xs text-gray-500">Created: {{ quote.createDate | date: 'shortDate' }}</p>
+
+                                        <p class="text-xs text-gray-500">
+                                            Created: {{ quote.createDate | date: 'shortDate' }}
+                                        </p>
                                     </div>
 
                                     <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.prodName">{{ quote.prodName }}</h4>
@@ -157,7 +166,7 @@
                                 </div>
 
                                 <!-- Button container with proper spacing to prevent overlap -->
-                                <div class="mt-auto flex items-stretch justify-end gap-1.5">
+                                <div class="mt-auto flex items-stretch justify-end gap-1.5" *ngIf="showOption(quote.status)">
                                     <button mat-stroked-button color="warn" (click)="deleteQuote(quote.id, i)"
                                             class="flex items-center justify-center rounded-xl !border-red-400 px-2.5 py-1.5 text-xs font-medium !text-red-500 transition-colors hover:bg-red-50 whitespace-nowrap">
                                         <mat-icon class="!h-4 !w-4">delete_outline</mat-icon>
@@ -169,7 +178,7 @@
                                         <mat-icon class="!h-4 !w-4">edit</mat-icon>
                                         <span class="hidden sm:inline ml-1">Edit</span>
                                     </button>
-                                    <button mat-raised-button (click)="initiatePayment(quote.quoteId,quote.originCountry,quote.shippingmodeId)"
+                                    <button mat-raised-button (click)="initiatePayment(quote.quoteId,quote.originCountry,quote.shippingmodeId,quote.sumassured,quote.pinNumber,quote.idNumber,quote.status,quote.phoneNo,quote.netprem,quote.refno)"
                                             class="flex items-center justify-center rounded-xl bg-pantone-dark-blue px-3 py-1.5 text-xs font-medium text-white whitespace-nowrap">
                                         <mat-icon class="!h-4 !w-4">credit_card</mat-icon>
                                         <span class="ml-1">Pay Now</span>
