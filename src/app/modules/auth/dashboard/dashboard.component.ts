@@ -14,7 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { interval, Subject, Subscription, takeUntil } from 'rxjs';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -23,7 +23,7 @@ import { AuthenticationService, PendingQuote, StoredUser } from '../shared/servi
 import { UserService } from '../../../core/user/user.service';
 import {
     KycShippingPaymentModalComponent,
-    KycShippingPaymentModalData,
+    KycShippingPaymentModalData, PaymentModalComponent,
 } from '../marine-cargo-quotation/marine-cargo.component';
 
 // --- (All your interface and modal component definitions remain the same) ---
@@ -345,7 +345,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isMobileSidebarOpen = false;
   expandedPolicyId: number | null = null;
   expandedClaimId: string | null = null;
-
+    private statusCheckSubs: { [id: string]: Subscription } = {};
   constructor(
     private dialog: MatDialog,
     public router: Router,
@@ -378,10 +378,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
              console.log( this.pendingQuotes );
              this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
              this.updateDashboardStats();
+              // this.pendingQuotes.forEach(q => {
+              //     if (q.status === 'PAID') {
+              //         this.checkQuoteStatusPeriodically(q);
+              //     }
+              // });
           },
           error: (err) => console.error('Error loading quotes', err)
       });
   }
+
+    checkQuoteStatusPeriodically(quote: any) {
+      console.log(quote);
+        if (this.statusCheckSubs[quote.quoteId]) return; // already polling
+
+        this.statusCheckSubs[quote.quoteId] = interval(5000).subscribe(() => {
+            this.userService.getQuoteStatus(quote.quoteId).subscribe(latestStatus => {
+                console.log('checking status....',latestStatus);
+                if (latestStatus !== quote.status) {
+                    quote.status = latestStatus;
+                }
+
+                if (latestStatus === 'COMPLETED') {
+                    // stop polling this quote
+                    this.statusCheckSubs[quote.id]?.unsubscribe();
+                    delete this.statusCheckSubs[quote.quoteId];
+                    this.currentIndex = 0;
+                    // refresh whole pendingQuotes list
+                    this.loadDashboardData();
+                }
+            });
+        });
+    }
 
     updateDashboardStats(): void {
         const offset = this.currentIndex * this.pageLength;
@@ -465,25 +493,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (this.isMobileSidebarOpen) this.isMobileSidebarOpen = false;
     }
 
-    initiatePayment(quoteId: number,originCountry:string,shippingmodeId:number): void {
-      this.openKycShippingPaymentModal(quoteId,originCountry,shippingmodeId);
+    initiatePayment(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
+      this.openKycShippingPaymentModal(quoteId,originCountry,shippingmodeId,sumassured,pinNo,idNo,status,phone,prem,refno);
   }
 
-    private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number): void {
+  showOption(status):boolean{
+      return status!=='PAID';
+  }
+
+    private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
   const isMobile = window.innerWidth <= 480;
 
   // Add body class to prevent background scrolling on mobile
   if (isMobile) {
     document.body.classList.add('modal-open');
   }
-
+  if(status==='DRAFT'){
   const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
     width: isMobile ? '100vw' : '800px',
     maxWidth: isMobile ? '100vw' : '90vw',
     height: isMobile ? '100vh' : 'auto',
     maxHeight: isMobile ? '100vh' : '90vh',
     panelClass: ['payment-modal', ...(isMobile ? ['mobile-modal'] : [])],
-    data: {quoteId:quoteId,originCountry:originCountry,shippingmodeId:shippingmodeId},
+    data: {quoteId:quoteId,originCountry:originCountry,shippingmodeId:shippingmodeId,sumassured:sumassured,pinNo:pinNo,idNo:idNo},
     disableClose: true,
     hasBackdrop: true,
     backdropClass: 'payment-modal-backdrop',
@@ -500,15 +532,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (isMobile) {
       document.body.classList.remove('modal-open');
     }
-
-    if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
-      this.router.navigate(['/sign-up/dashboard']);
-      if (result === 'payment_success') this.showToast('Payment successful! Redirecting to dashboard.');
-      else if (result === 'quote_saved_and_closed') this.showToast('Your quote has been saved. Redirecting to dashboard.');
-      else if (result === 'payment_failed') this.showToast('Payment failed. Your quote has been saved.');
-    }
+   this.loadDashboardData();
   });
+  }
+  else if(status==='PENDING'){
+      this.openPaymentModal(prem,phone,refno);
+  }
 }
+
+
+
+    private openPaymentModal(premium,phoneNo,ref): void {
+        const dialogRef = this.dialog.open(PaymentModalComponent, {
+            width: '450px',
+            data: {
+                amount: premium,
+                phoneNumber: phoneNo,
+                reference: ref,
+                description: `Marine Cargo Insurance for Quote ${ref}`
+            },
+            disableClose: true
+        });
+
+        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((paymentResult: PaymentResult | null) => {
+            if (paymentResult?.success) {
+                this.showToast('Payment successful!');
+            } else {
+                this.showToast('Payment cancelled or failed. Your quote has been saved.');
+            }
+        });
+    }
 
     private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
 

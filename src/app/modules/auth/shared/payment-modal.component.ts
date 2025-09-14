@@ -17,7 +17,7 @@ import { Injectable } from '@angular/core';
 export class MpesaService {
   stkPush(amount: number, phoneNumber: string, reference: string): Observable<{ success: boolean; message: string }> {
     console.log(`Initiating STK Push for KES ${amount} to ${phoneNumber} with reference ${reference}`);
-    
+
     // Simulate a network delay
     return of(null).pipe(
       delay(3000), // 3-second delay to simulate API call
@@ -107,7 +107,7 @@ export interface PaymentResult {
             <button mat-flat-button color="primary" (click)="resetAndTryAgain()">Try Again</button>
         </div>
       </div>
-      
+
       <!-- Initial State -->
       <div *ngIf="!isLoading && paymentStatus === 'pending'" mat-dialog-content>
         <div class="text-center mb-6 bg-gray-50 p-4 rounded-lg">
@@ -121,9 +121,9 @@ export interface PaymentResult {
                 <mat-label>M-PESA Phone Number</mat-label>
                 <input matInput formControlName="phoneNumber" placeholder="0712345678" required>
                 <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('required')">Phone number is required</mat-error>
-                <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('pattern')">Enter a valid Kenyan phone number</mat-error>
+<!--                <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('pattern')">Enter a valid Kenyan phone number</mat-error>-->
             </mat-form-field>
-            
+
             <div mat-dialog-actions class="mt-4">
                 <button mat-flat-button color="primary" class="w-full !py-6 !text-base" [disabled]="paymentForm.invalid || isLoading">
                     Pay Now
@@ -139,7 +139,7 @@ export class MpesaPaymentModalComponent implements OnInit, OnDestroy {
   paymentStatus: 'pending' | 'success' | 'failed' = 'pending';
   errorMessage: string | null = null;
   paymentForm: FormGroup;
-  
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -152,8 +152,8 @@ export class MpesaPaymentModalComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.paymentForm = this.fb.group({
       phoneNumber: [this.data.phoneNumber, [
-        Validators.required,
-        Validators.pattern(/^0[17]\d{8}$/)
+        Validators.required
+        // Validators.pattern(/^0[17]\d{8}$/)
       ]]
     });
   }
@@ -162,7 +162,7 @@ export class MpesaPaymentModalComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
-  
+
   initiatePayment(): void {
     if (this.paymentForm.invalid) {
       return;

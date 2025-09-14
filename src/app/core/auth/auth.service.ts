@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import { JwtService } from '../../modules/auth/shared/services/jwt.service';
 import { AuthenticationService } from '../../modules/auth/shared/services/auth.service';
 import { User } from '../user/user.types';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -15,6 +16,7 @@ export class AuthService {
     private _httpClient = inject(HttpClient);
     private _userService = inject(UserService);
     private baseUrl = environment.apiUrl;
+    private router = inject(Router);
 
     private jwtService: JwtService = inject(JwtService);
     private authenticationService: AuthenticationService = inject(AuthenticationService);
@@ -136,14 +138,18 @@ export class AuthService {
     /**
      * Sign out
      */
-    signOut(): Observable<any> {
+    signOut(): void {
+        sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('userType');
+        sessionStorage.removeItem(this.STORAGE_KEYS.USER_DATA);
         // Remove the access token from the local storage
         localStorage.removeItem('accessToken');
         // Return the observable
         localStorage.removeItem(this.ACCESS_TOKEN_KEY);
         this.clearTempToken();
         this._authenticated = false;
-        return of(true);
+        this.router.navigate(['/sign-in']);
     }
 
     /**

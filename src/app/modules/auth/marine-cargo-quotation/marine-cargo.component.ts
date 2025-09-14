@@ -1,6 +1,15 @@
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+    AbstractControl,
+    FormArray,
+    FormBuilder,
+    FormGroup,
+    ReactiveFormsModule,
+    ValidationErrors,
+    ValidatorFn,
+    Validators,
+} from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,7 +18,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { forkJoin, Subject, takeUntil, debounceTime, Observable, of, map } from 'rxjs';
+import {
+    forkJoin,
+    Subject,
+    takeUntil,
+    debounceTime,
+    Observable,
+    of,
+    map,
+    timeout,
+    interval,
+    switchMap,
+    takeWhile, catchError, throwError,
+} from 'rxjs';
 import { AuthenticationService, PortData, StoredUser } from '../shared/services/auth.service';
 import {
     CargoTypeData,
@@ -22,6 +43,8 @@ import {
 import { UserService } from '../../../core/user/user.service';
 import { ThousandsSeparatorValueAccessor } from '../directives/thousands-separator-value-accessor';
 import { QuoteService } from '../shared/services/quote.service';
+import { FuseAlertComponent } from '../../../../@fuse/components/alert';
+import { data } from 'autoprefixer';
 
 // --- INTERFACES & VALIDATORS ---
 
@@ -49,7 +72,7 @@ export const kraPinValidator: ValidatorFn = (control: AbstractControl): Validati
 
 export const kenyanPhoneNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const phonePattern = /^\+254\d{9}$/;
+    const phonePattern = /^(?:\+254\d{9}|0\d{9})$/;
     return phonePattern.test(control.value) ? null : { invalidPhoneNumber: true };
 };
 
@@ -103,8 +126,8 @@ export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractCon
     return duplicates.length > 0 ? {
         duplicateFiles: {
             duplicatedControls: duplicates,
-            message: 'The same document cannot be uploaded to multiple fields'
-        }
+            message: 'The same document cannot be uploaded to multiple fields',
+        },
     } : null;
 };
 
@@ -119,8 +142,8 @@ export function enhancedFileTypeValidator(allowedTypes: string[], maxSizeMB: num
             return {
                 invalidFileType: {
                     allowed: allowedTypes.join(', '),
-                    actual: extension || 'unknown'
-                }
+                    actual: extension || 'unknown',
+                },
             };
         }
         const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -128,8 +151,8 @@ export function enhancedFileTypeValidator(allowedTypes: string[], maxSizeMB: num
             return {
                 fileTooLarge: {
                     maxSize: maxSizeMB,
-                    actualSize: Math.round(file.size / (1024 * 1024) * 100) / 100
-                }
+                    actualSize: Math.round(file.size / (1024 * 1024) * 100) / 100,
+                },
             };
         }
         return null;
@@ -141,10 +164,34 @@ interface QuoteResult extends CoreQuoteResult {
     currency: string;
 }
 
-interface PremiumCalculation { basePremium: number; phcf: number; trainingLevy: number; stampDuty: number; commission: number; totalPayable: number; currency: string; }
-interface MpesaPayment { amount: number; phoneNumber: string; reference: string; description: string; }
-export interface PaymentResult { success: boolean; method: 'stk' | 'paybill' | 'card'; reference: string; mpesaReceipt?: string; }
-interface DisplayUser { type: 'individual' | 'intermediary'; name: string; }
+interface PremiumCalculation {
+    basePremium: number;
+    phcf: number;
+    trainingLevy: number;
+    stampDuty: number;
+    commission: number;
+    totalPayable: number;
+    currency: string;
+}
+
+interface MpesaPayment {
+    amount: number;
+    phoneNumber: string;
+    reference: string;
+    description: string;
+}
+
+export interface PaymentResult {
+    success: boolean;
+    method: 'stk' | 'paybill' | 'card';
+    reference: string;
+    mpesaReceipt?: string;
+}
+
+interface DisplayUser {
+    type: 'individual' | 'intermediary';
+    name: string;
+}
 
 type EnhancedStoredUser = StoredUser & { uid: string; }; // LOCAL TYPE EXTENSION
 
@@ -187,7 +234,7 @@ if (!originalQuoteServiceProto.updateQuoteWithKycAndShipping) {
         });
         console.log('Received FormData (MOCK):', data);
         return of({ success: true, message: 'Quote details updated successfully (mock).' }).pipe(
-            debounceTime(1500)
+            debounceTime(1500),
         );
     };
 }
@@ -208,8 +255,16 @@ if (!originalQuoteServiceProto.updateQuoteWithKycAndShipping) {
             <mat-dialog-content class="modal-content">
                 <div class="content-text">
                     <h3>Terms of Use and Data Privacy Policy</h3>
-                    <p>Geminia Insurance Company Limited is committed to protecting the fundamental human right to privacy of those with whom we interact. We recognize the need to safeguard personal data that is collected or disclosed to us as part of the Know-your-customer information required by us in order to provide you with the requisite financial product or service.</p>
-                    <p>We are committed to complying with the requirements of the Data Protection Act and the attendant regulations as well as best global best practices regarding the processing of your personal data. In this regard, you are required to acquaint yourselves with our data privacy statement (<a href="https://geminia.co.ke/data-privacy-statement/" target="_blank" class="policy-link">https://geminia.co.ke/data-privacy-statement/</a>) which is intended to tell you how we use your personal data and describes how we collect and process your personal data during and after your relationship with us.</p>
+                    <p>Geminia Insurance Company Limited is committed to protecting the fundamental human right to
+                        privacy of those with whom we interact. We recognize the need to safeguard personal data that is
+                        collected or disclosed to us as part of the Know-your-customer information required by us in
+                        order to provide you with the requisite financial product or service.</p>
+                    <p>We are committed to complying with the requirements of the Data Protection Act and the attendant
+                        regulations as well as best global best practices regarding the processing of your personal
+                        data. In this regard, you are required to acquaint yourselves with our data privacy statement
+                        (<a href="https://geminia.co.ke/data-privacy-statement/" target="_blank" class="policy-link">https://geminia.co.ke/data-privacy-statement/</a>)
+                        which is intended to tell you how we use your personal data and describes how we collect and
+                        process your personal data during and after your relationship with us.</p>
                 </div>
             </mat-dialog-content>
             <div class="modal-footer">
@@ -218,17 +273,77 @@ if (!originalQuoteServiceProto.updateQuoteWithKycAndShipping) {
         </div>
     `,
     styles: [`
-        .modal-container { background-color: white; border-radius: 12px; overflow: hidden; max-width: 600px; max-height: 80vh; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; background-color: #21275c; color: white; position: relative; }
-        .modal-title { font-size: 18px; font-weight: 600; margin: 0; }
-        .close-button { position: absolute; top: 12px; right: 12px; color: rgba(255, 255, 255, 0.7); }
-        .close-button:hover { color: white; }
-        .modal-content { padding: 24px; max-height: 60vh; overflow-y: auto; }
-        .content-text h3 { color: #21275c; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-        .content-text p { line-height: 1.6; margin-bottom: 12px; font-size: 14px; color: #4a5568; }
-        .policy-link { color: #04b2e1; text-decoration: none; }
-        .policy-link:hover { text-decoration: underline; }
-        .modal-footer { padding: 16px 24px; background-color: #f8f9fa; display: flex; justify-content: flex-end; }
+        .modal-container {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 600px;
+            max-height: 80vh;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background-color: #21275c;
+            color: white;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .close-button:hover {
+            color: white;
+        }
+
+        .modal-content {
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .content-text h3 {
+            color: #21275c;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .content-text p {
+            line-height: 1.6;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .policy-link {
+            color: #04b2e1;
+            text-decoration: none;
+        }
+
+        .policy-link:hover {
+            text-decoration: underline;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -242,42 +357,254 @@ if (!originalQuoteServiceProto.updateQuoteWithKycAndShipping) {
             cursor: pointer;
             transition: background-color 0.2s;
         }
+
         .btn-primary:hover:not(:disabled) {
             background-color: #21275c;
         }
+
         .btn-primary:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
             opacity: 0.7;
         }
-    `]
+    `],
 })
 export class TermsPrivacyModalComponent {
-    constructor( public dialogRef: MatDialogRef<TermsPrivacyModalComponent>, @Inject(MAT_DIALOG_DATA) public data: { title: string } ) {}
-    closeDialog(): void { this.dialogRef.close(); }
+    constructor(public dialogRef: MatDialogRef<TermsPrivacyModalComponent>, @Inject(MAT_DIALOG_DATA) public data: {
+        title: string
+    }) {
+    }
+
+    closeDialog(): void {
+        this.dialogRef.close();
+    }
 }
 
 @Component({
     selector: 'app-payment-modal',
     standalone: true,
-    imports: [ CommonModule, MatDialogModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule, MatTabsModule ],
-    template: `<div class="payment-modal-container"><div class="modal-header"><div class="header-icon-wrapper"><mat-icon>payment</mat-icon></div><div><h1 mat-dialog-title class="modal-title">Complete Your Payment</h1><p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p></div><button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog"><mat-icon>close</mat-icon></button></div><mat-dialog-content class="modal-content"><mat-tab-group animationDuration="300ms" mat-stretch-tabs="true" class="payment-tabs"><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>phone_iphone</mat-icon><span>M-PESA</span></div></ng-template><div class="tab-panel-content"><div class="sub-options"><button (click)="mpesaSubMethod = 'stk'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'stk'"><mat-icon>tap_and_play</mat-icon><span>STK Push</span></button><button (click)="mpesaSubMethod = 'paybill'" class="sub-option-btn" [class.active]="mpesaSubMethod === 'paybill'"><mat-icon>article</mat-icon><span>Use Paybill</span></button></div><div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in"><p class="instruction-text">Enter your M-PESA phone number to receive a payment prompt.</p><form [formGroup]="stkForm"><mat-form-field appearance="outline"><mat-label>Phone Number</mat-label><input matInput formControlName="phoneNumber" placeholder="e.g., 0712345678" [disabled]="isProcessingStk"/><mat-icon matSuffix>phone_iphone</mat-icon></mat-form-field></form><button class="btn-primary w-full" (click)="processStkPush()" [disabled]="stkForm.invalid || isProcessingStk"><mat-spinner *ngIf="isProcessingStk" diameter="24"></mat-spinner><span *ngIf="!isProcessingStk">Pay KES {{ data.amount | number: '1.2-2' }}</span></button></div><div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in"><p class="instruction-text">Use the details below on your M-PESA App to complete payment.</p><div class="paybill-details"><div class="detail-item"><span class="label">Paybill Number:</span><span class="value">853338</span></div><div class="detail-item"><span class="label">Account Number:</span><span class="value account-number">{{ data.reference }}</span></div></div><button class="btn-primary w-full" (click)="verifyPaybillPayment()" [disabled]="isVerifyingPaybill"><mat-spinner *ngIf="isVerifyingPaybill" diameter="24"></mat-spinner><span *ngIf="!isVerifyingPaybill">Verify Payment</span></button></div></div></mat-tab><mat-tab><ng-template mat-tab-label><div class="tab-label-content"><mat-icon>credit_card</mat-icon><span>Credit/Debit Card</span></div></ng-template><div class="tab-panel-content animate-fade-in"><div class="card-redirect-info"><p class="instruction-text">You will be redirected to pay via <strong>I&M Bank</strong>, our reliable and trusted payment partner.</p><button class="btn-primary w-full" (click)="redirectToCardGateway()" [disabled]="isRedirectingToCard"><mat-spinner *ngIf="isRedirectingToCard" diameter="24"></mat-spinner><span *ngIf="!isRedirectingToCard">Pay Using Credit/Debit Card</span></button></div></div></mat-tab></mat-tab-group></mat-dialog-content></div>`,
+    imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule, MatTabsModule],
+    template: `
+        <div class="payment-modal-container">
+            <div class="modal-header">
+                <div class="header-icon-wrapper">
+                    <mat-icon>payment</mat-icon>
+                </div>
+                <div><h1 mat-dialog-title class="modal-title">Complete Your Payment</h1>
+                    <p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p>
+                </div>
+                <button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+            <mat-dialog-content class="modal-content">
+                <mat-tab-group animationDuration="300ms" mat-stretch-tabs="true" class="payment-tabs">
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <div class="tab-label-content">
+                                <mat-icon>phone_iphone</mat-icon>
+                                <span>M-PESA</span></div>
+                        </ng-template>
+                        <div class="tab-panel-content">
+                            <div class="sub-options">
+                                <button (click)="mpesaSubMethod = 'stk'" class="sub-option-btn"
+                                        [class.active]="mpesaSubMethod === 'stk'">
+                                    <mat-icon>tap_and_play</mat-icon>
+                                    <span>STK Push</span></button>
+                                <button (click)="mpesaSubMethod = 'paybill'" class="sub-option-btn"
+                                        [class.active]="mpesaSubMethod === 'paybill'">
+                                    <mat-icon>article</mat-icon>
+                                    <span>Use Paybill</span></button>
+                            </div>
+                            <div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in"><p
+                                class="instruction-text">Enter your M-PESA phone number to receive a payment prompt.</p>
+                                <form [formGroup]="stkForm">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Phone Number</mat-label>
+                                        <input matInput formControlName="phoneNumber" placeholder="e.g., 0712345678"
+                                               [disabled]="isProcessingStk" />
+                                        <mat-icon matSuffix>phone_iphone</mat-icon>
+                                    </mat-form-field>
+                                </form>
+                                <button class="btn-primary w-full" (click)="processStkPush()"
+                                        [disabled]="stkForm.invalid || isProcessingStk">
+                                    <mat-spinner *ngIf="isProcessingStk" diameter="24"></mat-spinner>
+                                    <span *ngIf="!isProcessingStk">Pay KES {{ data.amount | number: '1.2-2' }}</span>
+                                    <span *ngIf="isProcessingStk">Processing...</span>
+                                </button>
+                                <div class="mt-3" *ngIf="!isProcessingStk && paymentSuccess !== undefined">
+                                    <p
+                                        *ngIf="paymentSuccess"
+                                        class="text-green-600 font-semibold"
+                                    >
+                                        ✅ Payment successful!
+                                    </p>
+                                    <p
+                                        *ngIf="paymentSuccess === false"
+                                        class="text-red-600 font-semibold"
+                                    >
+                                        ❌ Payment failed. Please try again.
+                                    </p>
+                                </div>
+                            </div>
+                            <div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in"><p
+                                class="instruction-text">Use the details below on your M-PESA App to complete
+                                payment.</p>
+                                <div class="paybill-details">
+                                    <div class="detail-item"><span class="label">Paybill Number:</span><span
+                                        class="value">853338</span></div>
+                                    <div class="detail-item"><span class="label">Account Number:</span><span
+                                        class="value account-number">{{ data.reference }}</span></div>
+                                </div>
+                                <button class="btn-primary w-full" (click)="verifyPaybillPayment()"
+                                        [disabled]="isVerifyingPaybill">
+                                    <mat-spinner *ngIf="isVerifyingPaybill" diameter="24"></mat-spinner>
+                                    <span *ngIf="!isVerifyingPaybill">Verify Payment</span></button>
+                            </div>
+                        </div>
+                    </mat-tab>
+                    <mat-tab>
+                        <ng-template mat-tab-label>
+                            <div class="tab-label-content">
+                                <mat-icon>credit_card</mat-icon>
+                                <span>Credit/Debit Card</span></div>
+                        </ng-template>
+                        <div class="tab-panel-content animate-fade-in">
+                            <div class="card-redirect-info"><p class="instruction-text">You will be redirected to pay
+                                via <strong>I&M Bank</strong>, our reliable and trusted payment partner.</p>
+                                <button class="btn-primary w-full" (click)="redirectToCardGateway()"
+                                        [disabled]="isRedirectingToCard">
+                                    <mat-spinner *ngIf="isRedirectingToCard" diameter="24"></mat-spinner>
+                                    <span *ngIf="!isRedirectingToCard">Pay Using Credit/Debit Card</span></button>
+                            </div>
+                        </div>
+                    </mat-tab>
+                </mat-tab-group>
+            </mat-dialog-content>
+        </div>`,
     styles: [`
-        .payment-modal-container{border-radius:16px;overflow:hidden;max-width:450px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
-        .modal-header{display:flex;align-items:center;padding:20px 24px;background-color:#21275c;color:white}
-        .header-icon-wrapper{width:48px;height:48px;background-color:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:16px}
-        .modal-title{color:white;font-size:20px;font-weight:600;margin:0}
-        .modal-subtitle{font-size:14px;opacity:.9;margin-top:2px}
-        .close-button{position:absolute;top:12px;right:12px;color:rgba(255,255,255,.7)}
-        .modal-content{padding:0!important;background-color:#f9fafb}
-        .tab-panel-content{padding:24px}
-        .sub-options{display:flex;gap:8px;margin-bottom:24px;border-radius:12px;padding:6px;background-color:#e9ecef}
-        .sub-option-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:8px;border:none;background:0 0;font-weight:500;cursor:pointer;transition:all .3s ease;color:#495057}
-        .sub-option-btn.active{background-color:#fff;color:#21275c;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-        .paybill-details{background:#fff;border:1px dashed #d1d5db;border-radius:12px;padding:20px;margin-bottom:24px}
-        .detail-item{display:flex;justify-content:space-between;align-items:center;font-size:16px;padding:12px 0}
-        .detail-item .value{font-weight:700;color:#21275c}
-        .animate-fade-in{animation:fadeIn .4s ease-in-out}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .payment-modal-container {
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .1)
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            padding: 20px 24px;
+            background-color: #21275c;
+            color: white
+        }
+
+        .header-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(255, 255, 255, .1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px
+        }
+
+        .modal-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0
+        }
+
+        .modal-subtitle {
+            font-size: 14px;
+            opacity: .9;
+            margin-top: 2px
+        }
+
+        .close-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: rgba(255, 255, 255, .7)
+        }
+
+        .modal-content {
+            padding: 0 !important;
+            background-color: #f9fafb
+        }
+
+        .tab-panel-content {
+            padding: 24px
+        }
+
+        .sub-options {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            padding: 6px;
+            background-color: #e9ecef
+        }
+
+        .sub-option-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: 0 0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .3s ease;
+            color: #495057
+        }
+
+        .sub-option-btn.active {
+            background-color: #fff;
+            color: #21275c;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05)
+        }
+
+        .paybill-details {
+            background: #fff;
+            border: 1px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            padding: 12px 0
+        }
+
+        .detail-item .value {
+            font-weight: 700;
+            color: #21275c
+        }
+
+        .animate-fade-in {
+            animation: fadeIn .4s ease-in-out
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -292,28 +619,122 @@ export class TermsPrivacyModalComponent {
             transition: background-color 0.2s;
             height: 50px;
         }
+
         .btn-primary:hover:not(:disabled) {
             background-color: #21275c;
         }
+
         .btn-primary:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
             opacity: 0.7;
         }
-    `]
+    `],
 })
 export class PaymentModalComponent implements OnInit {
     stkForm: FormGroup;
     mpesaSubMethod: 'stk' | 'paybill' = 'stk';
     isProcessingStk = false;
+    paymentSuccess?: boolean;
     isVerifyingPaybill = false;
     isRedirectingToCard = false;
-    constructor( private fb: FormBuilder, public dialogRef: MatDialogRef<PaymentModalComponent>, @Inject(MAT_DIALOG_DATA) public data: MpesaPayment ) { this.stkForm = this.fb.group({ phoneNumber: [this.data.phoneNumber || '', [Validators.required, kenyanPhoneNumberValidator]] }); }
-    ngOnInit(): void {}
-    closeDialog(result: PaymentResult | null = null): void { this.dialogRef.close(result); }
-    processStkPush(): void { if (this.stkForm.invalid) return; this.isProcessingStk = true; setTimeout(() => { this.isProcessingStk = false; this.closeDialog({ success: true, method: 'stk', reference: this.data.reference, mpesaReceipt: 'S' + Math.random().toString(36).substring(2, 12).toUpperCase() }); }, 3000); }
-    verifyPaybillPayment(): void { this.isVerifyingPaybill = true; setTimeout(() => { this.isVerifyingPaybill = false; this.closeDialog({ success: true, method: 'paybill', reference: this.data.reference }); }, 3500); }
-    redirectToCardGateway(): void { this.isRedirectingToCard = true; setTimeout(() => { this.isRedirectingToCard = false; this.closeDialog({ success: true, method: 'card', reference: this.data.reference }); }, 2000); }
+
+    constructor(private fb: FormBuilder, public dialogRef: MatDialogRef<PaymentModalComponent>, @Inject(MAT_DIALOG_DATA) public data: MpesaPayment,
+                public quoteService: QuoteService,private router: Router) {
+        this.stkForm = this.fb.group({ phoneNumber: [this.data.phoneNumber || '', [Validators.required, kenyanPhoneNumberValidator]] });
+    }
+
+    ngOnInit(): void {
+    }
+
+    closeDialog(result: PaymentResult | null = null): void {
+        this.dialogRef.close(result);
+    }
+
+    processStkPush(): void {
+        if (this.stkForm.invalid) return;
+
+        this.isProcessingStk = true;
+        this.paymentSuccess = undefined;
+
+        const phoneValue = this.stkForm.get('phoneNumber')?.value;
+
+        this.quoteService.stkPush(phoneValue, 1, this.data.reference)
+            .subscribe({
+                next: (res) => {
+                    console.log('STK Push response', res);
+
+                    const checkOutRequestId = res.checkOutRequestId;
+                    const merchantRequestId = res.merchantRequestId;
+
+                    interval(5000).pipe(
+                        switchMap(() =>
+                            this.quoteService.validatePayment(merchantRequestId, checkOutRequestId)
+                        ),
+                        // stop polling once success or failure is reached
+                        takeWhile(
+                            (statusRes) =>
+                                statusRes.resultCode === 0 && !statusRes.mpesaCode, // keep polling while still pending
+                            true // emit the last value that breaks the condition
+                        ),
+                        catchError((err) => {
+                            this.isProcessingStk = false;
+                            return throwError(() => err);
+                        })
+                    ).subscribe({
+                        next: (statusRes) => {
+
+                            if (statusRes.resultCode === 0 && statusRes.mpesaCode) {
+                                // success
+                                this.isProcessingStk = false;
+                                this.paymentSuccess = true;
+                                setTimeout(() => {
+                                    this.dialogRef.close(true);
+                                    this.router.navigate(['/dashboard']);
+                                }, 1000);
+
+
+                            } else if (statusRes.resultCode !== 0) {
+                                // user cancelled or failed
+                                this.isProcessingStk = false;
+                                this.paymentSuccess = false;
+
+                            }
+                            // If still pending (resultCode===0 but no mpesaCode), the loop continues until it changes
+                        },
+                        error: (err) => {
+                            console.error('Polling error or timeout', err);
+                            this.isProcessingStk = false;
+                        }
+                    });
+                },
+                error: (err) => {
+                    if (err.name === 'TimeoutError') {
+                        console.error('STK request timed out');
+                    } else {
+                        console.error('Error', err);
+                    }
+                    this.isProcessingStk = false;
+                }
+            });
+    }
+
+
+    verifyPaybillPayment(): void {
+        this.isVerifyingPaybill = true;
+        setTimeout(() => {
+            this.isVerifyingPaybill = false;
+            this.closeDialog({ success: true, method: 'paybill', reference: this.data.reference });
+        }, 3500);
+    }
+
+    redirectToCardGateway(): void {
+        this.isRedirectingToCard = true;
+        setTimeout(() => {
+            this.isRedirectingToCard = false;
+            this.closeDialog({ success: true, method: 'card', reference: this.data.reference });
+        }, 2000);
+    }
 }
 
 
@@ -323,152 +744,248 @@ export class PaymentModalComponent implements OnInit {
     imports: [
         CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule,
         MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, DatePipe,
-        ThousandsSeparatorValueAccessor, PaymentModalComponent
+        ThousandsSeparatorValueAccessor, PaymentModalComponent, FuseAlertComponent,
     ],
     providers: [DatePipe],
     template: `
         <div class="modal-container">
             <div class="modal-header">
                 <h2 mat-dialog-title class="modal-title">Complete Purchase Details</h2>
-                <button mat-icon-button (click)="closeDialog('quote_saved_and_closed')" class="close-button" aria-label="Close dialog">
+                <button mat-icon-button (click)="closeDialog('quote_saved_and_closed')" class="close-button"
+                        aria-label="Close dialog">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
             <mat-dialog-content class="modal-content">
                 <form [formGroup]="kycShippingForm" class="p-4">
+
                     <h3 class="mb-4 text-xl font-semibold text-gray-800">Your Details (KYC)</h3>
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">KRA PIN <span class="text-red-500">*</span></label>
-                            <input type="text" formControlName="kraPin" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" placeholder="Format: A123456789Z" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'kraPin')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'kraPin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'kraPin') }}</div>
+                            <label class="block text-sm font-medium text-gray-700">KRA PIN <span
+                                class="text-red-500">*</span></label>
+                            <input type="text" formControlName="kraPin"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   placeholder="Format: A123456789Z"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'kraPin')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'kraPin')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'kraPin') }}
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
-                            <input type="text" formControlName="idNumber" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idNumber')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}</div>
+                            <input type="text" formControlName="idNumber"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idNumber')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idNumber')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}
+                            </div>
                         </div>
                     </div>
 
                     <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
-                    <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted formats: PDF, PNG, JPG (Max 10MB each).</p>
-                    <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched" class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                    <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted
+                        formats: PDF, PNG, JPG (Max 10MB each).</p>
+                    <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched"
+                         class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
                         <p>{{ getErrorMessage(kycShippingForm, 'kycDocuments') }}</p>
                     </div>
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6" formGroupName="kycDocuments">
                         <div>
-                            <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span class="text-red-500">*</span></label>
+                            <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span
+                                class="text-red-500">*</span></label>
                             <div class="mt-1">
-                                <input id="idfUpload" (change)="onFileSelected($event, 'idfUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': hasKYCValidationError('idfUpload') }">
+                                <input id="idfUpload" (change)="onFileSelected($event, 'idfUpload')" type="file"
+                                       accept=".pdf,.jpg,.jpeg,.png"
+                                       class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                       [ngClass]="{'border-red-500': hasKYCValidationError('idfUpload') }">
                                 <span *ngIf="selectedFiles['idfUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['idfUpload']?.name }}</span>
                             </div>
-                            <div *ngIf="hasKYCValidationError('idfUpload')" class="mt-1 text-sm text-red-600">{{ getKYCValidationError('idfUpload') }}</div>
+                            <div *ngIf="hasKYCValidationError('idfUpload')"
+                                 class="mt-1 text-sm text-red-600">{{ getKYCValidationError('idfUpload') }}
+                            </div>
                         </div>
                         <div>
-                            <label for="invoiceUpload" class="block text-sm font-medium text-gray-700">Invoice <span class="text-red-500">*</span></label>
+                            <label for="invoiceUpload" class="block text-sm font-medium text-gray-700">Invoice <span
+                                class="text-red-500">*</span></label>
                             <div class="mt-1">
-                                <input id="invoiceUpload" (change)="onFileSelected($event, 'invoiceUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': hasKYCValidationError('invoiceUpload') }">
+                                <input id="invoiceUpload" (change)="onFileSelected($event, 'invoiceUpload')" type="file"
+                                       accept=".pdf,.jpg,.jpeg,.png"
+                                       class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                       [ngClass]="{'border-red-500': hasKYCValidationError('invoiceUpload') }">
                                 <span *ngIf="selectedFiles['invoiceUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['invoiceUpload']?.name }}</span>
                             </div>
-                            <div *ngIf="hasKYCValidationError('invoiceUpload')" class="mt-1 text-sm text-red-600">{{ getKYCValidationError('invoiceUpload') }}</div>
+                            <div *ngIf="hasKYCValidationError('invoiceUpload')"
+                                 class="mt-1 text-sm text-red-600">{{ getKYCValidationError('invoiceUpload') }}
+                            </div>
                         </div>
                         <div>
-                            <label for="kraPinUpload" class="block text-sm font-medium text-gray-700">KRA PIN Certificate <span class="text-red-500">*</span></label>
+                            <label for="kraPinUpload" class="block text-sm font-medium text-gray-700">KRA PIN
+                                Certificate <span class="text-red-500">*</span></label>
                             <div class="mt-1">
-                                <input id="kraPinUpload" (change)="onFileSelected($event, 'kraPinUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': hasKYCValidationError('kraPinUpload') }">
+                                <input id="kraPinUpload" (change)="onFileSelected($event, 'kraPinUpload')" type="file"
+                                       accept=".pdf,.jpg,.jpeg,.png"
+                                       class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                       [ngClass]="{'border-red-500': hasKYCValidationError('kraPinUpload') }">
                                 <span *ngIf="selectedFiles['kraPinUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['kraPinUpload']?.name }}</span>
                             </div>
-                            <div *ngIf="hasKYCValidationError('kraPinUpload')" class="mt-1 text-sm text-red-600">{{ getKYCValidationError('kraPinUpload') }}</div>
+                            <div *ngIf="hasKYCValidationError('kraPinUpload')"
+                                 class="mt-1 text-sm text-red-600">{{ getKYCValidationError('kraPinUpload') }}
+                            </div>
                         </div>
                         <div>
-                            <label for="nationalIdUpload" class="block text-sm font-medium text-gray-700">National ID <span class="text-red-500">*</span></label>
+                            <label for="nationalIdUpload" class="block text-sm font-medium text-gray-700">National ID
+                                <span class="text-red-500">*</span></label>
                             <div class="mt-1">
-                                <input id="nationalIdUpload" (change)="onFileSelected($event, 'nationalIdUpload')" type="file" accept=".pdf,.jpg,.jpeg,.png" class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" [ngClass]="{'border-red-500': hasKYCValidationError('nationalIdUpload') }">
-                                <span *ngIf="selectedFiles['nationalIdUpload']" class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['nationalIdUpload']?.name }}</span>
+                                <input id="nationalIdUpload" (change)="onFileSelected($event, 'nationalIdUpload')"
+                                       type="file" accept=".pdf,.jpg,.jpeg,.png"
+                                       class="block w-full cursor-pointer rounded-md border border-gray-300 text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:py-2 file:px-4 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                       [ngClass]="{'border-red-500': hasKYCValidationError('nationalIdUpload') }">
+                                <span *ngIf="selectedFiles['nationalIdUpload']"
+                                      class="mt-2 block text-xs text-gray-500">Selected: {{ selectedFiles['nationalIdUpload']?.name }}</span>
                             </div>
-                            <div *ngIf="hasKYCValidationError('nationalIdUpload')" class="mt-1 text-sm text-red-600">{{ getKYCValidationError('nationalIdUpload') }}</div>
+                            <div *ngIf="hasKYCValidationError('nationalIdUpload')"
+                                 class="mt-1 text-sm text-red-600">{{ getKYCValidationError('nationalIdUpload') }}
+                            </div>
                         </div>
                     </div>
 
-                    <h3 class="mb-4 text-xl font-semibold text-gray-800 mt-6 border-t pt-6">Additional Shipment Information</h3>
+                    <h3 class="mb-4 text-xl font-semibold text-gray-800 mt-6 border-t pt-6">Additional Shipment
+                        Information</h3>
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">UCR Number</label>
-                            <input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'ucrNumber')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'ucrNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'ucrNumber') }}</div>
+                            <input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'ucrNumber')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'ucrNumber')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'ucrNumber') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">IDF Number <span class="text-red-500">*</span></label>
-                            <input type="text" formControlName="idfNumber" placeholder="e.g. 12MBAIM1234567891" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idfNumber')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idfNumber')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idfNumber') }}</div>
+                            <label class="block text-sm font-medium text-gray-700">IDF Number <span
+                                class="text-red-500">*</span></label>
+                            <input type="text" formControlName="idfNumber" placeholder="e.g. 12MBAIM1234567891"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idfNumber')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idfNumber')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idfNumber') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Loading Port <span class="text-red-500">*</span></label>
-                            <select formControlName="loadingPort" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'loadingPort')}">
+                            <label class="block text-sm font-medium text-gray-700">Loading Port <span
+                                class="text-red-500">*</span></label>
+                            <select formControlName="loadingPort"
+                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'loadingPort')}">
                                 <option value="" disabled>Select a port</option>
-                                <option *ngFor="let port of loadingPortOptions" [value]="port.id">{{ port.portName }}</option>
+                                <option *ngFor="let port of loadingPortOptions" [value]="port.id">{{ port.portName }}
+                                </option>
                             </select>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'loadingPort')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'loadingPort') }}</div>
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'loadingPort')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'loadingPort') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Port of Discharge <span class="text-red-500">*</span></label>
-                            <select formControlName="portOfDischarge" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'portOfDischarge')}">
+                            <label class="block text-sm font-medium text-gray-700">Port of Discharge <span
+                                class="text-red-500">*</span></label>
+                            <select formControlName="portOfDischarge"
+                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'portOfDischarge')}">
                                 <option value="" disabled>Select a port</option>
-                                <option *ngFor="let port of dischargePortOptions" [value]="port.id">{{ port.portName }}</option>
+                                <option *ngFor="let port of dischargePortOptions"
+                                        [value]="port.id">{{ port.portName }}
+                                </option>
                             </select>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'portOfDischarge')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'portOfDischarge') }}</div>
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'portOfDischarge')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'portOfDischarge') }}
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Vessel Name</label>
-                            <input type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'vesselName')}" />
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}</div>
+                            <input type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'vesselName')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Final Destination (County in Kenya) <span class="text-red-500">*</span></label>
-                            <select formControlName="finalDestinationCounty" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'finalDestinationCounty')}">
+                            <label class="block text-sm font-medium text-gray-700">Final Destination (County in Kenya)
+                                <span class="text-red-500">*</span></label>
+                            <select formControlName="finalDestinationCounty"
+                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'finalDestinationCounty')}">
                                 <option value="" disabled>Select a county</option>
-                                <option *ngFor="let county of kenyanCounties" [value]="county.id">{{ county.portName }}</option>
+                                <option *ngFor="let county of kenyanCounties"
+                                        [value]="county.id">{{ county.portName }}
+                                </option>
                             </select>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'finalDestinationCounty')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'finalDestinationCounty') }}</div>
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'finalDestinationCounty')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'finalDestinationCounty') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Date of Dispatch <span class="text-red-500">*</span></label>
-                            <input type="date" formControlName="dateOfDispatch" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'dateOfDispatch')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'dateOfDispatch')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'dateOfDispatch') }}</div>
+                            <label class="block text-sm font-medium text-gray-700">Date of Dispatch <span
+                                class="text-red-500">*</span></label>
+                            <input type="date" formControlName="dateOfDispatch" [min]="getToday()"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'dateOfDispatch')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'dateOfDispatch')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'dateOfDispatch') }}
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Estimated Date of Arrival <span class="text-red-500">*</span></label>
-                            <input type="date" formControlName="estimatedArrivalDate" [min]="getToday()" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'estimatedArrivalDate')}"/>
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'estimatedArrivalDate')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'estimatedArrivalDate') }}</div>
+                            <label class="block text-sm font-medium text-gray-700">Estimated Date of Arrival <span
+                                class="text-red-500">*</span></label>
+                            <input type="date" formControlName="estimatedArrivalDate" [min]="getToday()"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'estimatedArrivalDate')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'estimatedArrivalDate')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'estimatedArrivalDate') }}
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700">Description of Goods <span class="text-red-500">*</span></label>
-                        <textarea formControlName="descriptionOfGoods" rows="4" placeholder="Describe the type of goods, their value, quantity, packaging details..." class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'descriptionOfGoods')}"></textarea>
-                        <div *ngIf="isFieldInvalid(kycShippingForm, 'descriptionOfGoods')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'descriptionOfGoods') }}</div>
-                    </div>
-
-                    <div formArrayName="shippingItems" class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700">Shipping Items <span class="text-red-500">*</span></label>
-                        <div *ngFor="let item of shippingItems.controls; let i=index" [formGroupName]="i" class="mb-3 rounded-lg border bg-gray-50/50 p-3">
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                <div class="sm:col-span-3"><input type="text" formControlName="itemName" placeholder="Item Name" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(item, 'itemName')}"></div>
-                                <div><input type="number" formControlName="quantity" placeholder="Qty" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(item, 'quantity')}"></div>
-                                <div><input type="text" formControlName="unitCost" appThousands placeholder="Unit Cost (KES)" inputmode="numeric" class="w-full rounded-md border bg-white px-3 py-2 text-sm focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(item, 'unitCost')}"></div>
-                                <div class="flex items-end"><button type="button" (click)="removeShippingItem(i)" [disabled]="shippingItems.length <= 1" class="flex h-9 w-9 items-center justify-center rounded-md bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"><mat-icon>delete</mat-icon></button></div>
-                            </div>
-                            <div *ngIf="isFieldInvalid(item, 'itemName')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(item, 'itemName') }}</div>
-                            <div *ngIf="isFieldInvalid(item, 'quantity')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(item, 'quantity') }}</div>
-                            <div *ngIf="isFieldInvalid(item, 'unitCost')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(item, 'unitCost') }}</div>
+                        <label class="block text-sm font-medium text-gray-700">Description of Goods <span
+                            class="text-red-500">*</span></label>
+                        <textarea formControlName="descriptionOfGoods" rows="4"
+                                  placeholder="Describe the type of goods, their value, quantity, packaging details..."
+                                  class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                  [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'descriptionOfGoods')}"></textarea>
+                        <div *ngIf="isFieldInvalid(kycShippingForm, 'descriptionOfGoods')"
+                             class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'descriptionOfGoods') }}
                         </div>
-                        <button type="button" (click)="addShippingItem()" class="mt-2 flex items-center gap-2 rounded-md border border-dashed border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"><mat-icon>add</mat-icon>Add Another Item</button>
+                    </div>
+                    <div class="mb-6">
+                        <label class="mb-1 block text-sm font-medium">Sum Insured (KES) <span
+                            class="text-red-500">*</span></label>
+                        <input type="text" formControlName="sumInsured" appThousands placeholder="e.g., 1,500,000"
+                               inputmode="numeric"
+                               class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                               [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'sumInsured')}" />
+                        <div *ngIf="isFieldInvalid(kycShippingForm, 'sumInsured')"
+                             class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'sumInsured') }}
+                        </div>
                     </div>
 
+                    <fuse-alert
+                        *ngIf="formErrorMessage"
+                        [type]="'error'"
+                        [appearance]="'outline'"
+                        class="mb-4">
+                        <span fuseAlertTitle>Error</span>
+                        {{ formErrorMessage }}
+                    </fuse-alert>
                     <div class="mt-8 flex justify-end gap-4 border-t pt-6">
-                        <button type="button" (click)="closeDialog('quote_saved_and_closed')" class="btn-primary">Close (Save Quote)</button>
-                        <button type="submit" (click)="submitKycShippingDetails()" class="btn-primary" [disabled]="kycShippingForm.invalid || isSubmitting">
-                            <span *ngIf="isSubmitting" class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>
+                        <button type="button" (click)="closeDialog('quote_saved_and_closed')" class="btn-primary">Close
+                            (Save Quote)
+                        </button>
+                        <button type="submit" (click)="submitKycShippingDetails()" class="btn-primary"
+                                [disabled]="kycShippingForm.invalid || isSubmitting">
+                            <span *ngIf="isSubmitting"
+                                  class="animate-spin mr-2 inline-block h-5 w-5 rounded-full border-b-2 border-white"></span>
                             {{ isSubmitting ? 'Submitting...' : 'Submit & Pay' }}
                         </button>
                     </div>
@@ -477,15 +994,53 @@ export class PaymentModalComponent implements OnInit {
         </div>
     `,
     styles: [`
-        .modal-container { background-color: white; border-radius: 12px; overflow: hidden; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; background-color: #21275c; color: white; position: sticky; top: 0; z-index: 10; }
-        .modal-title { font-size: 20px; font-weight: 600; margin: 0; color: white; }
-        .close-button { color: rgba(255, 255, 255, 0.7); }
-        .close-button:hover { color: white; }
-        .modal-content { flex-grow: 1; overflow-y: auto; padding: 0 !important; }
+        .modal-container {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background-color: #21275c;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: white;
+        }
+
+        .close-button {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .close-button:hover {
+            color: white;
+        }
+
+        .modal-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0 !important;
+        }
+
         .modal-content form input, .modal-content form select, .modal-content form textarea {
             color: #1f2937;
         }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -499,25 +1054,33 @@ export class PaymentModalComponent implements OnInit {
             cursor: pointer;
             transition: background-color 0.2s;
         }
+
         .btn-primary:hover:not(:disabled) {
             background-color: #21275c;
         }
+
         .btn-primary:disabled {
             background-color: #9ca3af;
             cursor: not-allowed;
             opacity: 0.7;
         }
-    `]
+    `],
 })
 export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
     kycShippingForm: FormGroup;
     isSubmitting: boolean = false;
-    selectedFiles: { [key: string]: File | null } = { kraPinUpload: null, nationalIdUpload: null, invoiceUpload: null, idfUpload: null };
+    selectedFiles: { [key: string]: File | null } = {
+        kraPinUpload: null,
+        nationalIdUpload: null,
+        invoiceUpload: null,
+        idfUpload: null,
+    };
     private kycFileValidationErrors: { [key: string]: string } = {};
-     loadingPortOptions: PortData[] = [];
-     dischargePortOptions: PortData[] = [];
-     kenyanCounties: County[] = [];
+    loadingPortOptions: PortData[] = [];
+    dischargePortOptions: PortData[] = [];
+    kenyanCounties: County[] = [];
+    formErrorMessage: string = null;
 
     constructor(
         private fb: FormBuilder,
@@ -527,7 +1090,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         private datePipe: DatePipe,
         private quotationService: QuoteService,
         private userService: UserService,
-        private router: Router
+        private router: Router,
     ) {
         this.kycShippingForm = this.createKycShippingForm();
     }
@@ -542,25 +1105,32 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 console.error('Error loading counties:', err);
-            }
+            },
         });
-
-        let countryId: number = this.data.shippingmodeId===1 ? 116 : 43;
+        let countryId: number = this.data.shippingmodeId === 1 ? 116 : 43;
         forkJoin({
             countis: this.userService.getCounties(0, 100),
-            ports: this.userService.getPorts(this.data.originCountry, this.data.shippingmodeId,0,800),
-            destports: this.userService.getPorts(countryId, this.data.shippingmodeId,0,500),
+            ports: this.userService.getPorts(this.data.originCountry, this.data.shippingmodeId, 0, 800),
+            destports: this.userService.getPorts(countryId, this.data.shippingmodeId, 0, 500),
         }).subscribe({
             next: (data) => {
                 this.kenyanCounties = data.countis.pageItems || [];
                 this.loadingPortOptions = data.ports.pageItems || [];
                 this.dischargePortOptions = data.destports.pageItems || [];
             },
-            error: (err) => { console.error('Error loading marine data:', err); }
+            error: (err) => {
+                console.error('Error loading marine data:', err);
+            },
         });
-
-
-        console.log(this.data);
+        this.kycShippingForm.get('sumInsured')?.setValue(this.data.sumassured, { emitEvent: false });
+        this.kycShippingForm.get('kraPin')?.setValue(this.data.pinNo, { emitEvent: false });
+        this.kycShippingForm.get('idNumber')?.setValue(this.data.idNumber, { emitEvent: false });
+        if (this.data.pinNo) {
+            this.kycShippingForm.get('kraPin')?.disable();
+        }
+        if (this.data.idNumber) {
+            this.kycShippingForm.get('idNumber')?.disable();
+        }
     }
 
     ngOnDestroy(): void {
@@ -584,12 +1154,12 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             idfNumber: ['', [Validators.required, idfNumberValidator]],
             loadingPort: ['', Validators.required],
             portOfDischarge: ['', Validators.required],
+            sumInsured: ['', Validators.required],
             vesselName: [''],
             finalDestinationCounty: ['', Validators.required],
             dateOfDispatch: ['', [Validators.required, this.noPastDatesValidator]],
             estimatedArrivalDate: ['', [Validators.required, this.noPastDatesValidator]],
             descriptionOfGoods: ['', [Validators.required, minWords(3), maxWords(100)]],
-            shippingItems: this.fb.array([this.createShippingItem()], Validators.required),
         });
     }
 
@@ -609,12 +1179,31 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         }
     }
 
-    get shippingItems(): FormArray { return this.kycShippingForm.get('shippingItems') as FormArray; }
-    get kycDocuments(): FormGroup { return this.kycShippingForm.get('kycDocuments') as FormGroup; }
+    get shippingItems(): FormArray {
+        return this.kycShippingForm.get('shippingItems') as FormArray;
+    }
 
-    createShippingItem(): FormGroup { return this.fb.group({ itemName: ['', Validators.required], quantity: [1, [Validators.required, Validators.min(1)]], unitCost: [null, [Validators.required, Validators.min(0)]] }); }
-    addShippingItem(): void { this.shippingItems.push(this.createShippingItem()); }
-    removeShippingItem(index: number): void { if (this.shippingItems.length > 1) { this.shippingItems.removeAt(index); } }
+    get kycDocuments(): FormGroup {
+        return this.kycShippingForm.get('kycDocuments') as FormGroup;
+    }
+
+    createShippingItem(): FormGroup {
+        return this.fb.group({
+            itemName: ['', Validators.required],
+            quantity: [1, [Validators.required, Validators.min(1)]],
+            unitCost: [null, [Validators.required, Validators.min(0)]],
+        });
+    }
+
+    addShippingItem(): void {
+        this.shippingItems.push(this.createShippingItem());
+    }
+
+    removeShippingItem(index: number): void {
+        if (this.shippingItems.length > 1) {
+            this.shippingItems.removeAt(index);
+        }
+    }
 
     onFileSelected(event: Event, controlName: string): void {
         const input = event.target as HTMLInputElement;
@@ -633,11 +1222,16 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
     private getFieldDisplayName(controlName: string): string {
         switch (controlName) {
-            case 'kraPinUpload': return 'KRA PIN Certificate';
-            case 'nationalIdUpload': return 'National ID';
-            case 'invoiceUpload': return 'Invoice';
-            case 'idfUpload': return 'IDF Document';
-            default: return controlName;
+            case 'kraPinUpload':
+                return 'KRA PIN Certificate';
+            case 'nationalIdUpload':
+                return 'National ID';
+            case 'invoiceUpload':
+                return 'Invoice';
+            case 'idfUpload':
+                return 'IDF Document';
+            default:
+                return controlName;
         }
     }
 
@@ -665,7 +1259,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
                     });
                     Object.keys(this.kycFileValidationErrors).forEach(key => {
                         if (!duplicatedControls.includes(key) && this.kycFileValidationErrors[key].includes('duplicate')) {
-                             delete this.kycFileValidationErrors[key];
+                            delete this.kycFileValidationErrors[key];
                         }
                     });
                 } else {
@@ -746,74 +1340,63 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
         const updatedMetadata = {
             quoteId: this.data.quoteId,
-            firstName: this.data.firstName,
-            lastName: this.data.lastName,
-            email: this.data.email,
-            phoneNumber: this.data.phoneNumber,
-            suminsured: this.data.sumInsured,
-            shippingid: this.data.modeOfShipment,
-            tradeType: this.data.tradeType,
-            countryOrigin: this.data.origin,
-            destination: this.data.destination,
-            marineProduct: this.data.marineProduct,
-            marineCategory: this.data.marineCategory,
-            marineCargoType: this.data.marineCargoType,
-            marinePackagingType: this.data.marinePackagingType,
+            suminsured: kycFormValue.sumInsured,
             kraPin: kycFormValue.kraPin,
             idNumber: kycFormValue.idNumber,
-            ucrNumber: kycFormValue.ucrNumber,
-            idfNumber: kycFormValue.idfNumber,
-            vesselName: kycFormValue.vesselName,
+            ucrnumber: kycFormValue.ucrNumber,
+            idfnumber: kycFormValue.idfNumber,
+            vesselname: kycFormValue.vesselName,
             loadingPort: kycFormValue.loadingPort,
             portOfDischarge: kycFormValue.portOfDischarge,
             finalDestinationCounty: kycFormValue.finalDestinationCounty,
             dateOfDispatch: this.datePipe.transform(kycFormValue.dateOfDispatch, 'dd MMM yyyy'),
             estimatedArrivalDate: this.datePipe.transform(kycFormValue.estimatedArrivalDate, 'dd MMM yyyy'),
-            descriptionOfGoods: kycFormValue.descriptionOfGoods,
-            shippingItems: kycFormValue.shippingItems,
+            description: kycFormValue.descriptionOfGoods,
+            // shippingItems: kycFormValue.shippingItems,
             dateFormat: 'dd MMM yyyy',
-            locale: "en_US",
-            productId: 2416,
+            locale: 'en_US',
         };
 
         formData.append('metadata', JSON.stringify(updatedMetadata));
-
-        this.quotationService.updateQuoteWithKycAndShipping(this.data.quoteId, formData).subscribe({
-            next: (response) => {
-                this.isSubmitting = false;
+        this.quotationService.createApplication(formData).subscribe({
+            next: (res) => {
                 this.showToast('Quote details updated. Proceeding to payment.');
-                this.openPaymentModal();
+                this.openPaymentModal(res.commandId);
+                this.isSubmitting = false;
+                this.formErrorMessage = null;
             },
             error: (err) => {
-                console.error('Error updating quote with KYC/Shipping:', err);
-                this.showToast('Failed to update quote details. Please try again.');
+                console.error('Application creation error:', err);
+                this.formErrorMessage = 'Application creation error:' + err?.error?.errors[0].defaultUserMessage;
                 this.isSubmitting = false;
-                this.closeDialog('payment_failed');
-            }
+            },
         });
     }
 
-    private openPaymentModal(): void {
-        const dialogRef = this.dialog.open(PaymentModalComponent, {
-            width: '450px',
-            data: {
-                amount: this.data.totalPremium,
-                phoneNumber: this.data.phoneNumber,
-                reference: this.data.quoteId,
-                description: `Marine Cargo Insurance for Quote ${this.data.quoteId}`
-            },
-            disableClose: true
+    private openPaymentModal(shippingId): void {
+        this.userService.getShippingData(shippingId).subscribe(data => {
+            const dialogRef = this.dialog.open(PaymentModalComponent, {
+                width: '450px',
+                data: {
+                    amount: data.netpremium,
+                    phoneNumber: this.data.phoneNumber,
+                    reference: data.refno,
+                    description: `Marine Cargo Insurance for Quote ${data.refno}`,
+                },
+                disableClose: true,
+            });
+
+            dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((paymentResult: PaymentResult | null) => {
+                if (paymentResult?.success) {
+                    this.showToast('Payment successful!');
+                    this.dialogRef.close('payment_success');
+                } else {
+                    this.showToast('Payment cancelled or failed. Your quote has been saved.');
+                    this.dialogRef.close('payment_failed');
+                }
+            });
         });
 
-        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((paymentResult: PaymentResult | null) => {
-            if (paymentResult?.success) {
-                this.showToast('Payment successful!');
-                this.dialogRef.close('payment_success');
-            } else {
-                this.showToast('Payment cancelled or failed. Your quote has been saved.');
-                this.dialogRef.close('payment_failed');
-            }
-        });
     }
 
     closeDialog(result: 'quote_saved_and_closed' | 'payment_success' | 'payment_failed' | null = null): void {
@@ -827,7 +1410,9 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
     getErrorMessage(form: AbstractControl, field: string): string {
         const control = form.get(field);
-        if (field === 'kycDocuments' && control?.hasError('duplicateFiles')) { return 'You cannot upload the same document for multiple fields.'; }
+        if (field === 'kycDocuments' && control?.hasError('duplicateFiles')) {
+            return 'You cannot upload the same document for multiple fields.';
+        }
         if (!control || !control.errors) return '';
         if (control.hasError('required')) return 'This field is required.';
         if (control.hasError('email')) return 'Please enter a valid email address.';
@@ -853,17 +1438,29 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         return controlDate < today ? { pastDate: true } : null;
     }
 
-    getToday(): string { return new Date().toISOString().split('T')[0]; }
+    getToday(): string {
+        return new Date().toISOString().split('T')[0];
+    }
 
-    private scrollToFirstError(): void { setTimeout(() => { const firstErrorElement = document.querySelector('.ng-invalid.ng-touched'); if (firstErrorElement) { firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 100); }
-    private showToast(message: string): void { console.log("Toast (KycShippingPaymentModal):", message); }
+    private scrollToFirstError(): void {
+        setTimeout(() => {
+            const firstErrorElement = document.querySelector('.ng-invalid.ng-touched');
+            if (firstErrorElement) {
+                firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    }
+
+    private showToast(message: string): void {
+        console.log('Toast (KycShippingPaymentModal):', message);
+    }
 }
 
 
 @Component({
     selector: 'app-marine-cargo-quotation',
     standalone: true,
-    imports: [ CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule, MatIconModule, TitleCasePipe, ThousandsSeparatorValueAccessor, TermsPrivacyModalComponent, PaymentModalComponent, KycShippingPaymentModalComponent ],
+    imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule, MatIconModule, TitleCasePipe, ThousandsSeparatorValueAccessor, TermsPrivacyModalComponent, PaymentModalComponent, KycShippingPaymentModalComponent],
     providers: [DatePipe],
     templateUrl: './marine-cargo-quotation.component.html',
     styleUrls: ['./marine-cargo-quotation.component.scss'],
@@ -895,7 +1492,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     marineCargoTypes: CargoTypeData[] = [];
     readonly blacklistedCountries: string[] = ['Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia'];
     readonly allCountriesList: string[] = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe'].sort();
-    filteredCountriesList: Country[]= [];
+    filteredCountriesList: Country[] = [];
     exportDestinationCountries: string[] = [];
     readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
     kenyanCounties: County[] = [];
@@ -910,7 +1507,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         private userService: UserService,
         private route: ActivatedRoute,
         private datePipe: DatePipe,
-        private quotationService: QuoteService
+        private quotationService: QuoteService,
     ) {
 
         this.exportRequestForm = this.createExportRequestForm();
@@ -925,14 +1522,15 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             if (this.isLoggedIn) {
                 this.user = user as EnhancedStoredUser;
                 console.log(this.user);
+            } else {
+                this.user = null;
             }
-            else { this.user = null; }
         });
         this.isLoadingMarineData = true;
         forkJoin({
             products: this.userService.getMarineProducts(),
             packagingTypes: this.userService.getMarinePackagingTypes(),
-            categories: this.userService.getMarineCategories()
+            categories: this.userService.getMarineCategories(),
         }).subscribe({
             next: (data) => {
                 this.marineProducts = data.products || [];
@@ -940,12 +1538,19 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.marineCategories = data.categories || [];
                 this.isLoadingMarineData = false;
             },
-            error: (err) => { console.error('Error loading marine data:', err); this.isLoadingMarineData = false; }
+            error: (err) => {
+                console.error('Error loading marine data:', err);
+                this.isLoadingMarineData = false;
+            },
         });
         this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
             const quoteId = params['editId'];
-            if (quoteId) { this.editModeQuoteId = quoteId; this.loadQuoteForEditing(quoteId); }
-            else { this.loadQuoteFromLocalStorage(); }
+            if (quoteId) {
+                this.editModeQuoteId = quoteId;
+                this.loadQuoteForEditing(quoteId);
+            } else {
+                this.loadQuoteFromLocalStorage();
+            }
         });
         this.setupFormSubscriptions();
     }
@@ -974,7 +1579,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             termsAndPolicyConsent: [false, Validators.requiredTrue],
         });
     }
-
 
 
     onSubmit(): void {
@@ -1007,7 +1611,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             countryOrigin: this.quotationForm.get('origin')?.value,
             destination: this.quotationForm.get('destination')?.value,
             dateFormat: 'dd MMM yyyy',
-            locale: "en_US",
+            locale: 'en_US',
             productId: 2416,
             packagetypeid: packagingType,
             categoryid: selectedCategory?.id,
@@ -1033,7 +1637,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 console.error('Quote creation error:', err);
                 this.showToast('An error occurred while creating the quote. Please try again.');
                 this.isSaving = false;
-            }
+            },
         });
     }
 
@@ -1047,8 +1651,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             this.quotationForm.get('lastName')?.setValue('two', { emitEvent: false });
             this.quotationForm.get('email')?.setValue('three@test.com', { emitEvent: false });
             this.quotationForm.get('phoneNumber')?.setValue('+254722123456', { emitEvent: false });
-        }
-        else{
+        } else {
             this.displayImporterForm = true;
             this.quotationForm.get('firstName')?.setValue('', { emitEvent: false });
             this.quotationForm.get('lastName')?.setValue('', { emitEvent: false });
@@ -1086,7 +1689,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                     },
                     error: (err) => {
                         console.error('Error loading countries:', err);
-                    }
+                    },
                 });
             }
         });
@@ -1113,7 +1716,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                         console.error('Error loading marine cargo types:', err);
                         this.marineCargoTypes = [];
                         this.isLoadingCargoTypes = false;
-                    }
+                    },
                 });
         } else {
             this.marineCargoTypes = [];
@@ -1134,14 +1737,48 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         // }
     }
 
-    openTermsModal(event?: Event): void { if (event) { event.preventDefault(); event.stopPropagation(); } this.showTermsModal = true; }
-    closeTermsModal(): void { this.showTermsModal = false; }
-    openPrivacyModal(event?: Event): void { if (event) { event.preventDefault(); event.stopPropagation(); } this.showPrivacyModal = true; }
-    closePrivacyModal(): void { this.showPrivacyModal = false; }
-    private scrollToFirstError(): void { setTimeout(() => { const firstErrorElement = document.querySelector('.ng-invalid.ng-touched'); if (firstErrorElement) { firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 100); }
-    private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
+    openTermsModal(event?: Event): void {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        this.showTermsModal = true;
+    }
 
-    isFieldInvalid(form: FormGroup, field: string): boolean { const control = form.get(field); return !!control && control.invalid && (control.dirty || control.touched); }
+    closeTermsModal(): void {
+        this.showTermsModal = false;
+    }
+
+    openPrivacyModal(event?: Event): void {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        this.showPrivacyModal = true;
+    }
+
+    closePrivacyModal(): void {
+        this.showPrivacyModal = false;
+    }
+
+    private scrollToFirstError(): void {
+        setTimeout(() => {
+            const firstErrorElement = document.querySelector('.ng-invalid.ng-touched');
+            if (firstErrorElement) {
+                firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    }
+
+    private showToast(message: string): void {
+        this.toastMessage = message;
+        setTimeout(() => (this.toastMessage = ''), 5000);
+    }
+
+    isFieldInvalid(form: FormGroup, field: string): boolean {
+        const control = form.get(field);
+        return !!control && control.invalid && (control.dirty || control.touched);
+    }
 
     getErrorMessage(form: FormGroup, field: string): string {
         const control = form.get(field);
@@ -1161,7 +1798,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         return 'This field has an error.';
     }
 
-    noPastDatesValidator(control: AbstractControl): { [key: string]: boolean } | null { const today = new Date(); today.setHours(0, 0, 0, 0); const controlDate = new Date(control.value); return controlDate < today ? { pastDate: true } : null; }
+    noPastDatesValidator(control: AbstractControl): { [key: string]: boolean } | null {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const controlDate = new Date(control.value);
+        return controlDate < today ? { pastDate: true } : null;
+    }
 
     private createModalForm(): FormGroup {
         return this.fb.group({
@@ -1221,7 +1863,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.highRiskRequestForm.reset({ destinationCountry: 'Kenya' });
     }
 
-    private loadQuoteForEditing(quoteId: string): void { this.showToast(`Editing for quote ${quoteId} is not yet implemented.`); this.loadQuoteFromLocalStorage(); }
+    private loadQuoteForEditing(quoteId: string): void {
+        this.showToast(`Editing for quote ${quoteId} is not yet implemented.`);
+        this.loadQuoteFromLocalStorage();
+    }
 
     handlePayment(): void {
         if (this.isLoggedIn) {
@@ -1229,62 +1874,39 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.showToast('Error: No quote available for payment. Please generate a quote first.');
                 return;
             }
-            this.openKycShippingPaymentModal();
+            this.userService.getSingleQuote(this.quoteResult.id).subscribe(data => {
+                this.openKycShippingPaymentModal(data.quoteId,data.originCountry,data.shippingmodeId,data.sumassured,data.pinNumber,data.idNumber,data.status,
+                    data.phoneNo,data.netprem,data.refno);
+            });
+
+
+
         } else {
             this.showToast('Please log in or register to complete your purchase.');
-            setTimeout(() => { this.router.navigate(['/']); }, 2500);
+            setTimeout(() => {
+                this.router.navigate(['/']);
+            }, 2500);
         }
     }
 
-    private openKycShippingPaymentModal(): void {
-        if (!this.quoteResult || !this.quoteResult.id) {
-            console.error('No quoteResult or quoteId available for KYC/Shipping modal.');
-            this.showToast('Could not initiate purchase. Please generate a quote again.');
-            return;
-        }
-
-        const marineProduct = this.quotationForm.get('marineProduct')?.value;
-
-        const dialogData: KycShippingPaymentModalData = {
-            quoteId: this.quoteResult.id,
-            sumInsured: this.quotationForm.get('sumInsured')?.value,
-            firstName: this.quotationForm.get('firstName')?.value,
-            lastName: this.quotationForm.get('lastName')?.value,
-            email: this.quotationForm.get('email')?.value,
-            phoneNumber: this.quotationForm.get('phoneNumber')?.value,
-            origin: this.quotationForm.get('origin')?.value,
-            destination: this.quotationForm.get('destination')?.value,
-            modeOfShipment: this.quotationForm.get('modeOfShipment')?.value,
-            marineProduct: marineProduct,
-            marineCategory: this.quotationForm.get('marineCategory')?.value,
-            marineCargoType: this.quotationForm.get('marineCargoType')?.value,
-            marinePackagingType: this.quotationForm.get('marinePackagingType')?.value,
-            tradeType: this.quotationForm.get('tradeType')?.value,
-            totalPremium: this.quoteResult.netprem,
-            currency: this.quoteResult.currency || 'KES'
-        };
-
-        const dialogRef = this.dialog.open(KycShippingPaymentModalComponent, {
-            width: '800px',
-            maxHeight: '90vh',
-            data: dialogData,
-            disableClose: true
-        });
-
-        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
-            if (result === 'payment_success' || result === 'quote_saved_and_closed' || result === 'payment_failed') {
-                this.router.navigate(['/sign-up/dashboard']);
-                if (result === 'payment_success') {
-                    this.showToast('Payment successful! Redirecting to dashboard to access your documents.');
-                } else if (result === 'quote_saved_and_closed') {
-                    this.showToast('Your quote details have been saved to the dashboard. Redirecting to dashboard.');
-                } else if (result === 'payment_failed') {
-                    this.showToast('Payment failed. Your quote details have been saved to the dashboard.');
-                }
-            } else {
-                this.router.navigate(['/sign-up/dashboard']);
-                this.showToast('Operation cancelled. Returning to dashboard.');
-            }
+    private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
+        const isMobile = window.innerWidth <= 480;
+        this.dialog.open(KycShippingPaymentModalComponent, {
+            width: isMobile ? '100vw' : '800px',
+            maxWidth: isMobile ? '100vw' : '90vw',
+            height: isMobile ? '100vh' : 'auto',
+            maxHeight: isMobile ? '100vh' : '90vh',
+            panelClass: ['payment-modal', ...(isMobile ? ['mobile-modal'] : [])],
+            data: {quoteId:quoteId,originCountry:originCountry,shippingmodeId:shippingmodeId,sumassured:sumassured,pinNo:pinNo,idNo:idNo},
+            disableClose: true,
+            hasBackdrop: true,
+            backdropClass: 'payment-modal-backdrop',
+            // Add these mobile-specific options
+            ...(isMobile && {
+                position: { top: '0px', left: '0px' },
+                autoFocus: false,
+                restoreFocus: false
+            })
         });
     }
 
@@ -1309,8 +1931,26 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         }
     }
 
-    logout(): void { this.authService.logout(); this.showToast('You have been logged out successfully.'); setTimeout(() => { this.router.navigate(['/']); }, 1500); }
-    private resetPremiumCalculation(): PremiumCalculation { return { basePremium: 0, phcf: 0, trainingLevy: 0, stampDuty: 0, commission: 0, totalPayable: 0, currency: 'KES' }; }
+    logout(): void {
+        this.authService.logout();
+        this.showToast('You have been logged out successfully.');
+        setTimeout(() => {
+            this.router.navigate(['/']);
+        }, 1500);
+    }
+
+    private resetPremiumCalculation(): PremiumCalculation {
+        return {
+            basePremium: 0,
+            phcf: 0,
+            trainingLevy: 0,
+            stampDuty: 0,
+            commission: 0,
+            totalPayable: 0,
+            currency: 'KES',
+        };
+    }
+
     downloadQuote(): void {
         if (this.quoteResult?.id) {
             this.userService.downloadQuote(this.quoteResult?.id).subscribe(base64String => {
@@ -1336,6 +1976,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             this.showToast('No quote available to download.');
         }
     }
-    getToday(): string { return new Date().toISOString().split('T')[0]; }
-    goToStep(step: number): void { this.currentStep = step; }
+
+    getToday(): string {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    goToStep(step: number): void {
+        this.currentStep = step;
+    }
 }

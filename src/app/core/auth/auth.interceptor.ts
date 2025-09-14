@@ -8,6 +8,7 @@ import { inject } from '@angular/core';
 import { AuthService } from 'app/core/auth/auth.service';
 import { AuthUtils } from 'app/core/auth/auth.utils';
 import { Observable, catchError, throwError } from 'rxjs';
+import { Router } from '@angular/router';
 
 /**
  * Intercept
@@ -20,7 +21,7 @@ export const authInterceptor = (
     next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
     const authService = inject(AuthService);
-
+    const router = inject(Router);
     // Clone the request object
     const publicApiUrls = [
         '/api/v1/login',
@@ -62,7 +63,6 @@ export const authInterceptor = (
             console.log('Interceptor caught an error on a secure route:', error);
             if (error instanceof HttpErrorResponse && error.status === 401) {
                 authService.signOut();
-                location.reload();
             }
             return throwError(() => error);
         })

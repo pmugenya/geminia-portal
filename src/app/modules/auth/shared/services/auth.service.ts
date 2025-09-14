@@ -27,12 +27,16 @@ export interface PendingQuote {
     shippingmodeId: number;
     id: string;
     prodName: string;
+    phoneNo: string;
     refno: string;
     status: string;
     createDate: string;
     description: any;
+    pinNumber: string;
+    idNumber: string;
     originCountry: any;
-    netprem: any;
+    sumassured:number;
+    netprem: number;
 }
 
 export  interface PortData {

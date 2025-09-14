@@ -74,6 +74,18 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/quote/clientquotes`, { params });
     }
 
+    getSingleQuote(quoteId: string): Observable<any> {
+        return this._httpClient.get<any>(`${this.baseUrl}/quote/singlequote/${quoteId}`);
+    }
+
+    getQuoteStatus(quoteId: number): Observable<string> {
+        return this._httpClient.get<string>(`${this.baseUrl}/quote/quotStatus/${quoteId}`);
+    }
+
+    getShippingData(applicationId: number): Observable<any> {
+        return this._httpClient.get<any>(`${this.baseUrl}/shippingapplication/${applicationId}`);
+    }
+
     getClientPolicies(offset: number, limit: number): Observable<any> {
         let params = new HttpParams()
             .set('offset', offset.toString())
