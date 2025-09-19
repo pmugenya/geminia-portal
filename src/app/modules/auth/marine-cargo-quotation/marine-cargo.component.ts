@@ -33,7 +33,7 @@ import {
     timeout,
     interval,
     switchMap,
-    takeWhile, catchError, throwError, take,
+    takeWhile, catchError, throwError, take, fromEvent, filter,
 } from 'rxjs';
 import { AuthenticationService, PortData, StoredUser } from '../shared/services/auth.service';
 import {
@@ -935,21 +935,25 @@ export class PaymentModalComponent implements OnInit {
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
                             </div>
                         </div>
+                        
+                         <!-- Final Destination County -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Final Destination (County in Kenya)
-                                <span class="text-red-500">*</span></label>
-                            <select formControlName="finalDestinationCounty"
-                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
-                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'finalDestinationCounty')}">
-                                <option value="" disabled>Select a county</option>
-                                <option *ngFor="let county of kenyanCounties"
-                                        [value]="county.id">{{ county.portName }}
-                                </option>
-                            </select>
+                           <mat-form-field class="w-full">
+                                <mat-label>Final Destination (County in Kenya) <span class="text-red-500">*</span></mat-label>
+                                <mat-select formControlName="finalDestinationCounty">
+                                    <mat-option>
+                                        <ngx-mat-select-search [formControl]="countyFilterCtrl" placeholderLabel="Search..."></ngx-mat-select-search>
+                                    </mat-option>
+                                    <mat-option *ngFor="let county of filteredKenyanCounties" [value]="county.id">
+                                        {{ county.portName }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'finalDestinationCounty')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'finalDestinationCounty') }}
                             </div>
                         </div>
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Date of Dispatch <span
                                 class="text-red-500">*</span></label>
@@ -1124,7 +1128,11 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     dischargePortsPage = 0;
     dischargePortsLoading = false;
 
+    // Counties State
     kenyanCounties: County[] = [];
+    countyFilterCtrl: FormControl = new FormControl();
+    filteredKenyanCounties: County[] = [];
+
     formErrorMessage: string = null;
 
     constructor(
@@ -1144,12 +1152,26 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         this.patchFormWithQuoteData();
         this.setupKYCFileValidation();
         this.setDefaultDates();
-        this.loadInitialPorts();
         this.setupPortSearch();
+        this.setupCountySearch();
 
-        this.userService.getCounties(0, 100).subscribe({
-            next: (res) => this.kenyanCounties = res.pageItems,
-            error: (err) => console.error('Error loading counties:', err),
+        const countryId = this.data.shippingmodeId === 1 ? 116 : 43;
+        forkJoin({
+            counties: this.userService.getCounties(0, 100),
+            loadingPorts: this.userService.getPorts(this.data.originCountry, this.data.shippingmodeId, 0, 20),
+            dischargePorts: this.userService.getPorts(countryId, this.data.shippingmodeId, 0, 20),
+        }).subscribe({
+            next: (data) => {
+                this.kenyanCounties = data.counties.pageItems || [];
+                this.filteredKenyanCounties = this.kenyanCounties.slice();
+                
+                this.filteredLoadingPorts = data.loadingPorts.pageItems || [];
+                this.loadingPortsPage = 1;
+                
+                this.filteredDischargePorts = data.dischargePorts.pageItems || [];
+                this.dischargePortsPage = 1;
+            },
+            error: (err) => console.error('Error loading initial modal data:', err),
         });
 
         this.kycShippingForm.get('sumInsured')?.setValue(this.data.sumassured, { emitEvent: false });
@@ -1170,55 +1192,31 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     }
 
     private setupPortScrollListeners() {
-        const setupScroll = (select: MatSelect, viewport: CdkVirtualScrollViewport, action: () => void) => {
+        const setupScroll = (select: MatSelect, action: () => void) => {
             select.openedChange.pipe(
+                filter(opened => opened),
                 take(1),
+                switchMap(() => {
+                    const viewport = (select.panel.nativeElement as HTMLElement).querySelector('cdk-virtual-scroll-viewport');
+                    return viewport ? fromEvent(viewport, 'scroll').pipe(takeUntil(select.openedChange)) : of(null);
+                }),
                 takeUntil(this.destroy$)
             ).subscribe(() => {
-                viewport.elementScrolled().pipe(
-                    takeUntil(select.openedChange),
-                    takeUntil(this.destroy$)
-                ).subscribe(() => {
-                    const end = viewport.getRenderedRange().end;
+                const viewport = (select as any)._scrollableViewport;
+                if (viewport) {
+                    const { end } = viewport.getRenderedRange();
                     const total = viewport.getDataLength();
-                    if (end === total) {
+                    if (end === total && !this.loadingPortsLoading && !this.dischargePortsLoading) {
                         action();
                     }
-                });
+                }
             });
         };
-
-        this.loadingPortSelect.openedChange.pipe(takeUntil(this.destroy$)).subscribe(opened => {
-            if (opened) {
-                const viewport = (this.loadingPortSelect.panel.nativeElement as HTMLElement).querySelector('cdk-virtual-scroll-viewport');
-                if (viewport) {
-                    setupScroll(this.loadingPortSelect, this.getViewport(this.loadingPortSelect), this.loadNextLoadingPortsPage.bind(this));
-                }
-            }
-        });
-        
-        this.dischargePortSelect.openedChange.pipe(takeUntil(this.destroy$)).subscribe(opened => {
-            if (opened) {
-                const viewport = (this.dischargePortSelect.panel.nativeElement as HTMLElement).querySelector('cdk-virtual-scroll-viewport');
-                if (viewport) {
-                     setupScroll(this.dischargePortSelect, this.getViewport(this.dischargePortSelect), this.loadNextDischargePortsPage.bind(this));
-                }
-            }
-        });
+    
+        setupScroll(this.loadingPortSelect, this.loadNextLoadingPortsPage.bind(this));
+        setupScroll(this.dischargePortSelect, this.loadNextDischargePortsPage.bind(this));
     }
     
-    private getViewport(select: MatSelect): CdkVirtualScrollViewport | null {
-        // A bit of a workaround to get the viewport instance since we can't use @ViewChild directly
-        // on a component inside a template opened by another component (mat-select).
-        const scrollableViewport: any = select;
-        return scrollableViewport._scrollableViewport;
-    }
-    
-    private loadInitialPorts(): void {
-        this.loadNextLoadingPortsPage();
-        this.loadNextDischargePortsPage();
-    }
-
     private setupPortSearch(): void {
         this.loadingPortFilterCtrl.valueChanges.pipe(
             debounceTime(300),
@@ -1237,6 +1235,30 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             this.filteredDischargePorts = [];
             this.loadNextDischargePortsPage();
         });
+    }
+    
+    private setupCountySearch(): void {
+        this.countyFilterCtrl.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.filterCounties();
+            });
+    }
+
+    private filterCounties(): void {
+        if (!this.kenyanCounties) {
+            return;
+        }
+        let search = this.countyFilterCtrl.value;
+        if (!search) {
+            this.filteredKenyanCounties = this.kenyanCounties.slice();
+            return;
+        } else {
+            search = search.toLowerCase();
+        }
+        this.filteredKenyanCounties = this.kenyanCounties.filter(county => 
+            county.portName.toLowerCase().indexOf(search) > -1
+        );
     }
 
     loadNextLoadingPortsPage(): void {
@@ -1757,7 +1779,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         const category = this.quotationForm.get('marineCategory')?.value;
         const cargoType = this.quotationForm.get('marineCargoType')?.value;
         const selectedProduct = this.marineProducts.find(p => p.productdisplay === marineProductValue);
-        const selectedCategory = this.marineCategories.find(p => p.catname === category);
+        const selectedCategory = this.marineCategories.find(c => c.catname === category);
         const selectedCargoType = this.marineCargoTypes.find(p => p.ctname === cargoType);
 
         const metadata = {
