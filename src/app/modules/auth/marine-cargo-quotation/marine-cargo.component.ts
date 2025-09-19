@@ -463,22 +463,6 @@ export class TermsPrivacyModalComponent {
                             </div>
                         </div>
                     </mat-tab>
-                    <mat-tab>
-                        <ng-template mat-tab-label>
-                            <div class="tab-label-content">
-                                <mat-icon>credit_card</mat-icon>
-                                <span>Credit/Debit Card</span></div>
-                        </ng-template>
-                        <div class="tab-panel-content animate-fade-in">
-                            <div class="card-redirect-info"><p class="instruction-text">You will be redirected to pay
-                                via <strong>I&M Bank</strong>, our reliable and trusted payment partner.</p>
-                                <button class="btn-primary w-full" (click)="redirectToCardGateway()"
-                                        [disabled]="isRedirectingToCard">
-                                    <mat-spinner *ngIf="isRedirectingToCard" diameter="24"></mat-spinner>
-                                    <span *ngIf="!isRedirectingToCard">Pay Using Credit/Debit Card</span></button>
-                            </div>
-                        </div>
-                    </mat-tab>
                 </mat-tab-group>
             </mat-dialog-content>
         </div>`,
@@ -646,6 +630,11 @@ export class TermsPrivacyModalComponent {
             }
             .sub-options {
                 flex-direction: column;
+            }
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
             }
         }
     `],
