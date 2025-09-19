@@ -487,7 +487,8 @@ export class TermsPrivacyModalComponent {
             border-radius: 16px;
             overflow: hidden;
             max-width: 450px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .1)
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .1);
+            width: 100%;
         }
 
         .modal-header {
@@ -628,6 +629,24 @@ export class TermsPrivacyModalComponent {
             background-color: #9ca3af;
             cursor: not-allowed;
             opacity: 0.7;
+        }
+
+        @media (max-width: 480px) {
+            .modal-header {
+                padding: 16px;
+            }
+            .modal-title {
+                font-size: 18px;
+            }
+            .modal-subtitle {
+                font-size: 13px;
+            }
+            .tab-panel-content {
+                padding: 16px;
+            }
+            .sub-options {
+                flex-direction: column;
+            }
         }
     `],
 })
@@ -978,7 +997,7 @@ export class PaymentModalComponent implements OnInit {
                         <span fuseAlertTitle>Error</span>
                         {{ formErrorMessage }}
                     </fuse-alert>
-                    <div class="mt-8 flex justify-end gap-4 border-t pt-6">
+                    <div class="mt-8 flex flex-col sm:flex-row justify-end gap-4 border-t pt-6">
                         <button type="button" (click)="closeDialog('quote_saved_and_closed')" class="btn-primary">Close
                             (Save Quote)
                         </button>
@@ -1063,6 +1082,12 @@ export class PaymentModalComponent implements OnInit {
             background-color: #9ca3af;
             cursor: not-allowed;
             opacity: 0.7;
+        }
+
+        @media (max-width: 767px) {
+            .modal-container {
+                border-radius: 0;
+            }
         }
     `],
 })
@@ -1375,8 +1400,10 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
     private openPaymentModal(shippingId): void {
         this.userService.getShippingData(shippingId).subscribe(data => {
+            const isMobile = window.innerWidth < 480;
             const dialogRef = this.dialog.open(PaymentModalComponent, {
-                width: '450px',
+                width: isMobile ? '95vw' : '450px',
+                maxWidth: '95vw',
                 data: {
                     amount: data.netpremium,
                     phoneNumber: this.data.phoneNumber,
@@ -1396,7 +1423,6 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
                 }
             });
         });
-
     }
 
     closeDialog(result: 'quote_saved_and_closed' | 'payment_success' | 'payment_failed' | null = null): void {
@@ -1890,7 +1916,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
-        const isMobile = window.innerWidth <= 480;
+        const isMobile = window.innerWidth < 768;
         this.dialog.open(KycShippingPaymentModalComponent, {
             width: isMobile ? '100vw' : '800px',
             maxWidth: isMobile ? '100vw' : '90vw',
