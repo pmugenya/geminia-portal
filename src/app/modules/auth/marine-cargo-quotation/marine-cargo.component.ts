@@ -1423,6 +1423,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
                 }
             });
         });
+
     }
 
     closeDialog(result: 'quote_saved_and_closed' | 'payment_success' | 'payment_failed' | null = null): void {
@@ -1490,6 +1491,40 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     providers: [DatePipe],
     templateUrl: './marine-cargo-quotation.component.html',
     styleUrls: ['./marine-cargo-quotation.component.scss'],
+    styles: [`
+        :host form select,
+        :host form input[type="text"],
+        :host form input[type="email"],
+        :host form input[type="tel"],
+        :host form input.sum-insured-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 1rem;
+            color: #111827;
+            height: 50px;
+        }
+
+        :host form select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        :host form input:disabled,
+        :host form select:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+            color: #6b7280;
+        }
+    `]
 })
 export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
