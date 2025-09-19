@@ -59,8 +59,8 @@ export class AuthSignInComponent implements OnInit {
 
     ngOnInit(): void {
         this.signInForm = this.fb.group({
-            username: ['individual@geminia.com', [Validators.required, Validators.email]],
-            password: ['password123', Validators.required],
+            username: ['', [Validators.required, Validators.email]],
+            password: ['', Validators.required],
             otp: [''], // OTP is not required initially
             agreementAccepted: [false, Validators.requiredTrue],
         });
