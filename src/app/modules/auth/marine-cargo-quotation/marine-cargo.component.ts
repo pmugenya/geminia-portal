@@ -397,7 +397,8 @@ export class TermsPrivacyModalComponent {
                 <div class="header-icon-wrapper">
                     <mat-icon>payment</mat-icon>
                 </div>
-                <div><h1 mat-dialog-title class="modal-title">Complete Your Payment</h1>
+                <div class="header-text-content">
+                    <h1 mat-dialog-title class="modal-title">Complete Your Payment</h1>
                     <p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p>
                 </div>
                 <button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog">
@@ -454,9 +455,7 @@ export class TermsPrivacyModalComponent {
                                     </p>
                                 </div>
                             </div>
-                            <div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in"><p
-                                class="instruction-text">Use the details below on your M-PESA App to complete
-                                payment.</p>
+                            <div *ngIf="mpesaSubMethod === 'paybill'" class="option-view animate-fade-in">
                                 <div class="paybill-details">
                                     <div class="detail-item"><span class="label">Paybill Number:</span><span
                                         class="value">853338</span></div>
@@ -487,7 +486,8 @@ export class TermsPrivacyModalComponent {
             align-items: center;
             padding: 20px 24px;
             background-color: #21275c;
-            color: white
+            color: white;
+            position: relative;
         }
 
         .header-icon-wrapper {
@@ -499,6 +499,10 @@ export class TermsPrivacyModalComponent {
             align-items: center;
             justify-content: center;
             margin-right: 16px
+        }
+        
+        .header-text-content {
+            flex-grow: 1;
         }
 
         .modal-title {
@@ -631,6 +635,9 @@ export class TermsPrivacyModalComponent {
             }
             .modal-subtitle {
                 font-size: 13px;
+            }
+            .header-text-content {
+                padding-right: 30px; /* Space for close button */
             }
             .tab-panel-content {
                 padding: 16px;
@@ -1049,6 +1056,7 @@ export class PaymentModalComponent implements OnInit {
             position: sticky;
             top: 0;
             z-index: 10;
+            position: relative; /* Set positioning context */
         }
 
         .modal-title {
@@ -1056,13 +1064,13 @@ export class PaymentModalComponent implements OnInit {
             font-weight: 600;
             margin: 0;
             color: white;
-            flex-grow: 1;
+            padding-right: 40px; /* Add space for the button */
         }
 
         .close-button {
-            position: absolute;
+            position: absolute; /* Position relative to the header */
             top: 50%;
-            right: 16px;
+            right: 24px;
             transform: translateY(-50%);
             color: rgba(255, 255, 255, 0.7);
         }
@@ -2253,4 +2261,3 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.currentStep = step;
     }
 }
-
