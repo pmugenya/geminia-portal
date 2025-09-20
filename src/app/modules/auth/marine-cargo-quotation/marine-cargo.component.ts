@@ -398,7 +398,7 @@ export class TermsPrivacyModalComponent {
                     <mat-icon>payment</mat-icon>
                 </div>
                 <div class="header-text-content">
-                    <h1 mat-dialog-title class="modal-title">Complete Your Payment</h1>
+                    <h1 mat-dialog-title class="modal-title">Pay Here</h1>
                     <p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p>
                 </div>
                 <button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog">
@@ -424,8 +424,8 @@ export class TermsPrivacyModalComponent {
                                     <mat-icon>article</mat-icon>
                                     <span>Use Paybill</span></button>
                             </div>
-                            <div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in"><p
-                                class="instruction-text">Enter your M-PESA phone number to receive a payment prompt.</p>
+                            <div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in">
+                                <p class="instruction-text" style="font-weight: 700;"><strong>Enter your M-PESA number to receive a payment prompt.</strong></p>
                                 <form [formGroup]="stkForm">
                                     <mat-form-field appearance="outline">
                                         <mat-label>Phone Number</mat-label>
@@ -777,7 +777,7 @@ export class PaymentModalComponent implements OnInit {
     template: `
         <div class="modal-container">
             <div class="modal-header">
-                <h2 mat-dialog-title class="modal-title">Complete Purchase Details</h2>
+                <h2 mat-dialog-title class="modal-title">Complete Purchase</h2> 
                 <button mat-icon-button (click)="closeDialog('quote_saved_and_closed')" class="close-button"
                         aria-label="Close dialog">
                     <mat-icon>close</mat-icon>
@@ -1586,7 +1586,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         if (control.hasError('requiredTrue')) return 'You must agree to proceed.';
         if (control.hasError('pastDate')) return 'Date cannot be in the past.';
         if (control.hasError('min')) return 'Value must be greater than 0.';
-        if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z.';
+        if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z';
         if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: +254712345678.';
         if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 7 or 8 numerals.';
         if (control.hasError('invalidName')) return 'Name can only contain letters, spaces, and hyphens.';
