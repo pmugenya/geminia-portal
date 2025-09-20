@@ -116,6 +116,10 @@ export class UserService {
             responseType: 'text'
         });
     }
+    //the save quote method is embedded here where we can call actual API
+    getSingleQuoteForEditing(quoteId: string): Observable<any> {
+        return this._httpClient.get(`${this.baseUrl}/quotes/${quoteId}/edit`);
+    }
 
     getPorts(countryId: number, type: string, offset: number, limit: number, sqlSearch?: string
     ): Observable<any> {

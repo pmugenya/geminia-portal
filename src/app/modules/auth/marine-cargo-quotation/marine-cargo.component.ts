@@ -461,7 +461,7 @@ export class TermsPrivacyModalComponent {
                                     <div class="detail-item"><span class="label">Paybill Number:</span><span
                                         class="value">853338</span></div>
                                     <div class="detail-item"><span class="label">Account Number:</span><span
-                                        class="value account-number">{{ data.reference }}</span></div>
+                                        class="value account-number">{{ data.reference | slice:0:10 }}</span></div>
                                 </div>
                                 <button class="btn-primary w-full" (click)="verifyPaybillPayment()"
                                         [disabled]="isVerifyingPaybill">
@@ -642,6 +642,10 @@ export class TermsPrivacyModalComponent {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 4px;
+            }
+            .option-view form mat-form-field {
+                width: 100%;
+                box-sizing: border-box;
             }
         }
     `],
@@ -1038,7 +1042,6 @@ export class PaymentModalComponent implements OnInit {
 
         .modal-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             padding: 20px 24px;
             background-color: #21275c;
@@ -1053,9 +1056,14 @@ export class PaymentModalComponent implements OnInit {
             font-weight: 600;
             margin: 0;
             color: white;
+            flex-grow: 1;
         }
 
         .close-button {
+            position: absolute;
+            top: 50%;
+            right: 16px;
+            transform: translateY(-50%);
             color: rgba(255, 255, 255, 0.7);
         }
 
@@ -1653,6 +1661,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
     quotationForm: FormGroup;
+    isEditMode: boolean = false;
     exportRequestForm: FormGroup;
     highRiskRequestForm: FormGroup;
     currentStep: number = 1;
@@ -1711,6 +1720,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.user = null;
             }
         });
+        this.setupFormSubscriptions();
         this.isLoadingMarineData = true;
         forkJoin({
             products: this.userService.getMarineProducts(),
@@ -1729,15 +1739,25 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             },
         });
         this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-            const quoteId = params['editId'];
+            const quoteId = params['editId'] || params['id']; // Support both parameter names
             if (quoteId) {
                 this.editModeQuoteId = quoteId;
-                this.loadQuoteForEditing(quoteId);
+                // Wait for marine data to load before loading quote
+                if (!this.isLoadingMarineData) {
+                    this.loadQuoteForEditing(quoteId);
+                } else {
+                    // Wait for marine data to finish loading
+                    const checkDataLoaded = setInterval(() => {
+                        if (!this.isLoadingMarineData) {
+                            clearInterval(checkDataLoaded);
+                            this.loadQuoteForEditing(quoteId);
+                        }
+                    }, 100);
+                }
             } else {
                 this.loadQuoteFromLocalStorage();
             }
         });
-        this.setupFormSubscriptions();
     }
 
     ngOnDestroy(): void {
@@ -2050,8 +2070,51 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     }
 
     private loadQuoteForEditing(quoteId: string): void {
-        this.showToast(`Editing for quote ${quoteId} is not yet implemented.`);
-        this.loadQuoteFromLocalStorage();
+        this.isEditMode = true;
+        this.userService.getSingleQuoteForEditing(quoteId).subscribe({
+            next: (quoteData) => {
+                // Pre-fill the form with saved quote data
+                this.quotationForm.patchValue({
+                    firstName: quoteData.firstName || '',
+                    lastName: quoteData.lastName || '',
+                    email: quoteData.email || '',
+                    phoneNumber: quoteData.phoneNumber || '',
+                    modeOfShipment: quoteData.shippingmodeId || '',
+                    marineProduct: quoteData.marineProduct || 'ICC (A) All Risks',
+                    marineCategory: quoteData.marineCategory || '',
+                    marineCargoType: quoteData.marineCargoType || '',
+                    marinePackagingType: quoteData.marinePackagingType || '',
+                    tradeType: quoteData.tradeType || '',
+                    origin: quoteData.originCountry || '',
+                    destination: quoteData.destination || 'Kenya',
+                    sumInsured: quoteData.sumassured || null,
+                    termsAndPolicyConsent: false // Reset this for security
+                });
+    
+                // Load dependent data if needed
+                if (quoteData.marineCategory) {
+                    this.loadCargoTypesForCategory(quoteData.marineCategory);
+                }
+    
+                // Load countries for the selected shipping mode
+                if (quoteData.shippingmodeId) {
+                    this.userService.getCountries(0, 300, quoteData.shippingmodeId).subscribe({
+                        next: (res) => {
+                            this.filteredCountriesList = res.pageItems;
+                        },
+                        error: (err) => console.error('Error loading countries:', err)
+                    });
+                }
+    
+                this.showToast('Quote loaded successfully for editing.');
+            },
+            error: (err) => {
+                console.error('Error loading quote for editing:', err);
+                this.showToast('Error loading quote. Please try again.');
+                // Fallback to localStorage if API fails
+                this.loadQuoteFromLocalStorage();
+            }
+        });
     }
 
     handlePayment(): void {
@@ -2094,6 +2157,25 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 restoreFocus: false
             })
         });
+    }
+    private loadCargoTypesForCategory(categoryName: string): void {
+        const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
+        if (selectedCategory) {
+            this.isLoadingCargoTypes = true;
+            this.userService.getCargoTypesByCategory(selectedCategory.id)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe({
+                    next: (cargoTypes) => {
+                        this.marineCargoTypes = cargoTypes || [];
+                        this.isLoadingCargoTypes = false;
+                    },
+                    error: (err) => {
+                        console.error('Error loading marine cargo types:', err);
+                        this.marineCargoTypes = [];
+                        this.isLoadingCargoTypes = false;
+                    }
+                });
+        }
     }
 
     private saveQuoteToDashboard(quote: QuoteResult): void {
@@ -2171,3 +2253,4 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.currentStep = step;
     }
 }
+
