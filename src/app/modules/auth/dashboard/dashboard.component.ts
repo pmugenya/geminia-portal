@@ -415,6 +415,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const offset = this.currentIndex * this.pageLength;
         this.userService.getClientPolicies(offset, this.pageLength).subscribe({
             next: (res) => {
+                console.log(res.pageItems);
                 if (this.currentIndex === 0) {
                     this.activePolicies = res.pageItems;
                 } else {
