@@ -500,7 +500,7 @@ export class TermsPrivacyModalComponent {
             justify-content: center;
             margin-right: 16px
         }
-        
+
         .header-text-content {
             flex-grow: 1;
         }
@@ -777,7 +777,7 @@ export class PaymentModalComponent implements OnInit {
     template: `
         <div class="modal-container">
             <div class="modal-header">
-                <h2 mat-dialog-title class="modal-title">Complete Purchase</h2> 
+                <h2 mat-dialog-title class="modal-title">Complete Purchase</h2>
                 <button mat-icon-button (click)="closeDialog('quote_saved_and_closed')" class="close-button"
                         aria-label="Close dialog">
                     <mat-icon>close</mat-icon>
@@ -949,7 +949,7 @@ export class PaymentModalComponent implements OnInit {
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
                             </div>
                         </div>
-                        
+
                          <!-- Final Destination County -->
                         <div>
                            <mat-form-field class="w-full">
@@ -967,7 +967,7 @@ export class PaymentModalComponent implements OnInit {
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'finalDestinationCounty') }}
                             </div>
                         </div>
-                        
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Date of Dispatch <span
                                 class="text-red-500">*</span></label>
@@ -1123,7 +1123,7 @@ export class PaymentModalComponent implements OnInit {
 export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     @ViewChild('loadingPortSelect') loadingPortSelect: MatSelect;
     @ViewChild('dischargePortSelect') dischargePortSelect: MatSelect;
-    
+
     private destroy$ = new Subject<void>();
     kycShippingForm: FormGroup;
     isSubmitting: boolean = false;
@@ -1140,7 +1140,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     filteredLoadingPorts: PortData[] = [];
     loadingPortsPage = 0;
     loadingPortsLoading = false;
-    
+
     // Discharge Ports State
     dischargePortFilterCtrl: FormControl = new FormControl();
     filteredDischargePorts: PortData[] = [];
@@ -1183,10 +1183,10 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             next: (data) => {
                 this.kenyanCounties = data.counties.pageItems || [];
                 this.filteredKenyanCounties = this.kenyanCounties.slice();
-                
+
                 this.filteredLoadingPorts = data.loadingPorts.pageItems || [];
                 this.loadingPortsPage = 1;
-                
+
                 this.filteredDischargePorts = data.dischargePorts.pageItems || [];
                 this.dischargePortsPage = 1;
             },
@@ -1200,7 +1200,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         if (this.data.pinNo) this.kycShippingForm.get('kraPin')?.disable();
         if (this.data.idNumber) this.kycShippingForm.get('idNumber')?.disable();
     }
-    
+
     ngAfterViewInit() {
         this.setupPortScrollListeners();
     }
@@ -1231,11 +1231,11 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
                 }
             });
         };
-    
+
         setupScroll(this.loadingPortSelect, this.loadNextLoadingPortsPage.bind(this));
         setupScroll(this.dischargePortSelect, this.loadNextDischargePortsPage.bind(this));
     }
-    
+
     private setupPortSearch(): void {
         this.loadingPortFilterCtrl.valueChanges.pipe(
             debounceTime(300),
@@ -1255,7 +1255,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             this.loadNextDischargePortsPage();
         });
     }
-    
+
     private setupCountySearch(): void {
         this.countyFilterCtrl.valueChanges
             .pipe(takeUntil(this.destroy$))
@@ -1275,7 +1275,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         } else {
             search = search.toLowerCase();
         }
-        this.filteredKenyanCounties = this.kenyanCounties.filter(county => 
+        this.filteredKenyanCounties = this.kenyanCounties.filter(county =>
             county.portName.toLowerCase().indexOf(search) > -1
         );
     }

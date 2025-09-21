@@ -345,7 +345,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isMobileSidebarOpen = false;
   expandedPolicyId: number | null = null;
   expandedClaimId: string | null = null;
-    private statusCheckSubs: { [id: string]: Subscription } = {};
+    private refreshSub!: Subscription;
   constructor(
     private dialog: MatDialog,
     public router: Router,
@@ -367,6 +367,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
       });
     this.loadDashboardData();
+      this.refreshSub = interval(30000) // every 30s
+          .subscribe(() => this.loadDashboardData());
     this.loadClaimsData(); // Load claims data on init
   }
 
@@ -375,46 +377,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
           next: (res) => {
              this.pendingQuotes = res.pageItems;
-             console.log( this.pendingQuotes );
              this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
              this.updateDashboardStats();
-              // this.pendingQuotes.forEach(q => {
-              //     if (q.status === 'PAID') {
-              //         this.checkQuoteStatusPeriodically(q);
-              //     }
-              // });
           },
           error: (err) => console.error('Error loading quotes', err)
       });
   }
 
-    checkQuoteStatusPeriodically(quote: any) {
-      console.log(quote);
-        if (this.statusCheckSubs[quote.quoteId]) return; // already polling
 
-        this.statusCheckSubs[quote.quoteId] = interval(5000).subscribe(() => {
-            this.userService.getQuoteStatus(quote.quoteId).subscribe(latestStatus => {
-                console.log('checking status....',latestStatus);
-                if (latestStatus !== quote.status) {
-                    quote.status = latestStatus;
-                }
-
-                if (latestStatus === 'COMPLETED') {
-                    // stop polling this quote
-                    this.statusCheckSubs[quote.id]?.unsubscribe();
-                    delete this.statusCheckSubs[quote.quoteId];
-                    this.currentIndex = 0;
-                    // refresh whole pendingQuotes list
-                    this.loadDashboardData();
-                }
-            });
-        });
-    }
 
     updateDashboardStats(): void {
         const offset = this.currentIndex * this.pageLength;
         this.userService.getClientPolicies(offset, this.pageLength).subscribe({
             next: (res) => {
+                console.log(res.pageItems);
                 if (this.currentIndex === 0) {
                     this.activePolicies = res.pageItems;
                 } else {
@@ -692,7 +668,9 @@ onResize(event: Event) {
 ngOnDestroy(): void {
   // Remove body class if component is destroyed while modal is open
   document.body.classList.remove('modal-open');
-
+    if (this.refreshSub) {
+        this.refreshSub.unsubscribe();
+    }
   this.destroy$.next();
   this.destroy$.complete();
 }
@@ -717,7 +695,23 @@ ngOnDestroy(): void {
   getUnreadNotificationCount(): number { return this.notifications.filter((n) => !n.read).length; }
   toggleNavItem(item: NavigationItem): void { if (item.children) item.isExpanded = !item.isExpanded; }
   toggleMobileSidebar(): void { this.isMobileSidebarOpen = !this.isMobileSidebarOpen; }
-  downloadCertificate(policyId: number): void { /* ... download logic ... */ }
+  downloadCertificate(policyId: number): void {
+      this.userService.downloadCertificate(policyId).subscribe(
+          (blob: Blob) => {
+              const downloadUrl = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = downloadUrl;
+              a.download = `certificate_${policyId}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(downloadUrl);
+          },
+          (err) => {
+              this.showToast('Unable to get Certificate to download....');
+          }
+      );
+  }
   markNotificationAsRead(notification: Notification): void { notification.read = true; if (notification.actionUrl) document.querySelector(notification.actionUrl)?.scrollIntoView({ behavior: 'smooth' }); }
   getClaimStatusClass(status: ClaimStatus): string {
     const statusMap: { [key in ClaimStatus]: string } = {

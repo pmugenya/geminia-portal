@@ -94,6 +94,12 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/shippingapplication/approvedapplications`, { params });
     }
 
+    downloadCertificate(id: number): Observable<Blob> {
+        return this._httpClient.get(`${this.baseUrl}/shippingapplication/coredigitalCert?id=${id}`, {
+            responseType: 'blob'  // very important for binary files
+        });
+    }
+
     getCountries(offset: number, limit: number,type: number): Observable<any> {
         let params = new HttpParams()
             .set('offset', offset.toString())
