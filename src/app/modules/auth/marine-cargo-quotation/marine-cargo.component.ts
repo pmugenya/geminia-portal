@@ -1,5 +1,5 @@
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
     AbstractControl,
     FormArray,
@@ -1627,7 +1627,24 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 @Component({
     selector: 'app-marine-cargo-quotation',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, DecimalPipe, MatDialogModule, MatIconModule, TitleCasePipe, ThousandsSeparatorValueAccessor, TermsPrivacyModalComponent, PaymentModalComponent, KycShippingPaymentModalComponent],
+    imports: [
+        CommonModule, 
+        ReactiveFormsModule, 
+        RouterLink, 
+        CurrencyPipe, 
+        DecimalPipe, 
+        MatDialogModule, 
+        MatIconModule, 
+        TitleCasePipe, 
+        ThousandsSeparatorValueAccessor, 
+        TermsPrivacyModalComponent, 
+        PaymentModalComponent, 
+        KycShippingPaymentModalComponent,
+        MatSelectModule,
+        NgxMatSelectSearchModule,
+        ScrollingModule,
+        MatFormFieldModule
+    ],
     providers: [DatePipe],
     templateUrl: './marine-cargo-quotation.component.html',
     styleUrls: ['./marine-cargo-quotation.component.scss'],
@@ -1666,7 +1683,11 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         }
     `]
 })
-export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
+export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterViewInit {
+    @ViewChild('countrySelect') countrySelect: MatSelect;
+    @ViewChild('categorySelect') categorySelect: MatSelect;
+    @ViewChild('cargoTypeSelect') cargoTypeSelect: MatSelect;
+    
     private destroy$ = new Subject<void>();
     quotationForm: FormGroup;
     isEditMode: boolean = false;
@@ -1694,12 +1715,25 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
     marineCargoTypes: CargoTypeData[] = [];
     readonly blacklistedCountries: string[] = ['Russia', 'Ukraine', 'North Korea', 'Syria', 'Iran', 'Yemen', 'Sudan', 'Somalia'];
     readonly allCountriesList: string[] = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium', 'Brazil', 'Canada', 'China', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Ghana', 'Greece', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Japan', 'Kenya', 'Mexico', 'Netherlands', 'New Zealand', 'Nigeria', 'North Korea', 'Norway', 'Pakistan', 'Russia', 'Saudi Arabia', 'Somalia', 'South Africa', 'Spain', 'Sudan', 'Sweden', 'Switzerland', 'Syria', 'Tanzania', 'Turkey', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States of America', 'Yemen', 'Zambia', 'Zimbabwe'].sort();
-    filteredCountriesList: Country[] = [];
     exportDestinationCountries: string[] = [];
     readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
     kenyanCounties: County[] = [];
     isSaving = false;
     private readonly quoteStorageKey = 'savedMarineQuote';
+
+    // Filter controls for search functionality
+    countryFilterCtrl: FormControl = new FormControl();
+    categoryFilterCtrl: FormControl = new FormControl();
+    cargoTypeFilterCtrl: FormControl = new FormControl();
+
+    // Update these existing arrays to be filtered versions
+    filteredCountriesList: Country[] = [];
+    filteredMarineCategories: Category[] = [];
+    filteredMarineCargoTypes: CargoTypeData[] = [];
+
+    // Add pagination state for countries
+    countriesPage = 0;
+    countriesLoading = false;
 
     constructor(
         private fb: FormBuilder,
@@ -1728,8 +1762,14 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.user = null;
             }
         });
+
         this.setupFormSubscriptions();
         this.isLoadingMarineData = true;
+
+        // Add this call to setup search filters
+        this.setupSearchFilters();
+        
+        // Update your existing forkJoin to initialize filtered arrays
         forkJoin({
             products: this.userService.getMarineProducts(),
             packagingTypes: this.userService.getMarinePackagingTypes(),
@@ -1739,6 +1779,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.marineProducts = data.products || [];
                 this.marinePackagingTypes = data.packagingTypes || [];
                 this.marineCategories = data.categories || [];
+                
+                // Initialize filtered arrays
+                this.filteredMarineCategories = this.marineCategories.slice();
+                
                 this.isLoadingMarineData = false;
             },
             error: (err) => {
@@ -1746,6 +1790,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.isLoadingMarineData = false;
             },
         });
+
         this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
             const quoteId = params['editId'] || params['id']; // Support both parameter names
             if (quoteId) {
@@ -1768,9 +1813,132 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         });
     }
 
+    ngAfterViewInit() {
+        // Add scroll listeners after view initialization
+        this.setupScrollListeners();
+    }
+
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    private setupSearchFilters(): void {
+        // Country search with debounce for server-side filtering
+        this.countryFilterCtrl.valueChanges.pipe(
+            debounceTime(300),
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.countriesPage = 0;
+            this.filteredCountriesList = [];
+            this.loadNextCountriesPage();
+        });
+
+        // Category search (local filtering)
+        this.categoryFilterCtrl.valueChanges.pipe(
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filterCategories();
+        });
+
+        // Cargo type search (local filtering)
+        this.cargoTypeFilterCtrl.valueChanges.pipe(
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filterCargoTypes();
+        });
+    }
+
+    private setupScrollListeners() {
+        const setupScroll = (select: MatSelect, action: () => void) => {
+            if (!select) return;
+            
+            select.openedChange.pipe(
+                filter(opened => opened),
+                take(1),
+                switchMap(() => {
+                    const viewport = (select.panel?.nativeElement as HTMLElement)?.querySelector('cdk-virtual-scroll-viewport');
+                    return viewport ? fromEvent(viewport, 'scroll').pipe(takeUntil(select.openedChange)) : of(null);
+                }),
+                takeUntil(this.destroy$)
+            ).subscribe(() => {
+                const viewport = (select as any)._scrollableViewport;
+                if (viewport) {
+                    const { end } = viewport.getRenderedRange();
+                    const total = viewport.getDataLength();
+                    if (end === total && !this.countriesLoading) {
+                        action();
+                    }
+                }
+            });
+        };
+
+        // Setup scroll listener for countries (with pagination)
+        setupScroll(this.countrySelect, this.loadNextCountriesPage.bind(this));
+    }
+
+    private loadNextCountriesPage(): void {
+        if (this.countriesLoading) return;
+        
+        const modeOfShipment = this.quotationForm.get('modeOfShipment')?.value;
+        if (!modeOfShipment) return;
+
+        this.countriesLoading = true;
+        
+        this.userService.getCountries(this.countriesPage, 20, modeOfShipment)
+            .subscribe({
+                next: (res) => {
+                    // Filter countries on the client side based on search term
+                    const searchTerm = this.countryFilterCtrl.value?.toLowerCase() || '';
+                    const newCountries = searchTerm 
+                        ? res.pageItems.filter((country: any) => 
+                            country.countryname.toLowerCase().includes(searchTerm))
+                        : res.pageItems;
+
+                    this.filteredCountriesList = [
+                        ...this.filteredCountriesList, 
+                        ...newCountries
+                    ];
+                    this.countriesPage++;
+                    this.countriesLoading = false;
+                },
+                error: (err) => {
+                    console.error('Error loading countries:', err);
+                    this.countriesLoading = false;
+                }
+            });
+    }
+
+    private filterCategories(): void {
+        if (!this.marineCategories) {
+            return;
+        }
+        let search = this.categoryFilterCtrl.value;
+        if (!search) {
+            this.filteredMarineCategories = this.marineCategories.slice();
+            return;
+        } else {
+            search = search.toLowerCase();
+        }
+        this.filteredMarineCategories = this.marineCategories.filter(category => 
+            category.catname.toLowerCase().indexOf(search) > -1
+        );
+    }
+
+    private filterCargoTypes(): void {
+        if (!this.marineCargoTypes) {
+            return;
+        }
+        let search = this.cargoTypeFilterCtrl.value;
+        if (!search) {
+            this.filteredMarineCargoTypes = this.marineCargoTypes.slice();
+            return;
+        } else {
+            search = search.toLowerCase();
+        }
+        this.filteredMarineCargoTypes = this.marineCargoTypes.filter(cargoType => 
+            cargoType.ctname.toLowerCase().indexOf(search) > -1
+        );
     }
 
     private createQuotationForm(): FormGroup {
@@ -1792,7 +1960,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             termsAndPolicyConsent: [false, Validators.requiredTrue],
         });
     }
-
 
     onSubmit(): void {
         this.isSaving = true;
@@ -1832,11 +1999,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         };
 
         const formData = new FormData();
-        // const kycDocs = this.kycDocuments.value;
-        // formData.append('kraPinUpload', kycDocs.kraPinUpload);
-        // formData.append('nationalIdUpload', kycDocs.nationalIdUpload);
-        // formData.append('invoiceUpload', kycDocs.invoiceUpload);
-        // formData.append('idfUpload', kycDocs.idfUpload);
         formData.append('metadata', JSON.stringify(metadata));
 
         this.quotationService.createQuote(formData).subscribe({
@@ -1880,6 +2042,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.showExportModal = true;
             }
         });
+
         this.quotationForm.get('origin')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((country) => {
             if (country && this.blacklistedCountries.includes(country)) {
                 this.highRiskRequestForm.patchValue(this.quotationForm.value);
@@ -1887,30 +2050,29 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 this.showHighRiskModal = true;
             }
         });
+
         this.quotationForm.valueChanges.pipe(debounceTime(1000), takeUntil(this.destroy$)).subscribe(value => {
             this.saveQuoteToLocalStorage(value);
         });
 
+        // Update the modeOfShipment subscription to reset countries
         this.quotationForm.get('modeOfShipment')?.valueChanges.subscribe((mode: number) => {
             if (mode) {
                 console.log('Mode of Shipment selected:', mode);
-
-                // Example: Call your API with mode as "type"
-                this.userService.getCountries(0, 300, mode).subscribe({
-                    next: (res) => {
-                        this.filteredCountriesList = res.pageItems;
-                    },
-                    error: (err) => {
-                        console.error('Error loading countries:', err);
-                    },
-                });
+                
+                // Reset countries and load first page
+                this.filteredCountriesList = [];
+                this.countriesPage = 0;
+                this.countryFilterCtrl.setValue('');
+                
+                // Load first page of countries
+                this.loadNextCountriesPage();
             }
         });
     }
 
-    onCategorySelected(event: Event) {
-        const categoryName = (event.target as HTMLSelectElement).value;
-        const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
+    onCategorySelected(categoryValue: string) {
+        const selectedCategory = this.marineCategories.find(c => c.catname === categoryValue);
 
         if (selectedCategory) {
             this.isLoadingCargoTypes = true;
@@ -1919,7 +2081,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: (cargoTypes) => {
                         this.marineCargoTypes = cargoTypes || [];
+                        this.filteredMarineCargoTypes = this.marineCargoTypes.slice();
+                        this.cargoTypeFilterCtrl.setValue(''); // Reset search
                         this.isLoadingCargoTypes = false;
+                        
                         const currentCargoType = this.quotationForm.get('marineCargoType')?.value;
                         if (currentCargoType && !this.marineCargoTypes.some(ct => ct.ctname === currentCargoType)) {
                             this.quotationForm.get('marineCargoType')?.setValue('', { emitEvent: false });
@@ -1928,11 +2093,13 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                     error: (err) => {
                         console.error('Error loading marine cargo types:', err);
                         this.marineCargoTypes = [];
+                        this.filteredMarineCargoTypes = [];
                         this.isLoadingCargoTypes = false;
                     },
                 });
         } else {
             this.marineCargoTypes = [];
+            this.filteredMarineCargoTypes = [];
             this.quotationForm.get('marineCargoType')?.setValue('', { emitEvent: false });
         }
     }
@@ -2098,22 +2265,19 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
                     sumInsured: quoteData.sumassured || null,
                     termsAndPolicyConsent: false // Reset this for security
                 });
-    
+
                 // Load dependent data if needed
                 if (quoteData.marineCategory) {
                     this.loadCargoTypesForCategory(quoteData.marineCategory);
                 }
-    
+
                 // Load countries for the selected shipping mode
                 if (quoteData.shippingmodeId) {
-                    this.userService.getCountries(0, 300, quoteData.shippingmodeId).subscribe({
-                        next: (res) => {
-                            this.filteredCountriesList = res.pageItems;
-                        },
-                        error: (err) => console.error('Error loading countries:', err)
-                    });
+                    this.filteredCountriesList = [];
+                    this.countriesPage = 0;
+                    this.loadNextCountriesPage();
                 }
-    
+
                 this.showToast('Quote loaded successfully for editing.');
             },
             error: (err) => {
@@ -2166,6 +2330,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
             })
         });
     }
+    
     private loadCargoTypesForCategory(categoryName: string): void {
         const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
         if (selectedCategory) {
@@ -2261,3 +2426,4 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy {
         this.currentStep = step;
     }
 }
+

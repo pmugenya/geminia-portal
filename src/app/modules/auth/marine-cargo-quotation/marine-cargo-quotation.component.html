@@ -119,27 +119,69 @@
                                         <div *ngIf="isFieldInvalid(quotationForm, 'marinePackagingType')" class="mt-2 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marinePackagingType') }}</div>
                                     </div>
                                 </div>
+                                
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <!-- Updated Select Category with Searchable Dropdown -->
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Select Category <span class="text-red-500">*</span></label>
-                                        <select formControlName="marineCategory" (change)="onCategorySelected($event)" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineCategory')}"><option value="" disabled>Select a category</option><option *ngFor="let category of marineCategories" [value]="category.catname">{{ category.catname }}</option></select>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'marineCategory')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marineCategory') }}</div>
+                                        <mat-form-field appearance="outline" class="w-full category-select">
+                                            <mat-select formControlName="marineCategory" (selectionChange)="onCategorySelected($event.value)" #categorySelect>
+                                                <mat-option>
+                                                    <ngx-mat-select-search [formControl]="categoryFilterCtrl" placeholderLabel="Search categories..."></ngx-mat-select-search>
+                                                </mat-option>
+                                                <mat-option *ngFor="let category of filteredMarineCategories" [value]="category.catname">
+                                                    {{ category.catname }}
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <div *ngIf="isFieldInvalid(quotationForm, 'marineCategory')" class="mt-1 text-sm text-red-600">
+                                            {{ getErrorMessage(quotationForm, 'marineCategory') }}
+                                        </div>
                                     </div>
+                                    
+                                    <!-- Updated Marine Cargo Type with Searchable Dropdown -->
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Marine Cargo Type <span class="text-red-500">*</span></label>
-                                        <select formControlName="marineCargoType" class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'marineCargoType')}"><option value="" disabled>Select a cargo type</option><option *ngFor="let type of marineCargoTypes" [value]="type.ctname">{{ type.ctname }}</option></select>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'marineCargoType')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'marineCargoType') }}</div>
+                                        <mat-form-field appearance="outline" class="w-full cargo-type-select">
+                                            <mat-select formControlName="marineCargoType" #cargoTypeSelect [disabled]="isLoadingCargoTypes">
+                                                <mat-option>
+                                                    <ngx-mat-select-search [formControl]="cargoTypeFilterCtrl" placeholderLabel="Search cargo types..."></ngx-mat-select-search>
+                                                </mat-option>
+                                                <mat-option *ngFor="let type of filteredMarineCargoTypes" [value]="type.ctname">
+                                                    {{ type.ctname }}
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <div *ngIf="isLoadingCargoTypes" class="mt-1 text-sm text-gray-500">
+                                            Loading cargo types...
+                                        </div>
+                                        <div *ngIf="isFieldInvalid(quotationForm, 'marineCargoType')" class="mt-1 text-sm text-red-600">
+                                            {{ getErrorMessage(quotationForm, 'marineCargoType') }}
+                                        </div>
                                     </div>
                                 </div>
+                                
                                 <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <!-- Updated Country of Origin with Searchable Dropdown -->
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Country of Origin <span class="text-red-500">*</span></label>
-                                        <select formControlName="origin" class="w-full rounded-md border bg-white px-3 py-2 font-semibold focus-ring-primary" [ngClass]="{'border-red-500': isFieldInvalid(quotationForm, 'origin')}">
-                                            <option value="" disabled>Select a country</option>
-                                            <option *ngFor="let country of filteredCountriesList" [value]="country.id">{{ country.countryname }}</option>
-                                        </select>
-                                        <div *ngIf="isFieldInvalid(quotationForm, 'origin')" class="mt-1 text-sm text-red-600">{{ getErrorMessage(quotationForm, 'origin') }}</div>
+                                        <mat-form-field appearance="outline" class="w-full country-select">
+                                            <mat-select formControlName="origin" #countrySelect>
+                                                <mat-option>
+                                                    <ngx-mat-select-search [formControl]="countryFilterCtrl" placeholderLabel="Search countries..."></ngx-mat-select-search>
+                                                </mat-option>
+                                                <cdk-virtual-scroll-viewport itemSize="50" class="h-[200px]">
+                                                    <mat-option *cdkVirtualFor="let country of filteredCountriesList" [value]="country.id">
+                                                        {{ country.countryname }}
+                                                    </mat-option>
+                                                </cdk-virtual-scroll-viewport>
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <div *ngIf="isFieldInvalid(quotationForm, 'origin')" class="mt-1 text-sm text-red-600">
+                                            {{ getErrorMessage(quotationForm, 'origin') }}
+                                        </div>
                                     </div>
+                                    
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">Destination</label>
                                         <input type="text" formControlName="destination" class="w-full rounded-md border-gray-300 bg-gray-100 px-3 py-2 font-bold text-gray-900" readonly/>
