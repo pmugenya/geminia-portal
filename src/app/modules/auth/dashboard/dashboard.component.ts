@@ -717,7 +717,46 @@ ngOnDestroy(): void {
   getUnreadNotificationCount(): number { return this.notifications.filter((n) => !n.read).length; }
   toggleNavItem(item: NavigationItem): void { if (item.children) item.isExpanded = !item.isExpanded; }
   toggleMobileSidebar(): void { this.isMobileSidebarOpen = !this.isMobileSidebarOpen; }
-  downloadCertificate(policyId: number): void { /* ... download logic ... */ }
+  downloadCertificate(policy: Policy): void {
+    if (!policy || !policy.erprefno) {
+        this.snackBar.open('Invalid policy information', 'OK', { duration: 3000 });
+        return;
+    }
+
+    this.userService.downloadPolicyDocument(policy.erprefno).subscribe({
+        next: (response: Blob) => {
+            // Create a blob URL for the file
+            const blob = new Blob([response], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            
+            // Create a temporary link and trigger download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Policy_${policy.erprefno}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // Log the download activity
+            this.recentActivities.unshift({
+                id: 'A' + Date.now(),
+                title: 'Policy Downloaded',
+                description: `Policy ${policy.erprefno} downloaded`,
+                timestamp: new Date(),
+                icon: 'file_download',
+                iconColor: '#04b2e1',
+                relatedId: policy.erprefno.toString()
+            });
+        },
+        error: (error) => {
+            console.error('Error downloading policy:', error);
+            this.snackBar.open('Error downloading policy. Please try again later.', 'OK', { duration: 5000 });
+        }
+    });
+}
   markNotificationAsRead(notification: Notification): void { notification.read = true; if (notification.actionUrl) document.querySelector(notification.actionUrl)?.scrollIntoView({ behavior: 'smooth' }); }
   getClaimStatusClass(status: ClaimStatus): string {
     const statusMap: { [key in ClaimStatus]: string } = {

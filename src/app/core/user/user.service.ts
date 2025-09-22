@@ -94,7 +94,24 @@ export class UserService {
         return this._httpClient.get<any>(`${this.baseUrl}/shippingapplication/approvedapplications`, { params });
     }
 
-    getCountries(offset: number, limit: number,type: number): Observable<any> {
+    /**
+     * Download policy document as a PDF file
+     * @param policyNumber The policy number to download
+     * @returns Observable with the PDF file as a Blob
+     */
+    downloadPolicyDocument(policyNumber: string): Observable<Blob> {
+        return this._httpClient.get(`${this.baseUrl}/policies/${policyNumber}/download`, {
+            responseType: 'blob',
+            observe: 'response'
+        }).pipe(
+            map(response => {
+                // Extract the blob from the response
+                return response.body as Blob;
+            })
+        );
+    }
+
+    getCountries(offset: number, limit: number, type: number): Observable<any> {
         let params = new HttpParams()
             .set('offset', offset.toString())
             .set('limit', limit.toString())
