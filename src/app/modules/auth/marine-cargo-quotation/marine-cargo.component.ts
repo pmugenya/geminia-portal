@@ -2419,6 +2419,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             this.showToast('No quote available to download.');
         }
     }
+
     shareQuote(): void {
         if (!this.quoteResult?.id) {
             this.showToast('No quote available to share.');
@@ -2427,22 +2428,23 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
         const quoteDetails = this.generateShareableQuoteText();
 
-        // Check if Web Share API is supported (mobile devices)
+        // Check if Web Share API is supported
         if (navigator.share) {
             navigator.share({
                 title: 'Marine Cargo Insurance Quote - Geminia',
-                text: quoteDetails,
-                url: this.generateShareableLink() // Use the generated link
+                text: quoteDetails
+                // REMOVED: url: this.generateShareableLink()
             }).then(() => {
                 this.showToast('Quote shared successfully!');
             }).catch((error) => {
                 console.log('Error sharing:', error);
-                // If user cancels share, don't show fallback
+                // If user cancels, don't show the fallback modal
                 if (error.name !== 'AbortError') {
                     this.fallbackShare(quoteDetails);
                 }
             });
         } else {
+            // The fallback modal already focuses on text, so it's fine.
             this.fallbackShare(quoteDetails);
         }
     }
