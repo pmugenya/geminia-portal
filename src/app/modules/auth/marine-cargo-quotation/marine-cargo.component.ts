@@ -942,14 +942,14 @@ export class PaymentModalComponent implements OnInit {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Vessel Name</label>
-                            <input type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella"
-                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
-                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'vesselName')}" />
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
-                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
-                            </div>
+                        <mat-form-field class="w-full">
+                            <mat-label>Vessel Name</mat-label>
+                            <input matInput type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" />
+                        </mat-form-field>
+                        <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
+                            class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
                         </div>
+                    </div>
                         
                          <!-- Final Destination County -->
                         <div>
