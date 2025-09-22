@@ -13,6 +13,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { ShareModalComponent } from './share-modal.component'; 
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -1822,6 +1823,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         this.destroy$.next();
         this.destroy$.complete();
     }
+    
 
     private setupSearchFilters(): void {
         // Country search with debounce for server-side filtering
@@ -2416,6 +2418,111 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         } else {
             this.showToast('No quote available to download.');
         }
+    }
+    shareQuote(): void {
+        if (!this.quoteResult?.id) {
+            this.showToast('No quote available to share.');
+            return;
+        }
+
+        const quoteDetails = this.generateShareableQuoteText();
+
+        // Check if Web Share API is supported (mobile devices)
+        if (navigator.share) {
+            navigator.share({
+                title: 'Marine Cargo Insurance Quote - Geminia',
+                text: quoteDetails,
+                url: this.generateShareableLink() // Use the generated link
+            }).then(() => {
+                this.showToast('Quote shared successfully!');
+            }).catch((error) => {
+                console.log('Error sharing:', error);
+                // If user cancels share, don't show fallback
+                if (error.name !== 'AbortError') {
+                    this.fallbackShare(quoteDetails);
+                }
+            });
+        } else {
+            this.fallbackShare(quoteDetails);
+        }
+    }
+
+    private generateShareableQuoteText(): string {
+        const formValue = this.quotationForm.value;
+        const currency = this.premiumCalculation.currency;
+
+        return `🚢 Marine Cargo Insurance Quote - Geminia Insurance
+
+👤 Importer: ${formValue.firstName} ${formValue.lastName}
+📧 Email: ${formValue.email}
+📱 Phone: ${formValue.phoneNumber}
+
+🚛 Shipment Details:
+• Trade Type: ${formValue.tradeType === '1' ? 'Import' : 'Export'}
+• Mode: ${formValue.modeOfShipment === '1' ? 'Sea' : 'Air'}
+• Origin: ${this.getCountryName(formValue.origin)}
+• Destination: ${formValue.destination}
+• Cargo Type: ${formValue.marineCargoType}
+• Category: ${formValue.marineCategory}
+
+💰 Premium Breakdown:
+• Sum Insured: ${currency} ${this.formatNumber(formValue.sumInsured)}
+• Base Premium: ${currency} ${this.formatNumber(this.quoteResult.premium)}
+• PHCF (0.25%): ${currency} ${this.formatNumber(this.quoteResult.phcf)}
+• Training Levy (0.25%): ${currency} ${this.formatNumber(this.quoteResult.tl)}
+• Stamp Duty: ${currency} ${this.formatNumber(this.quoteResult.sd)}
+
+💳 TOTAL PAYABLE: ${currency} ${this.formatNumber(this.quoteResult.netprem)}
+
+Generated on: ${new Date().toLocaleDateString()}
+Quote Reference: ${this.quoteResult.id}
+
+🌐 Get your marine cargo insurance at: ${window.location.origin}`;
+    }
+
+    private getCountryName(countryId: string): string {
+        // Ensure that filteredCountriesList is populated.
+        // The type 'any' is used here to match the dynamic nature of your existing code.
+        const country: any = this.filteredCountriesList.find((c: any) => c.id === countryId);
+        return country ? country.countryname : 'Unknown';
+    }
+
+
+    private formatNumber(value: number): string {
+        if (value === null || value === undefined) return '0';
+        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    }
+
+    private fallbackShare(quoteDetails: string): void {
+        const shareableLink = this.generateShareableLink();
+        this.showShareModal(quoteDetails, shareableLink);
+    }
+
+    private generateShareableLink(): string {
+        const baseUrl = window.location.origin;
+        const quoteId = this.quoteResult?.id;
+        // Construct a URL that can be used to retrieve the quote later
+        return `${baseUrl}/marine-cargo-quotation?id=${quoteId}`;
+    }
+
+    private showShareModal(quoteText: string, shareLink: string): void {
+        const modal = this.dialog.open(ShareModalComponent, {
+            width: '500px',
+            maxWidth: '95vw',
+            data: {
+                quoteText: quoteText,
+                shareLink: shareLink,
+                quoteId: this.quoteResult?.id
+            }
+        });
+
+        modal.afterClosed().subscribe(result => {
+            if (result === 'copied') {
+                this.showToast('Quote details copied to clipboard!');
+            } else if (result === 'link-copied') {
+                this.showToast('Share link copied to clipboard!');
+            }
+        });
     }
 
     getToday(): string {
