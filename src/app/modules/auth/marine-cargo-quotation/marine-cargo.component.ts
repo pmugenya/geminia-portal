@@ -1587,7 +1587,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         if (control.hasError('pastDate')) return 'Date cannot be in the past.';
         if (control.hasError('min')) return 'Value must be greater than 0.';
         if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z';
-        if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: +254712345678.';
+        if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format:0712345678';
         if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 7 or 8 numerals.';
         if (control.hasError('invalidName')) return 'Name can only contain letters, spaces, and hyphens.';
         if (control.hasError('minWords')) return `Minimum of ${control.errors['minWords'].requiredWords} words is required.`;
@@ -2170,7 +2170,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         if (control.hasError('min')) return 'Value must be greater than 0.';
         if (control.hasError('invalidKraPin')) return 'Invalid KRA PIN. Format: A123456789Z.';
         if (control.hasError('invalidIdfNumber')) return 'Invalid IDF Number. Format: 25MBAIM004889919 (2 digits + 5 letters + 9 digits).';
-        if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: +254712345678 or 0712345678 (no spaces).';
+        if (control.hasError('invalidPhoneNumber')) return 'Invalid phone number. Format: 0712345678';
         if (control.hasError('invalidIdNumber')) return 'Invalid ID. Must be 7 or 8 numerals.';
         if (control.hasError('invalidName')) return 'Name can only contain letters, spaces, and hyphens.';
         if (control.hasError('minWords')) return `Minimum of ${control.errors['minWords'].requiredWords} words is required.`;
