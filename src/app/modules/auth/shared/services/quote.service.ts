@@ -38,4 +38,13 @@ export class QuoteService {
 
         return this.http.get<any>(`${this.baseUrl}/payments/validate`, { params });
     }
+
+    /**
+     * Fetches a quote by its ID
+     * @param quoteId The ID of the quote to fetch
+     * @returns Observable with the quote data
+     */
+    getQuoteById(quoteId: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/quote/${quoteId}`);
+    }
 }

@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface ShareModalData {
     quoteText: string;
-    shareLink: string;
+    shareLink: string; // Kept in interface for compatibility, but not used in this modal
     quoteId: string;
 }
 
@@ -31,52 +31,32 @@ export interface ShareModalData {
             </div>
 
             <mat-dialog-content class="modal-content">
-                <!-- Social Media Share Options -->
+                <!-- Specific Share Options -->
                 <div class="share-options">
                     <h3 class="section-title">Share via</h3>
                     <div class="share-buttons-grid">
-                        <button (click)="shareViaWhatsApp()" class="share-button whatsapp">
+                        <!-- WhatsApp Button -->
+                        <button (click)="shareViaWhatsApp()" class="share-button whatsapp" matTooltip="Share via WhatsApp">
                             <svg class="share-icon" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
                             </svg>
                             <span>WhatsApp</span>
                         </button>
 
-                        <button (click)="shareViaEmail()" class="share-button email">
-                            <mat-icon class="share-icon">email</mat-icon>
-                            <span>Email</span>
+                        <!-- Gmail Button -->
+                        <button (click)="shareViaGmail()" class="share-button gmail" matTooltip="Share via Gmail">
+                             <svg class="share-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22 5.88V18c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-.55.22-1.05.59-1.41L12 12l9.41-7.41C21.78 4.95 22 5.45 22 6v-.12zM12 10.5L3.5 4.25h17L12 10.5z"/>
+                            </svg>
+                            <span>Gmail</span>
                         </button>
 
-                        <button (click)="shareViaSMS()" class="share-button sms">
-                            <mat-icon class="share-icon">sms</mat-icon>
-                            <span>SMS</span>
-                        </button>
-
-                        <button (click)="copyQuoteText()" class="share-button copy"
-                                [class.copied]="textCopied"
-                                matTooltip="Copy quote details">
-                            <mat-icon class="share-icon">{{ textCopied ? 'check' : 'content_copy' }}</mat-icon>
-                            <span>{{ textCopied ? 'Copied!' : 'Copy Text' }}</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Share Link Section -->
-                <div class="share-link-section">
-                    <h3 class="section-title">Or copy link</h3>
-                    <div class="link-container">
-                        <input
-                            #linkInput
-                            type="text"
-                            [value]="data.shareLink"
-                            readonly
-                            class="link-input"
-                        />
-                        <button (click)="copyShareLink()"
-                                class="copy-link-btn"
-                                [class.copied]="linkCopied"
-                                matTooltip="Copy share link">
-                            <mat-icon>{{ linkCopied ? 'check' : 'content_copy' }}</mat-icon>
+                        <!-- Outlook Button -->
+                        <button (click)="shareViaOutlook()" class="share-button outlook" matTooltip="Share via Outlook">
+                            <svg class="share-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21 5H3c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-2 12H5V9.92l7 4.38 7-4.38V17zM12 12.5L5 8h14l-7 4.5z"/>
+                            </svg>
+                            <span>Outlook</span>
                         </button>
                     </div>
                 </div>
@@ -92,6 +72,7 @@ export interface ShareModalData {
         </div>
     `,
     styles: [`
+        /* ... all the modal container, header, and content styles remain the same ... */
         .share-modal-container {
             border-radius: 16px;
             overflow: hidden;
@@ -148,21 +129,22 @@ export interface ShareModalData {
             padding: 24px !important;
             background-color: #f9fafb;
         }
-
         .section-title {
             font-size: 16px;
             font-weight: 600;
             color: #374151;
             margin-bottom: 16px;
+            text-align: center;
         }
 
         .share-options {
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .share-buttons-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            /* Updated to fit 3 items gracefully */
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
         }
 
@@ -170,6 +152,7 @@ export interface ShareModalData {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             padding: 16px 12px;
             border: 2px solid #e5e7eb;
             border-radius: 12px;
@@ -179,19 +162,11 @@ export interface ShareModalData {
             color: #374151;
             font-size: 14px;
             font-weight: 500;
+            text-align: center;
         }
 
         .share-button:hover {
-            border-color: #04b2e1;
-            background-color: #f0f9ff;
-            color: #04b2e1;
             transform: translateY(-2px);
-        }
-
-        .share-button.copied {
-            border-color: #10b981;
-            background-color: #ecfdf5;
-            color: #10b981;
         }
 
         .share-button.whatsapp:hover {
@@ -200,64 +175,23 @@ export interface ShareModalData {
             color: #25d366;
         }
 
-        .share-button.email:hover {
-            border-color: #dc2626;
+        /* NEW STYLES for Gmail and Outlook */
+        .share-button.gmail:hover {
+            border-color: #EA4335;
             background-color: #fef2f2;
-            color: #dc2626;
+            color: #EA4335;
         }
 
-        .share-button.sms:hover {
-            border-color: #7c3aed;
-            background-color: #faf5ff;
-            color: #7c3aed;
+        .share-button.outlook:hover {
+            border-color: #0078D4;
+            background-color: #f0f9ff;
+            color: #0078D4;
         }
 
         .share-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             margin-bottom: 8px;
-        }
-
-        .share-link-section {
-            margin-bottom: 24px;
-        }
-
-        .link-container {
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .link-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            background: transparent;
-        }
-
-        .copy-link-btn {
-            padding: 12px 16px;
-            border: none;
-            background: #f9fafb;
-            border-left: 1px solid #e5e7eb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #6b7280;
-        }
-
-        .copy-link-btn:hover {
-            background: #04b2e1;
-            color: white;
-        }
-
-        .copy-link-btn.copied {
-            background: #10b981;
-            color: white;
         }
 
         .preview-section {
@@ -269,7 +203,7 @@ export interface ShareModalData {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 16px;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
         }
 
@@ -285,108 +219,58 @@ export interface ShareModalData {
 
         @media (max-width: 480px) {
             .share-buttons-grid {
+                /* Stack them on small screens */
                 grid-template-columns: 1fr;
-            }
-
-            .modal-header {
-                padding: 16px;
-            }
-
-            .modal-content {
-                padding: 16px !important;
-            }
-
-            .header-text-content {
-                padding-right: 40px;
             }
         }
     `]
 })
 export class ShareModalComponent {
-    textCopied = false;
-    linkCopied = false;
 
     constructor(
         public dialogRef: MatDialogRef<ShareModalComponent>,
         @Inject(MAT_DIALOG_DATA) public data: ShareModalData
     ) {}
 
-    closeDialog(result?: string): void {
-        this.dialogRef.close(result);
+    closeDialog(): void {
+        this.dialogRef.close();
     }
 
     shareViaWhatsApp(): void {
+        // Ensure the full text is shared on WhatsApp
         const text = encodeURIComponent(this.data.quoteText);
         const whatsappUrl = `https://wa.me/?text=${text}`;
         window.open(whatsappUrl, '_blank');
+        this.closeDialog();
     }
 
-    shareViaEmail(): void {
+    shareViaGmail(): void {
         const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
-        const body = encodeURIComponent(this.data.quoteText);
-        const emailUrl = `mailto:?subject=${subject}&body=${body}`;
-        window.location.href = emailUrl;
+        // Add a line break and the shareable link for context
+        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
+        const body = encodeURIComponent(bodyText);
+
+        // This URL structure opens a new compose window in Gmail
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+        window.open(gmailUrl, '_blank');
+        this.closeDialog();
     }
 
-    shareViaSMS(): void {
-        const text = encodeURIComponent(this.data.quoteText.substring(0, 160) + '...');
-        const smsUrl = `sms:?body=${text}`;
-        window.location.href = smsUrl;
-    }
+    shareViaOutlook(): void {
+        const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        // The body for Outlook needs URL-encoded line breaks (%0D%0A)
+        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
+        const body = encodeURIComponent(bodyText).replace(/%0A/g, '%0D%0A');
 
-    copyQuoteText(): void {
-        this.copyToClipboard(this.data.quoteText).then(() => {
-            this.textCopied = true;
-            setTimeout(() => {
-                this.textCopied = false;
-            }, 2000);
-            this.closeDialog('copied');
-        });
-    }
-
-    copyShareLink(): void {
-        this.copyToClipboard(this.data.shareLink).then(() => {
-            this.linkCopied = true;
-            setTimeout(() => {
-                this.linkCopied = false;
-            }, 2000);
-            this.closeDialog('link-copied');
-        });
-    }
-
-    private async copyToClipboard(text: string): Promise<void> {
-        try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-            } else {
-                this.fallbackCopyTextToClipboard(text);
-            }
-        } catch (err) {
-            this.fallbackCopyTextToClipboard(text);
-        }
-    }
-
-    private fallbackCopyTextToClipboard(text: string): void {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-            document.execCommand('copy');
-        } catch (err) {
-            console.error('Fallback: Oops, unable to copy', err);
-        }
-
-        document.body.removeChild(textArea);
+        // This URL structure opens a new compose window in Outlook
+        const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`;
+        window.open(outlookUrl, '_blank');
+        this.closeDialog();
     }
 
     getPreviewText(): string {
-        return this.data.quoteText.split('\n').slice(0, 10).join('\n') +
-               (this.data.quoteText.split('\n').length > 10 ? '\n...' : '');
+        const lines = this.data.quoteText.split('\n');
+        // Show a slightly shorter preview
+        return lines.slice(0, 8).join('\n') + (lines.length > 8 ? '\n...' : '');
     }
 }
