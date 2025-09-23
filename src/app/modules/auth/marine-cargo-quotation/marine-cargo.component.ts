@@ -787,30 +787,6 @@ export class PaymentModalComponent implements OnInit {
             <mat-dialog-content class="modal-content">
                 <form [formGroup]="kycShippingForm" class="p-4">
 
-                    <h3 class="mb-4 text-xl font-semibold text-gray-800">Your Details (KYC)</h3>
-                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">KRA PIN <span
-                                class="text-red-500">*</span></label>
-                            <input type="text" formControlName="kraPin"
-                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
-                                   placeholder="Format: A123456789Z"
-                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'kraPin')}" />
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'kraPin')"
-                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'kraPin') }}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
-                            <input type="text" formControlName="idNumber"
-                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
-                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idNumber')}" />
-                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idNumber')"
-                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}
-                            </div>
-                        </div>
-                    </div>
-
                     <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
                     <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted
                         formats: PDF, PNG, JPG (Max 10MB each).</p>
@@ -874,6 +850,30 @@ export class PaymentModalComponent implements OnInit {
                             </div>
                             <div *ngIf="hasKYCValidationError('nationalIdUpload')"
                                  class="mt-1 text-sm text-red-600">{{ getKYCValidationError('nationalIdUpload') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="mb-4 text-xl font-semibold text-gray-800 mt-6 border-t pt-6">Your Details (KYC)</h3>
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">KRA PIN <span
+                                class="text-red-500">*</span></label>
+                            <input type="text" formControlName="kraPin"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   placeholder="Format: A123456789Z"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'kraPin')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'kraPin')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'kraPin') }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
+                            <input type="text" formControlName="idNumber"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idNumber')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'idNumber')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}
                             </div>
                         </div>
                     </div>
