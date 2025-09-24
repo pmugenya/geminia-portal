@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { ShareModalComponent } from './share-modal.component'; 
+import { ShareModalComponent } from './share-modal.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -949,12 +949,9 @@ export class PaymentModalComponent implements OnInit {
                         <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
                             class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
                         </div>
-<<<<<<< HEAD
                     </div>
-                        
-=======
 
->>>>>>> 3df155f (Print API)
+
                          <!-- Final Destination County -->
                         <div>
                            <mat-form-field class="w-full">
@@ -1633,17 +1630,17 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
     selector: 'app-marine-cargo-quotation',
     standalone: true,
     imports: [
-        CommonModule, 
-        ReactiveFormsModule, 
-        RouterLink, 
-        CurrencyPipe, 
-        DecimalPipe, 
-        MatDialogModule, 
-        MatIconModule, 
-        TitleCasePipe, 
-        ThousandsSeparatorValueAccessor, 
-        TermsPrivacyModalComponent, 
-        PaymentModalComponent, 
+        CommonModule,
+        ReactiveFormsModule,
+        RouterLink,
+        CurrencyPipe,
+        DecimalPipe,
+        MatDialogModule,
+        MatIconModule,
+        TitleCasePipe,
+        ThousandsSeparatorValueAccessor,
+        TermsPrivacyModalComponent,
+        PaymentModalComponent,
         KycShippingPaymentModalComponent,
         MatSelectModule,
         NgxMatSelectSearchModule,
@@ -1692,7 +1689,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     @ViewChild('countrySelect') countrySelect: MatSelect;
     @ViewChild('categorySelect') categorySelect: MatSelect;
     @ViewChild('cargoTypeSelect') cargoTypeSelect: MatSelect;
-    
+
     private destroy$ = new Subject<void>();
     quotationForm: FormGroup;
     isEditMode: boolean = false;
@@ -1773,7 +1770,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
         // Add this call to setup search filters
         this.setupSearchFilters();
-        
+
         // Update your existing forkJoin to initialize filtered arrays
         forkJoin({
             products: this.userService.getMarineProducts(),
@@ -1784,10 +1781,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
                 this.marineProducts = data.products || [];
                 this.marinePackagingTypes = data.packagingTypes || [];
                 this.marineCategories = data.categories || [];
-                
+
                 // Initialize filtered arrays
                 this.filteredMarineCategories = this.marineCategories.slice();
-                
+
                 this.isLoadingMarineData = false;
             },
             error: (err) => {
@@ -1827,7 +1824,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         this.destroy$.next();
         this.destroy$.complete();
     }
-    
+
 
     private setupSearchFilters(): void {
         // Country search with debounce for server-side filtering
@@ -1858,7 +1855,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     private setupScrollListeners() {
         const setupScroll = (select: MatSelect, action: () => void) => {
             if (!select) return;
-            
+
             select.openedChange.pipe(
                 filter(opened => opened),
                 take(1),
@@ -1885,24 +1882,24 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     private loadNextCountriesPage(): void {
         if (this.countriesLoading) return;
-        
+
         const modeOfShipment = this.quotationForm.get('modeOfShipment')?.value;
         if (!modeOfShipment) return;
 
         this.countriesLoading = true;
-        
+
         this.userService.getCountries(this.countriesPage, 20, modeOfShipment)
             .subscribe({
                 next: (res) => {
                     // Filter countries on the client side based on search term
                     const searchTerm = this.countryFilterCtrl.value?.toLowerCase() || '';
-                    const newCountries = searchTerm 
-                        ? res.pageItems.filter((country: any) => 
+                    const newCountries = searchTerm
+                        ? res.pageItems.filter((country: any) =>
                             country.countryname.toLowerCase().includes(searchTerm))
                         : res.pageItems;
 
                     this.filteredCountriesList = [
-                        ...this.filteredCountriesList, 
+                        ...this.filteredCountriesList,
                         ...newCountries
                     ];
                     this.countriesPage++;
@@ -1926,7 +1923,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         } else {
             search = search.toLowerCase();
         }
-        this.filteredMarineCategories = this.marineCategories.filter(category => 
+        this.filteredMarineCategories = this.marineCategories.filter(category =>
             category.catname.toLowerCase().indexOf(search) > -1
         );
     }
@@ -1942,7 +1939,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         } else {
             search = search.toLowerCase();
         }
-        this.filteredMarineCargoTypes = this.marineCargoTypes.filter(cargoType => 
+        this.filteredMarineCargoTypes = this.marineCargoTypes.filter(cargoType =>
             cargoType.ctname.toLowerCase().indexOf(search) > -1
         );
     }
@@ -2065,12 +2062,12 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         this.quotationForm.get('modeOfShipment')?.valueChanges.subscribe((mode: number) => {
             if (mode) {
                 console.log('Mode of Shipment selected:', mode);
-                
+
                 // Reset countries and load first page
                 this.filteredCountriesList = [];
                 this.countriesPage = 0;
                 this.countryFilterCtrl.setValue('');
-                
+
                 // Load first page of countries
                 this.loadNextCountriesPage();
             }
@@ -2090,7 +2087,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
                         this.filteredMarineCargoTypes = this.marineCargoTypes.slice();
                         this.cargoTypeFilterCtrl.setValue(''); // Reset search
                         this.isLoadingCargoTypes = false;
-                        
+
                         const currentCargoType = this.quotationForm.get('marineCargoType')?.value;
                         if (currentCargoType && !this.marineCargoTypes.some(ct => ct.ctname === currentCargoType)) {
                             this.quotationForm.get('marineCargoType')?.setValue('', { emitEvent: false });
@@ -2336,7 +2333,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             })
         });
     }
-    
+
     private loadCargoTypesForCategory(categoryName: string): void {
         const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
         if (selectedCategory) {
@@ -2429,16 +2426,16 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             this.showToast('No quote available to share.');
             return;
         }
-    
+
         // 1. Generate the text and the shareable link.
         const quoteDetails = this.generateShareableQuoteText();
         const shareableLink = this.generateShareableLink();
-    
+
         // 2. Directly open YOUR custom modal every time.
         //    We are no longer checking for navigator.share.
         this.showShareModal(quoteDetails, shareableLink);
     }
-    
+
     // Ensure the showShareModal method is also in your component
     private showShareModal(quoteText: string, shareLink: string): void {
         const modal = this.dialog.open(ShareModalComponent, {
