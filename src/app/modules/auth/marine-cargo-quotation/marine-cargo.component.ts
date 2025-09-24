@@ -941,27 +941,24 @@ export class PaymentModalComponent implements OnInit {
                             </div>
                         </div>
 
+                        <!-- Vessel Name -->
                         <div>
-                        <mat-form-field class="w-full">
-                            <mat-label>Vessel Name</mat-label>
-                            <input matInput type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" />
-                        </mat-form-field>
-                        <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
-                            class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
+                            <mat-form-field class="w-full">
+                                <mat-label>Vessel Name</mat-label>
+                                <input matInput type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" />
+                            </mat-form-field>
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
+                                class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
+                            </div>
                         </div>
-<<<<<<< HEAD
-                    </div>
-                        
-=======
 
->>>>>>> 3df155f (Print API)
-                         <!-- Final Destination County -->
+                        <!-- Final Destination County -->
                         <div>
-                           <mat-form-field class="w-full">
-                                <mat-label>Final Destination (County in Kenya) <span class="text-red-500">*</span></mat-label>
+                            <mat-form-field class="w-full">
+                                <mat-label>Final Destination (Kenyan Counties) <span class="text-red-500">*</span></mat-label>
                                 <mat-select formControlName="finalDestinationCounty">
                                     <mat-option>
-                                        <ngx-mat-select-search [formControl]="countyFilterCtrl" placeholderLabel="Search..."></ngx-mat-select-search>
+                                        <ngx-mat-select-search [formControl]="countyFilterCtrl" placeholderLabel="Search counties..."></ngx-mat-select-search>
                                     </mat-option>
                                     <mat-option *ngFor="let county of filteredKenyanCounties" [value]="county.id">
                                         {{ county.portName }}
