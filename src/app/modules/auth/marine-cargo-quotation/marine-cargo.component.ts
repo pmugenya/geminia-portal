@@ -1705,6 +1705,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     pageSize = 200;
     premiumCalculation: PremiumCalculation = this.resetPremiumCalculation();
     private editModeQuoteId: string | null = null;
+    private originalQuoteData: any = null;
     user: EnhancedStoredUser | null = null;
     isLoggedIn: boolean = false;
     quoteResult: QuoteResult | null = null;
@@ -1722,6 +1723,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     kenyanCounties: County[] = [];
     isSaving = false;
     private readonly quoteStorageKey = 'savedMarineQuote';
+    private readonly editQuoteStorageKey = 'editMarineQuote';
 
     // Filter controls for search functionality
     countryFilterCtrl: FormControl = new FormControl();
@@ -1821,6 +1823,11 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     }
 
     ngOnDestroy(): void {
+        // Save current form state to localStorage before destroying component
+        if (this.quotationForm && this.quotationForm.dirty) {
+            this.saveQuoteToLocalStorage(this.quotationForm.value);
+        }
+        
         this.destroy$.next();
         this.destroy$.complete();
     }
@@ -1999,21 +2006,40 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             packagetypeid: packagingType,
             categoryid: selectedCategory?.id,
             cargoId: selectedCargoType?.id,
+            // Include edit mode information
+            ...(this.isEditMode && this.editModeQuoteId && {
+                editMode: true,
+                originalQuoteId: this.editModeQuoteId
+            })
         };
 
         const formData = new FormData();
         formData.append('metadata', JSON.stringify(metadata));
 
-        this.quotationService.createQuote(formData).subscribe({
+        // Use different endpoint for editing vs creating new quote
+        const quoteObservable = this.isEditMode && this.editModeQuoteId 
+            ? this.quotationService.updateQuote(this.editModeQuoteId, formData)
+            : this.quotationService.createQuote(formData);
+
+        quoteObservable.subscribe({
             next: (res) => {
                 this.quoteResult = res;
                 this.currentStep = 2;
                 this.isSaving = false;
                 localStorage.removeItem(this.quoteStorageKey);
+                
+                // Also remove edit localStorage if we were in edit mode
+                if (this.isEditMode) {
+                    localStorage.removeItem(this.editQuoteStorageKey);
+                    this.showToast('Quote updated successfully!');
+                } else {
+                    this.showToast('Quote created successfully!');
+                }
             },
             error: (err) => {
-                console.error('Quote creation error:', err);
-                this.showToast('An error occurred while creating the quote. Please try again.');
+                console.error('Quote submission error:', err);
+                const action = this.isEditMode ? 'updating' : 'creating';
+                this.showToast(`An error occurred while ${action} the quote. Please try again.`);
                 this.isSaving = false;
             },
         });
@@ -2108,16 +2134,122 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     }
 
     private saveQuoteToLocalStorage(formValue: any): void {
-        localStorage.setItem(this.quoteStorageKey, JSON.stringify(formValue));
+        const storageKey = this.isEditMode ? this.editQuoteStorageKey : this.quoteStorageKey;
+        const dataToSave = {
+            formData: formValue,
+            isEditMode: this.isEditMode,
+            editModeQuoteId: this.editModeQuoteId,
+            originalQuoteData: this.originalQuoteData,
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+        console.log('Quote saved to localStorage:', storageKey, dataToSave);
     }
 
     private loadQuoteFromLocalStorage(): void {
-        // const savedQuoteJSON = localStorage.getItem(this.quoteStorageKey);
-        // if (savedQuoteJSON) {
-        //     const savedQuote = JSON.parse(savedQuoteJSON);
-        //     this.quotationForm.patchValue(savedQuote);
-        //     this.showToast('Your previous progress has been restored.');
-        // }
+        const storageKey = this.isEditMode ? this.editQuoteStorageKey : this.quoteStorageKey;
+        const savedQuoteJSON = localStorage.getItem(storageKey);
+        
+        if (savedQuoteJSON) {
+            try {
+                const savedData = JSON.parse(savedQuoteJSON);
+                console.log('Loading quote from localStorage:', savedData);
+                
+                // Restore form data
+                if (savedData.formData) {
+                    this.quotationForm.patchValue(savedData.formData);
+                }
+                
+                // Restore edit mode state if applicable
+                if (savedData.isEditMode && savedData.editModeQuoteId) {
+                    this.isEditMode = savedData.isEditMode;
+                    this.editModeQuoteId = savedData.editModeQuoteId;
+                    this.originalQuoteData = savedData.originalQuoteData;
+                }
+                
+                this.showToast('Your previous progress has been restored from local storage.');
+            } catch (error) {
+                console.error('Error loading quote from localStorage:', error);
+                localStorage.removeItem(storageKey);
+            }
+        }
+    }
+
+    private saveEditQuoteToLocalStorage(quoteData: any): void {
+        const editData = {
+            quoteData: quoteData,
+            editModeQuoteId: this.editModeQuoteId,
+            isEditMode: true,
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(this.editQuoteStorageKey, JSON.stringify(editData));
+        console.log('Edit quote data saved to localStorage:', editData);
+    }
+
+    private loadEditQuoteFromLocalStorage(): boolean {
+        const savedEditJSON = localStorage.getItem(this.editQuoteStorageKey);
+        
+        if (savedEditJSON) {
+            try {
+                const editData = JSON.parse(savedEditJSON);
+                console.log('Loading edit quote from localStorage:', editData);
+                
+                if (editData.quoteData && editData.editModeQuoteId === this.editModeQuoteId) {
+                    // Use the saved quote data to populate the form
+                    this.originalQuoteData = editData.quoteData;
+                    this.populateFormFromQuoteData(editData.quoteData);
+                    this.showToast('Quote data restored from local storage.');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading edit quote from localStorage:', error);
+                localStorage.removeItem(this.editQuoteStorageKey);
+            }
+        }
+        return false;
+    }
+
+    private async populateFormFromQuoteData(quoteData: any): Promise<void> {
+        console.log('Populating form from quote data:', quoteData);
+        
+        // Prepare form data with comprehensive field mapping
+        const formData = {
+            firstName: quoteData.firstName || quoteData.clientFirstName || '',
+            lastName: quoteData.lastName || quoteData.clientLastName || '',
+            email: quoteData.email || quoteData.clientEmail || '',
+            phoneNumber: quoteData.phoneNumber || quoteData.clientPhone || '',
+            modeOfShipment: quoteData.shippingmodeId || quoteData.modeOfShipment || '',
+            marineProduct: quoteData.marineProduct || quoteData.productName || 'ICC (A) All Risks',
+            marineCategory: quoteData.marineCategory || quoteData.categoryName || '',
+            marineCargoType: quoteData.marineCargoType || quoteData.cargoTypeName || '',
+            marinePackagingType: quoteData.marinePackagingType || quoteData.packagingTypeId || '',
+            tradeType: quoteData.tradeType || quoteData.tradeTypeId || '',
+            origin: quoteData.originCountry || quoteData.originCountryId || '',
+            destination: quoteData.destination || quoteData.destinationCountry || 'Kenya',
+            sumInsured: quoteData.sumassured || quoteData.sumInsured || null,
+            selfAsImporter: quoteData.selfAsImporter || false,
+            termsAndPolicyConsent: false // Always reset this for security
+        };
+
+        try {
+            // Load dependent data first if needed
+            if (formData.modeOfShipment && formData.marineCategory) {
+                await this.loadDependentDataForEditing(quoteData);
+            }
+            
+            // Patch form after dependent data is loaded
+            this.quotationForm.patchValue(formData);
+            
+            // Mark form as pristine to track changes from this point
+            this.quotationForm.markAsPristine();
+            
+            // Trigger any necessary form validations
+            this.quotationForm.updateValueAndValidity();
+            
+            console.log('Form populated successfully from quote data');
+        } catch (error) {
+            console.error('Error populating form from quote data:', error);
+        }
     }
 
     openTermsModal(event?: Event): void {
@@ -2249,45 +2381,47 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     private loadQuoteForEditing(quoteId: string): void {
         this.isEditMode = true;
+        this.editModeQuoteId = quoteId;
+        
+        // First try to load from localStorage as a quick fallback
+        if (this.loadEditQuoteFromLocalStorage()) {
+            console.log('Quote loaded from localStorage successfully');
+            return;
+        }
+        
+        // If not in localStorage, fetch from API
         this.userService.getSingleQuoteForEditing(quoteId).subscribe({
             next: (quoteData) => {
-                // Pre-fill the form with saved quote data
-                this.quotationForm.patchValue({
-                    firstName: quoteData.firstName || '',
-                    lastName: quoteData.lastName || '',
-                    email: quoteData.email || '',
-                    phoneNumber: quoteData.phoneNumber || '',
-                    modeOfShipment: quoteData.shippingmodeId || '',
-                    marineProduct: quoteData.marineProduct || 'ICC (A) All Risks',
-                    marineCategory: quoteData.marineCategory || '',
-                    marineCargoType: quoteData.marineCargoType || '',
-                    marinePackagingType: quoteData.marinePackagingType || '',
-                    tradeType: quoteData.tradeType || '',
-                    origin: quoteData.originCountry || '',
-                    destination: quoteData.destination || 'Kenya',
-                    sumInsured: quoteData.sumassured || null,
-                    termsAndPolicyConsent: false // Reset this for security
+                console.log('Loading quote for editing from API:', quoteData);
+                
+                // Store the original quote data for reference
+                this.originalQuoteData = { ...quoteData };
+                
+                // Save to localStorage immediately for future use
+                this.saveEditQuoteToLocalStorage(quoteData);
+                
+                // Use the new populate method
+                this.populateFormFromQuoteData(quoteData).then(() => {
+                    this.showToast('Quote loaded successfully for editing.');
+                }).catch((error) => {
+                    console.error('Error populating form:', error);
+                    this.showToast('Quote loaded but some data may be missing.');
                 });
-
-                // Load dependent data if needed
-                if (quoteData.marineCategory) {
-                    this.loadCargoTypesForCategory(quoteData.marineCategory);
-                }
-
-                // Load countries for the selected shipping mode
-                if (quoteData.shippingmodeId) {
-                    this.filteredCountriesList = [];
-                    this.countriesPage = 0;
-                    this.loadNextCountriesPage();
-                }
-
-                this.showToast('Quote loaded successfully for editing.');
             },
             error: (err) => {
                 console.error('Error loading quote for editing:', err);
-                this.showToast('Error loading quote. Please try again.');
-                // Fallback to localStorage if API fails
-                this.loadQuoteFromLocalStorage();
+                
+                // Try localStorage as fallback
+                if (this.loadEditQuoteFromLocalStorage()) {
+                    this.showToast('Quote loaded from local storage (API unavailable).');
+                } else {
+                    this.showToast('Error loading quote. Please try again.');
+                    // Clear edit mode on error
+                    this.isEditMode = false;
+                    this.editModeQuoteId = null;
+                    // Final fallback to regular localStorage
+                    this.loadQuoteFromLocalStorage();
+                }
             }
         });
     }
@@ -2334,24 +2468,72 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         });
     }
     
-    private loadCargoTypesForCategory(categoryName: string): void {
-        const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
-        if (selectedCategory) {
-            this.isLoadingCargoTypes = true;
-            this.userService.getCargoTypesByCategory(selectedCategory.id)
-                .pipe(takeUntil(this.destroy$))
+    private loadCargoTypesForCategory(categoryName: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const selectedCategory = this.marineCategories.find(c => c.catname === categoryName);
+            if (selectedCategory) {
+                this.isLoadingCargoTypes = true;
+                this.userService.getCargoTypesByCategory(selectedCategory.id)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                        next: (cargoTypes) => {
+                            this.marineCargoTypes = cargoTypes || [];
+                            this.filteredMarineCargoTypes = this.marineCargoTypes.slice();
+                            this.isLoadingCargoTypes = false;
+                            resolve();
+                        },
+                        error: (err) => {
+                            console.error('Error loading marine cargo types:', err);
+                            this.marineCargoTypes = [];
+                            this.filteredMarineCargoTypes = [];
+                            this.isLoadingCargoTypes = false;
+                            reject(err);
+                        }
+                    });
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    private async loadDependentDataForEditing(quoteData: any): Promise<void> {
+        try {
+            // Load countries for the selected shipping mode
+            if (quoteData.shippingmodeId || quoteData.modeOfShipment) {
+                this.filteredCountriesList = [];
+                this.countriesPage = 0;
+                await this.loadCountriesForMode(quoteData.shippingmodeId || quoteData.modeOfShipment);
+            }
+
+            // Load cargo types for the selected category
+            if (quoteData.marineCategory || quoteData.categoryName) {
+                await this.loadCargoTypesForCategory(quoteData.marineCategory || quoteData.categoryName);
+            }
+
+            console.log('Dependent data loaded successfully for editing');
+        } catch (error) {
+            console.error('Error loading dependent data for editing:', error);
+        }
+    }
+
+    private loadCountriesForMode(modeId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.countriesLoading = true;
+            this.userService.getCountries(0, 50, modeId) // Load more countries initially for editing
                 .subscribe({
-                    next: (cargoTypes) => {
-                        this.marineCargoTypes = cargoTypes || [];
-                        this.isLoadingCargoTypes = false;
+                    next: (res) => {
+                        this.filteredCountriesList = res.pageItems || [];
+                        this.countriesPage = 1;
+                        this.countriesLoading = false;
+                        resolve();
                     },
                     error: (err) => {
-                        console.error('Error loading marine cargo types:', err);
-                        this.marineCargoTypes = [];
-                        this.isLoadingCargoTypes = false;
+                        console.error('Error loading countries for editing:', err);
+                        this.countriesLoading = false;
+                        reject(err);
                     }
                 });
-        }
+        });
     }
 
     private saveQuoteToDashboard(quote: QuoteResult): void {
@@ -2364,9 +2546,22 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     closeForm(): void {
         if (this.isLoggedIn) {
+            // Clear localStorage if we're in edit mode and closing
+            if (this.isEditMode) {
+                localStorage.removeItem(this.editQuoteStorageKey);
+            }
+            
+            // Clear edit mode when closing
+            const wasEditMode = this.isEditMode;
+            this.isEditMode = false;
+            this.editModeQuoteId = null;
+            this.originalQuoteData = null;
+            
             this.router.navigate(['/sign-up/dashboard']);
             if (this.currentStep === 2 && this.quoteResult) {
                 this.showToast('Quote saved to dashboard. Returning to dashboard.');
+            } else if (wasEditMode) {
+                this.showToast('Edit cancelled. Returning to dashboard.');
             } else {
                 this.showToast('Returning to dashboard.');
             }

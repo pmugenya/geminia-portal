@@ -47,4 +47,14 @@ export class QuoteService {
     getQuoteById(quoteId: string): Observable<any> {
         return this.http.get<any>(`${this.baseUrl}/quote/${quoteId}`);
     }
+
+    /**
+     * Updates an existing quote
+     * @param quoteId The ID of the quote to update
+     * @param formData The updated quote data
+     * @returns Observable with the updated quote data
+     */
+    updateQuote(quoteId: string, formData: FormData): Observable<any> {
+        return this.http.put(`${this.baseUrl}/quote/${quoteId}`, formData);
+    }
 }
