@@ -20,6 +20,7 @@ import { finalize } from 'rxjs';
 @Component({
     selector: 'auth-forgot-password',
     templateUrl: './forgot-password.component.html',
+    styleUrls: ['./forgot-password.component.scss'],
     encapsulation: ViewEncapsulation.None,
     animations: fuseAnimations,
     imports: [
