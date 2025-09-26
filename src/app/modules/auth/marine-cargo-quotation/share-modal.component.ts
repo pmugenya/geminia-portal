@@ -58,6 +58,14 @@ export interface ShareModalData {
                             </svg>
                             <span>Outlook</span>
                         </button>
+
+                        <!-- Yahoo Mail Button -->
+                        <button (click)="shareViaYahoo()" class="share-button yahoo" matTooltip="Share via Yahoo Mail">
+                            <svg class="share-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16l-3.92 7.28h-3.296l3.92-7.28-3.92-7.28h3.296l2.272 4.224L16.192.88h3.296l-3.92 7.28z"/>
+                            </svg>
+                            <span>Yahoo</span>
+                        </button>
                     </div>
                 </div>
 
@@ -143,8 +151,8 @@ export interface ShareModalData {
 
         .share-buttons-grid {
             display: grid;
-            /* Updated to fit 3 items gracefully */
-            grid-template-columns: repeat(3, 1fr);
+            /* Updated to fit 4 items gracefully */
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
         }
 
@@ -188,6 +196,12 @@ export interface ShareModalData {
             color: #0078D4;
         }
 
+        .share-button.yahoo:hover {
+            border-color: #720e9e;
+            background-color: #faf5ff;
+            color: #720e9e;
+        }
+
         .share-icon {
             width: 28px;
             height: 28px;
@@ -221,6 +235,13 @@ export interface ShareModalData {
             .share-buttons-grid {
                 /* Stack them on small screens */
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 640px) {
+            .share-buttons-grid {
+                /* 2x2 grid on medium screens */
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     `]
@@ -265,6 +286,18 @@ export class ShareModalComponent {
         // This URL structure opens a new compose window in Outlook
         const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`;
         window.open(outlookUrl, '_blank');
+        this.closeDialog();
+    }
+
+    shareViaYahoo(): void {
+        const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        // Add a line break and the shareable link for context
+        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
+        const body = encodeURIComponent(bodyText);
+
+        // Updated URL structure for Yahoo Mail compose - using the correct format
+        const yahooUrl = `https://compose.mail.yahoo.com/?To=&Subject=${subject}&Body=${body}`;
+        window.open(yahooUrl, '_blank');
         this.closeDialog();
     }
 

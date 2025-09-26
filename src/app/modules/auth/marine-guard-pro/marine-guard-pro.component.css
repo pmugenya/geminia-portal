@@ -6,3 +6,26 @@
 .feature-card:hover {
   transform: translateY(-2px);
 }
+
+/* Bold text styling for all form inputs */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="number"],
+select,
+textarea,
+.mat-mdc-select-value,
+.mat-mdc-form-field input {
+  font-weight: bold !important;
+}
+
+/* Ensure Material Design select values are bold */
+.mat-mdc-select-value-text {
+  font-weight: bold !important;
+}
+
+/* Bold text for readonly inputs */
+input[readonly] {
+  font-weight: bold !important;
+}
