@@ -240,15 +240,16 @@
                                             <div class="policy-detail-grid">
                                                 <div class="detail-item"><span class="detail-label">MODE OF SHIPMENT</span><span class="detail-value">{{ policy.shippingModeName | titlecase }}</span></div>
                                                 <div class="detail-item"><span class="detail-label">TRADE TYPE</span><span class="detail-value">{{ policy.importerType | titlecase }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">CLIENT/AGENT</span><span class="detail-value">{{ policy.clientName || 'N/A' }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">SUM INSURED</span><span class="detail-value">KES {{ policy.sumInsured | number:'1.2-2' }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">GOODS DESCRIPTION</span><span class="detail-value">{{ policy.goodsDescription || policy.description }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">VESSEL NAME</span><span class="detail-value">{{ policy.vesselName }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">LOADING PORT</span><span class="detail-value">{{ policy.loadingPort || policy.originPortName }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">PORT OF DISCHARGE</span><span class="detail-value">{{ policy.dischargePort || policy.destPortName }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">FINAL DESTINATION</span><span class="detail-value">{{ policy.finalDestination || policy.destPortName }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">IDF NUMBER</span><span class="detail-value">{{ policy.idfNumber || policy.refno }}</span></div>
-                                                <div class="detail-item"><span class="detail-label">UCR NUMBER</span><span class="detail-value">{{ policy.ucrNumber || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">COUNTRY OF ORIGIN</span><span class="detail-value">{{ policy.originCountry || policy.countryOrigin || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">INSURED NAME</span><span class="detail-value">{{ policy.clientName || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">SUM INSURED</span><span class="detail-value">KES {{ policy.sumassured || policy.sumInsured | number:'1.2-2' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">GOODS DESCRIPTION</span><span class="detail-value">{{ policy.description || policy.goodsDescription || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">VESSEL NAME</span><span class="detail-value">{{ policy.vesselname || policy.vesselName || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">LOADING PORT</span><span class="detail-value">{{ policy.loadingPort || policy.originPortName || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">PORT OF DISCHARGE</span><span class="detail-value">{{ policy.portOfDischarge || policy.destPortName || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">FINAL DESTINATION</span><span class="detail-value">{{ policy.finalDestinationCounty || policy.destPortName || 'Kenya' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">IDF NUMBER</span><span class="detail-value">{{ policy.idfnumber || policy.idfNumber || 'N/A' }}</span></div>
+                                                <div class="detail-item"><span class="detail-label">UCR NUMBER</span><span class="detail-value">{{ policy.ucrnumber || policy.ucrNumber || 'N/A' }}</span></div>
                                             </div>
                                         <div class="mt-6 flex items-center justify-between border-t pt-4">
                                             <button mat-stroked-button (click)="openClaimModal(policy)" class="file-claim-button">
