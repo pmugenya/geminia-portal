@@ -700,6 +700,10 @@ ngOnDestroy(): void {
           this.snackBar.open('Invalid policy information', 'OK', { duration: 3000 });
           return;
       }
+      
+      // Show friendly downloading message
+      this.showToast('Downloading Certificate....');
+      
       this.userService.downloadCertificate(policyId).subscribe(
           (blob: Blob) => {
               const downloadUrl = window.URL.createObjectURL(blob);
@@ -710,6 +714,9 @@ ngOnDestroy(): void {
               a.click();
               document.body.removeChild(a);
               window.URL.revokeObjectURL(downloadUrl);
+              
+              // Show success message
+              this.showToast('Certificate downloaded successfully!');
           },
           (err) => {
               this.snackBar.open('Error downloading policy. Please try again later.', 'OK', { duration: 5000 });

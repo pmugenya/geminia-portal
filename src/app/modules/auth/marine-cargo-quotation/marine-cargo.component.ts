@@ -98,8 +98,9 @@ export const idfNumberValidator: ValidatorFn = (control: AbstractControl): Valid
 
 export const ucrNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const ucrPattern = /^\d{2}[A-Z]{3}\d{9}[A-Z]\d{10}$/i;
-    return ucrPattern.test(control.value) ? null : { invalidUcrNumber: true };
+    // UCR format: 2 digits + 3 capital letters + 9 digits + 1 capital letter + 9 digits
+    const ucrPattern = /^\d{2}[A-Z]{3}\d{9}[A-Z]\d{9}$/;
+    return ucrPattern.test(control.value.trim().toUpperCase()) ? null : { invalidUcrNumber: true };
 };
 
 export const nameValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
