@@ -13,3 +13,55 @@
   background-color: #21275c; // Pantone 2758C
   color: white; // Ensure text is readable
 }
+
+/* Global bold text styling for all form inputs and textboxes */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="url"],
+input[type="search"],
+select,
+textarea,
+.mat-mdc-input-element,
+.mat-mdc-select-value,
+.mat-mdc-form-field input,
+.mat-input-element,
+.mat-select-value-text {
+  font-weight: bold !important;
+}
+
+/* Ensure Material Design components have bold text */
+.mat-mdc-select-value-text,
+.mat-mdc-form-field .mat-mdc-input-element,
+.mat-mdc-form-field .mat-mdc-select-value,
+.mat-form-field-infix input,
+.mat-form-field-infix textarea,
+.mat-form-field-infix select {
+  font-weight: bold !important;
+}
+
+/* Bold text for readonly and disabled inputs */
+input[readonly],
+input[disabled],
+textarea[readonly],
+textarea[disabled] {
+  font-weight: bold !important;
+}
+
+/* Bold text for file inputs */
+input[type="file"] {
+  font-weight: bold !important;
+}
+
+/* Ensure placeholder text is also bold */
+input::placeholder,
+textarea::placeholder,
+.mat-mdc-input-element::placeholder {
+  font-weight: bold !important;
+  opacity: 0.7;
+}

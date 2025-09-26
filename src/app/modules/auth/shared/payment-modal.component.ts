@@ -73,6 +73,23 @@ export interface PaymentResult {
     MatInputModule,
     MatFormFieldModule,
   ],
+  styles: [`
+    /* Ensure all input fields in payment modal have bold text */
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    .mat-mdc-input-element,
+    .mat-mdc-form-field input {
+      font-weight: bold !important;
+    }
+    
+    /* Bold placeholder text */
+    input::placeholder,
+    .mat-mdc-input-element::placeholder {
+      font-weight: bold !important;
+      opacity: 0.7;
+    }
+  `],
   template: `
     <div class="p-6 relative min-w-[320px] md:min-w-[400px]">
       <!-- Close Button -->

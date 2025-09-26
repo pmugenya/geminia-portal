@@ -1089,6 +1089,27 @@ export class PaymentModalComponent implements OnInit {
 
         .modal-content form input, .modal-content form select, .modal-content form textarea {
             color: #1f2937;
+            font-weight: bold !important;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="email"],
+        .modal-content input[type="tel"],
+        .modal-content input[type="number"],
+        .modal-content input[type="file"],
+        .modal-content select,
+        .modal-content textarea,
+        .modal-content .mat-mdc-input-element,
+        .modal-content .mat-mdc-select-value,
+        .modal-content .mat-mdc-form-field input {
+            font-weight: bold !important;
+        }
+
+        .modal-content input::placeholder,
+        .modal-content textarea::placeholder,
+        .modal-content .mat-mdc-input-element::placeholder {
+            font-weight: bold !important;
+            opacity: 0.7;
         }
 
         .btn-primary {
