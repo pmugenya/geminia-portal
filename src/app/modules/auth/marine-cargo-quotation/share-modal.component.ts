@@ -269,9 +269,8 @@ export class ShareModalComponent {
 
     shareViaGmail(): void {
         const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
-        // Add a line break and the shareable link for context
-        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
-        const body = encodeURIComponent(bodyText);
+        // Share only the quote text without website URL
+        const body = encodeURIComponent(this.data.quoteText);
 
         // This URL structure opens a new compose window in Gmail
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
@@ -281,9 +280,9 @@ export class ShareModalComponent {
 
     shareViaOutlook(): void {
         const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        // Share only the quote text without website URL
         // The body for Outlook needs URL-encoded line breaks (%0D%0A)
-        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
-        const body = encodeURIComponent(bodyText).replace(/%0A/g, '%0D%0A');
+        const body = encodeURIComponent(this.data.quoteText).replace(/%0A/g, '%0D%0A');
 
         // This URL structure opens a new compose window in Outlook
         const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`;
@@ -293,9 +292,8 @@ export class ShareModalComponent {
 
     shareViaYahoo(): void {
         const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
-        // Add a line break and the shareable link for context
-        const bodyText = `${this.data.quoteText}\n\nView this quote online: ${this.data.shareLink}`;
-        const body = encodeURIComponent(bodyText);
+        // Share only the quote text without website URL
+        const body = encodeURIComponent(this.data.quoteText);
 
         // Updated URL structure for Yahoo Mail compose - using the correct format
         const yahooUrl = `https://compose.mail.yahoo.com/?To=&Subject=${subject}&Body=${body}`;
