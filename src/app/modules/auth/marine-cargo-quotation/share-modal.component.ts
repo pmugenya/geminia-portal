@@ -213,22 +213,24 @@ export interface ShareModalData {
         }
 
         .quote-preview {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            max-height: 150px;
+            background: linear-gradient(135deg, #04b2e1 0%, #0396c7 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 200px;
             overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(4, 178, 225, 0.2);
         }
 
         .quote-preview pre {
             margin: 0;
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 13px;
+            line-height: 1.6;
             white-space: pre-wrap;
             word-wrap: break-word;
-            color: #374151;
+            color: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 500;
         }
 
         @media (max-width: 480px) {
@@ -302,8 +304,21 @@ export class ShareModalComponent {
     }
 
     getPreviewText(): string {
+        // Extract only premium breakdown and total payable for modern preview
         const lines = this.data.quoteText.split('\n');
-        // Show a slightly shorter preview
-        return lines.slice(0, 8).join('\n') + (lines.length > 8 ? '\n...' : '');
+        
+        // Find the premium breakdown section
+        const premiumStartIndex = lines.findIndex(line => line.includes('Premium Breakdown:'));
+        const totalPayableIndex = lines.findIndex(line => line.includes('TOTAL PAYABLE:'));
+        
+        if (premiumStartIndex === -1 || totalPayableIndex === -1) {
+            // Fallback to basic preview if structure is different
+            return `Marine Cargo Insurance Quote\n\nPremium Details Available\nComplete quote information will be shared`;
+        }
+        
+        // Create modern preview with only premium breakdown and total
+        const premiumLines = lines.slice(premiumStartIndex, totalPayableIndex + 1);
+        
+        return `Marine Cargo Insurance Quote - Geminia\n\n${premiumLines.join('\n')}\n\nComplete details will be shared via your selected method`;
     }
 }
