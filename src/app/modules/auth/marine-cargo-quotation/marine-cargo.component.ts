@@ -790,10 +790,6 @@ export class PaymentModalComponent implements OnInit {
                     <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
                     <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted
                         formats: PDF, PNG, JPG (Max 10MB each).</p>
-                    <div *ngIf="kycDocuments.hasError('duplicateFiles') && kycDocuments.touched"
-                         class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-                        <p>{{ getErrorMessage(kycShippingForm, 'kycDocuments') }}</p>
-                    </div>
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 mb-6" formGroupName="kycDocuments">
                         <div>
                             <label for="idfUpload" class="block text-sm font-medium text-gray-700">IDF Document <span
