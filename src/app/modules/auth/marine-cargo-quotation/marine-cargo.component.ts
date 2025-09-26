@@ -429,7 +429,6 @@ export class TermsPrivacyModalComponent {
                                 <p class="instruction-text" style="font-weight: 700;"><strong>Enter your M-PESA number to receive a payment prompt.</strong></p>
                                 <form [formGroup]="stkForm">
                                     <mat-form-field appearance="outline">
-                                        <mat-label>Phone Number</mat-label>
                                         <input matInput formControlName="phoneNumber" placeholder="e.g., 0712345678"
                                                [disabled]="isProcessingStk" />
                                         <mat-icon matSuffix>phone_iphone</mat-icon>

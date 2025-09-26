@@ -135,7 +135,6 @@ export interface PaymentResult {
 
         <form [formGroup]="paymentForm" (ngSubmit)="initiatePayment()">
             <mat-form-field appearance="outline" class="w-full">
-                <mat-label>M-PESA Phone Number</mat-label>
                 <input matInput formControlName="phoneNumber" placeholder="0712345678" required>
                 <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('required')">Phone number is required</mat-error>
 <!--                <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('pattern')">Enter a valid Kenyan phone number</mat-error>-->
