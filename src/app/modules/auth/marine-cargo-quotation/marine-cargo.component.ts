@@ -871,6 +871,26 @@ export class PaymentModalComponent implements OnInit {
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}
                             </div>
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Postal Address <span class="text-red-500">*</span></label>
+                            <input type="text" formControlName="postalAddress"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   placeholder="Enter your postal address"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'postalAddress')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'postalAddress')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'postalAddress') }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Postal Code <span class="text-red-500">*</span></label>
+                            <input type="number" formControlName="postalCode"
+                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   placeholder="Enter postal code (numbers only)"
+                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'postalCode')}" />
+                            <div *ngIf="isFieldInvalid(kycShippingForm, 'postalCode')"
+                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'postalCode') }}
+                            </div>
+                        </div>
                     </div>
 
                     <h3 class="mb-4 text-xl font-semibold text-gray-800 mt-6 border-t pt-6">Additional Shipment
@@ -1327,6 +1347,8 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         return this.fb.group({
             kraPin: ['', [Validators.required, kraPinValidator]],
             idNumber: ['', [Validators.required, idNumberValidator]],
+            postalAddress: ['', Validators.required],
+            postalCode: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
             kycDocuments: this.fb.group({
                 kraPinUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
                 nationalIdUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
@@ -1526,6 +1548,8 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
             suminsured: kycFormValue.sumInsured,
             kraPin: kycFormValue.kraPin,
             idNumber: kycFormValue.idNumber,
+            postalAddress: kycFormValue.postalAddress,
+            postalCode: kycFormValue.postalCode,
             ucrnumber: kycFormValue.ucrNumber,
             idfnumber: kycFormValue.idfNumber,
             vesselname: kycFormValue.vesselName,
@@ -1612,6 +1636,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         if (control.hasError('maxWords')) return `Maximum of ${control.errors['maxWords'].maxWords} words is allowed.`;
         if (control.hasError('invalidIdfNumber')) return 'Invalid IDF Number. Format: 25MBAIM004889919 (2 digits + 5 letters + 9 digits).';
         if (control.hasError('invalidUcrNumber')) return 'Invalid UCR Number. Format: 12VNP011111123X0012345678.';
+        if (control.hasError('pattern') && field === 'postalCode') return 'Postal code must contain only numbers.';
         return 'This field has an error.';
     }
 
