@@ -122,7 +122,10 @@
                 <!-- Login Form -->
                 <div *ngIf="formType === 'login'" class="animate-fade-in">
                     <div class="mb-4 sm:mb-6 text-center">
-                        <div class="text-xl sm:text-2xl font-bold text-gray-800">Geminia Insurance</div>
+                        <div class="mb-3 flex justify-center">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROTKn0j9cVpA67LPdjPeYBR3KnWiwP1gsM3cS27rca-7m8BgvgUylY4uhBnOnVnXFx8Is&usqp=CAU" alt="Geminia Insurance Logo" class="h-12 w-auto sm:h-16 rounded-lg object-contain"/>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-bold text-gray-800">Welcome Back</div>
                         <div class="mt-1 text-xs sm:text-sm text-gray-500">Sign in to the Geminia Insurance Platform</div>
                     </div>
                     <form [formGroup]="signInForm" (keydown.enter)="handleSignIn()">
