@@ -174,7 +174,7 @@ export class AuthSignInComponent implements OnInit {
      * It acts as a router, directing to the correct submission logic based on the login state.
      */
     handleSignIn(): void {
-        if (this.signInForm.invalid) return;
+        if (this.signInForm.invalid || this.signInForm.disabled) return;
         this.loginState === 'credentials' ? this.submitCredentials() : this.verifyOtp();
     }
 
@@ -227,7 +227,7 @@ export class AuthSignInComponent implements OnInit {
      * Handles the registration form submission.
      */
     register(): void {
-        if (this.registerForm.invalid) return;
+        if (this.registerForm.invalid || this.registerForm.disabled) return;
         this.registerForm.disable();
         const formValue = this.registerForm.getRawValue();
         const user: CreateUserObject = {

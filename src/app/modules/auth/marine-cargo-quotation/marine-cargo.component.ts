@@ -427,10 +427,10 @@ export class TermsPrivacyModalComponent {
                             </div>
                             <div *ngIf="mpesaSubMethod === 'stk'" class="option-view animate-fade-in">
                                 <p class="instruction-text" style="font-weight: 700;"><strong>Enter your M-PESA number to receive a payment prompt.</strong></p>
-                                <form [formGroup]="stkForm">
+                                <form [formGroup]="stkForm" (keydown.enter)="processStkPush()">
                                     <mat-form-field appearance="outline">
                                         <input matInput formControlName="phoneNumber" placeholder="e.g., 0712345678"
-                                               [disabled]="isProcessingStk" />
+                                               [disabled]="isProcessingStk" (keydown.enter)="processStkPush()" />
                                         <mat-icon matSuffix>phone_iphone</mat-icon>
                                     </mat-form-field>
                                 </form>
@@ -784,7 +784,7 @@ export class PaymentModalComponent implements OnInit {
                 </button>
             </div>
             <mat-dialog-content class="modal-content">
-                <form [formGroup]="kycShippingForm" class="p-4">
+                <form [formGroup]="kycShippingForm" class="p-4" (keydown.enter)="submitKycShippingDetails()">
 
                     <h3 class="mb-4 text-xl font-semibold text-gray-800">KYC Document Uploads</h3>
                     <p class="mb-4 text-sm text-gray-500">Please upload the following required documents. Accepted

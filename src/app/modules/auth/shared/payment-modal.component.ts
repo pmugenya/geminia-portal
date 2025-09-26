@@ -133,9 +133,9 @@ export interface PaymentResult {
             <p class="text-xs text-gray-500 mt-1">{{ data.description }}</p>
         </div>
 
-        <form [formGroup]="paymentForm" (ngSubmit)="initiatePayment()">
+        <form [formGroup]="paymentForm" (ngSubmit)="initiatePayment()" (keydown.enter)="initiatePayment()">
             <mat-form-field appearance="outline" class="w-full">
-                <input matInput formControlName="phoneNumber" placeholder="0712345678" required>
+                <input matInput formControlName="phoneNumber" placeholder="0712345678" required (keydown.enter)="initiatePayment()">
                 <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('required')">Phone number is required</mat-error>
 <!--                <mat-error *ngIf="paymentForm.get('phoneNumber')?.hasError('pattern')">Enter a valid Kenyan phone number</mat-error>-->
             </mat-form-field>
