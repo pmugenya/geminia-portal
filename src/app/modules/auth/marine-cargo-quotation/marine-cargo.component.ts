@@ -874,6 +874,7 @@ export class PaymentModalComponent implements OnInit {
                             <input type="text" formControlName="kraPin"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
                                    placeholder="Format: A123456789Z"
+                                   (blur)="trimInput($event, 'kraPin')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'kraPin')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'kraPin')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'kraPin') }}
@@ -883,6 +884,7 @@ export class PaymentModalComponent implements OnInit {
                             <label class="block text-sm font-medium text-gray-700">ID Number <span class="text-red-500">*</span></label>
                             <input type="text" formControlName="idNumber"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   (blur)="trimInput($event, 'idNumber')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idNumber')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'idNumber')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idNumber') }}
@@ -893,6 +895,7 @@ export class PaymentModalComponent implements OnInit {
                             <input type="text" formControlName="postalAddress"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
                                    placeholder="Enter your postal address"
+                                   (blur)="trimInput($event, 'postalAddress')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'postalAddress')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'postalAddress')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'postalAddress') }}
@@ -903,6 +906,7 @@ export class PaymentModalComponent implements OnInit {
                             <input type="number" formControlName="postalCode"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
                                    placeholder="Enter postal code (numbers only)"
+                                   (blur)="trimInput($event, 'postalCode')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'postalCode')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'postalCode')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'postalCode') }}
@@ -917,6 +921,7 @@ export class PaymentModalComponent implements OnInit {
                             <label class="block text-sm font-medium text-gray-700">UCR Number</label>
                             <input type="text" formControlName="ucrNumber" placeholder="e.g. 12VNP011111123X0012345678"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   (blur)="trimInput($event, 'ucrNumber')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'ucrNumber')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'ucrNumber')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'ucrNumber') }}
@@ -927,6 +932,7 @@ export class PaymentModalComponent implements OnInit {
                                 class="text-red-500">*</span></label>
                             <input type="text" formControlName="idfNumber" placeholder="e.g. 25MBAIM004889919"
                                    class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                   (blur)="trimInput($event, 'idfNumber')"
                                    [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'idfNumber')}" />
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'idfNumber')"
                                  class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'idfNumber') }}
@@ -977,7 +983,7 @@ export class PaymentModalComponent implements OnInit {
                         <div>
                             <mat-form-field class="w-full">
                                 <mat-label>Vessel Name</mat-label>
-                                <input matInput type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" />
+                                <input matInput type="text" formControlName="vesselName" placeholder="e.g., MSC Isabella" (blur)="trimInput($event, 'vesselName')" />
                             </mat-form-field>
                             <div *ngIf="isFieldInvalid(kycShippingForm, 'vesselName')"
                                 class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'vesselName') }}
@@ -1030,6 +1036,7 @@ export class PaymentModalComponent implements OnInit {
                         <textarea formControlName="descriptionOfGoods" rows="4"
                                   placeholder="Describe the type of goods, their value, quantity, packaging details..."
                                   class="w-full rounded-md border bg-white px-3 py-2 focus-ring-primary"
+                                  (blur)="trimInput($event, 'descriptionOfGoods')"
                                   [ngClass]="{'border-red-500': isFieldInvalid(kycShippingForm, 'descriptionOfGoods')}"></textarea>
                         <div *ngIf="isFieldInvalid(kycShippingForm, 'descriptionOfGoods')"
                              class="mt-1 text-sm text-red-600">{{ getErrorMessage(kycShippingForm, 'descriptionOfGoods') }}
@@ -1687,6 +1694,14 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
     private showToast(message: string): void {
         console.log('Toast (KycShippingPaymentModal):', message);
+    }
+
+    trimInput(event: Event, controlName: string): void {
+        const input = event.target as HTMLInputElement;
+        const trimmedValue = input.value.trim();
+        if (input.value !== trimmedValue) {
+            this.kycShippingForm.get(controlName)?.setValue(trimmedValue);
+        }
     }
 }
 
