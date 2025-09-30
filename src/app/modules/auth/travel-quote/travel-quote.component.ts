@@ -12,6 +12,7 @@ import { TravelQuoteService } from './travel-quote.service';
 import { UserService } from 'app/core/user/user.service';
 import { ShareModalComponent } from '../marine-cargo-quotation/share-modal.component';
 import { QuoteService } from '../shared/services/quote.service';
+import { AuthenticationService } from '../shared/services/auth.service';
 
 // --- Custom Validator Functions ---
 
@@ -92,6 +93,8 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   toastMessage: string = '';
   isSaving: boolean = false;
   quoteResult: any = null; // Store the backend response
+  user: any = null; // Current logged-in user
+  isLoggedIn: boolean = false; // Login state
   
   readonly standardDurations = [ {value: '4', label: 'Up to 4 days'}, {value: '7', label: 'Up to 7 days'}, {value: '10', label: 'Up to 10 days'}, {value: '15', label: 'Up to 15 days'}, {value: '21', label: 'Up to 21 days'}, {value: '31', label: 'Up to 31 days'}, {value: '62', label: 'Up to 62 days'}, {value: '92', label: 'Up to 92 days'}, {value: '180', 'label': 'Up to 180 days'}, {value: '365', label: '1 year multi-trip'} ];
   
@@ -103,7 +106,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   };
   
   constructor(
-    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService, private userService: UserService, private quoteService: QuoteService
+    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService, private userService: UserService, private quoteService: QuoteService, private authenticationService: AuthenticationService
   ) {
     this.quoteForm = this.fb.group({
       duration: ['4', Validators.required],
@@ -126,6 +129,18 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializePlans();
+    
+    // Subscribe to user authentication state
+    this.authenticationService.currentUser$.pipe(takeUntil(this.unsubscribe$)).subscribe(user => {
+      this.isLoggedIn = !!user;
+      if (this.isLoggedIn) {
+        this.user = user;
+        console.log('User logged in:', this.user);
+      } else {
+        this.user = null;
+      }
+    });
+    
     this.displayedPlans = this.allTravelPlans;
     this.updatePlanPrices(this.qf.duration.value);
     
@@ -227,16 +242,19 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     
     this.isSaving = true;
     
-    // Prepare metadata similar to marine quote
+    // Prepare metadata to match backend expected format
     const metadata = {
-      prodName: 'Travel Insurance',
+      productId: 2417, // Travel Insurance product ID (different from marine's 2416)
+      suminsured: this.premium.subtotalUSD * this.USD_TO_KES_RATE, // Sum insured in KES
+      email: (this.tdf.email.value || '').toString().replace(/\s+/g, ''),
+      phoneNumber: this.tdf.phoneNumber.value,
+      // Travel-specific fields
       planName: this.selectedPlanDetails.name,
       coverPeriod: this.getDurationText(this.qf.duration.value),
       numTravelers: this.tdf.numTravelers.value,
       winterSports: this.tdf.winterSports.value,
-      email: this.tdf.email.value,
-      phoneNo: this.tdf.phoneNumber.value,
-      travelers: this.tdf.travelers.value,
+      travelers: JSON.stringify(this.tdf.travelers.value), // Stringify travelers array
+      // Premium breakdown
       subtotal: this.premium.subtotalUSD,
       subtotalKES: this.premium.subtotalUSD * this.USD_TO_KES_RATE,
       groupDiscount: this.premium.groupDiscountUSD,
@@ -246,7 +264,9 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
       trainingLevy: this.premium.trainingLevy,
       stampDuty: this.premium.stampDuty,
       netprem: this.premium.totalPayableKES,
-      description: `${this.selectedPlanDetails.name} - ${this.getDurationText(this.qf.duration.value)}`
+      // Standard fields
+      dateFormat: 'dd MMM yyyy',
+      locale: 'en_US'
     };
 
     const formData = new FormData();
@@ -419,6 +439,14 @@ Get your travel insurance quote at: ${window.location.origin}/travel-quote`;
     setTimeout(() => {
       this.toastMessage = '';
     }, 3000);
+  }
+
+  logout(): void {
+    this.authenticationService.logout();
+    this.showToast('You have been logged out successfully.');
+    setTimeout(() => {
+      this.router.navigate(['/']);
+    }, 1500);
   }
 
   private initializePlans(): void {
