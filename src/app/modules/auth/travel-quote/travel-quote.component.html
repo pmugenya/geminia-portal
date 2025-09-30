@@ -130,18 +130,20 @@
                             <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                                <div>
                                    <label class="mb-2 block text-sm font-medium text-gray-700">Email Address<span class="text-red-500">*</span></label>
-                                   <input type="email" formControlName="email" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
+                                   <input type="email" formControlName="email" (blur)="trimInput($event, 'email')" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
                                     <div *ngIf="tdf.email.invalid && (tdf.email.dirty || tdf.email.touched)" class="mt-1 text-xs text-red-500">
                                        <div *ngIf="tdf.email.errors?.['required']">Email address is required.</div>
                                        <div *ngIf="tdf.email.errors?.['email']">Please enter a valid email address.</div>
+                                       <div *ngIf="tdf.email.errors?.['whitespace']">Email cannot contain only whitespace.</div>
                                    </div>
                                </div>
                                <div>
                                    <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number<span class="text-red-500">*</span></label>
-                                   <input type="tel" formControlName="phoneNumber" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" placeholder="+254712345678" />
+                                   <input type="tel" formControlName="phoneNumber" (blur)="trimInput($event, 'phoneNumber')" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" placeholder="+254712345678" />
                                     <div *ngIf="tdf.phoneNumber.invalid && (tdf.phoneNumber.dirty || tdf.phoneNumber.touched)" class="mt-1 text-xs text-red-500">
                                        <div *ngIf="tdf.phoneNumber.errors?.['required']">Phone number is required.</div>
-                                       <div *ngIf="tdf.phoneNumber.errors?.['pattern']">Must be in the format +2547... or +2541...</div>
+                                       <div *ngIf="tdf.phoneNumber.errors?.['pattern']">Please enter a valid phone number (9-15 digits).</div>
+                                       <div *ngIf="tdf.phoneNumber.errors?.['whitespace']">Phone number cannot contain only whitespace.</div>
                                    </div>
                                </div>
                                <div>
@@ -169,10 +171,11 @@
                                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                                         <div>
                                             <label class="mb-2 block text-sm font-medium text-gray-700">Full Name<span class="text-red-500">*</span></label>
-                                            <input type="text" formControlName="fullName" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
+                                            <input type="text" formControlName="fullName" (blur)="trimTravelerInput($event, i, 'fullName')" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
                                             <div *ngIf="travelerGroup.get('fullName')?.invalid && (travelerGroup.get('fullName')?.dirty || travelerGroup.get('fullName')?.touched)" class="mt-1 text-xs text-red-500">
                                                 <div *ngIf="travelerGroup.get('fullName')?.errors?.['required']">Full name is required.</div>
                                                 <div *ngIf="travelerGroup.get('fullName')?.errors?.['invalidName']">Please enter at least two names (e.g., John Doe).</div>
+                                                <div *ngIf="travelerGroup.get('fullName')?.errors?.['whitespace']">Name cannot contain only whitespace.</div>
                                             </div>
                                         </div>
                                         <div>

@@ -77,9 +77,10 @@ export const kraPinValidator: ValidatorFn = (control: AbstractControl): Validati
 
 export const kenyanPhoneNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    // Remove any spaces and validate
+    // Remove any spaces and validate - accepts any phone number format with at least 9 digits
     const cleanValue = control.value.replace(/\s+/g, '');
-    const phonePattern = /^(?:\+254\d{9}|0\d{9})$/;
+    // Accept any phone number with at least 9 digits (allows +254, 0, or any international format)
+    const phonePattern = /^[+]?\d{9,15}$/;
     return phonePattern.test(cleanValue) ? null : { invalidPhoneNumber: true };
 };
 

@@ -44,30 +44,38 @@ export function dobValidator(control: AbstractControl): ValidationErrors | null 
  * @param control The FormArray to validate.
  */
 export const duplicateTravelerValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-    const formArray = control as FormArray;
-    if (!formArray) return null;
+  const formArray = control as FormArray;
+  if (!formArray || formArray.length === 0) return null;
 
-    const uniqueTravelers = new Set<string>();
-    
-    for (const travelerControl of formArray.controls) {
-        const fullName = travelerControl.get('fullName')?.value;
-        const dob = travelerControl.get('dob')?.value;
+  const travelers = formArray.controls.map((c) => {
+    const fullName = c.get('fullName')?.value?.trim().toLowerCase();
+    const dob = c.get('dob')?.value;
+    return { fullName, dob };
+  });
 
-        if (fullName && dob) {
-            // Normalize name to handle whitespace and case differences
-            const normalizedName = (fullName as string).trim().toLowerCase();
-            const key = `${normalizedName}-${dob}`;
-
-            if (uniqueTravelers.has(key)) {
-                return { duplicateTraveler: true }; // Found a duplicate
-            }
-            uniqueTravelers.add(key);
-        }
+  for (let i = 0; i < travelers.length; i++) {
+    for (let j = i + 1; j < travelers.length; j++) {
+      if (
+        travelers[i].fullName &&
+        travelers[j].fullName &&
+        travelers[i].fullName === travelers[j].fullName &&
+        travelers[i].dob &&
+        travelers[j].dob &&
+        travelers[i].dob === travelers[j].dob
+      ) {
+        return { duplicateTraveler: true };
+      }
     }
+  }
 
-    return null; // No duplicates found
+  return null;
 };
 
+export const noWhitespaceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  if (!control.value) return null;
+  const isWhitespace = (control.value || '').trim().length === 0;
+  return isWhitespace ? { whitespace: true } : null;
+};
 
 // --- Data Structures ---
 interface BenefitDetail { name: string; included: boolean; limit?: string; notes?: string; }
@@ -114,8 +122,8 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     });
 
     this.travelerDetailsForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^(?:\+254|0)[17]\d{8}$/)]],
+      email: ['', [Validators.required, Validators.email, noWhitespaceValidator]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^[+]?\d{9,15}$/), noWhitespaceValidator]],
       numTravelers: [1, [Validators.required, Validators.min(1)]],
       winterSports: [false],
       // UPDATED: Added duplicateTravelerValidator to the FormArray
@@ -159,7 +167,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   
   createTravelerGroup(): FormGroup {
     return this.fb.group({
-      fullName: ['', [Validators.required, fullNameValidator]],
+      fullName: ['', [Validators.required, fullNameValidator, noWhitespaceValidator]],
       dob: ['', [Validators.required, dobValidator]]
     });
   }
@@ -477,6 +485,44 @@ Get your travel insurance quote at: ${window.location.origin}/travel-quote`;
     setTimeout(() => {
       this.toastMessage = '';
     }, 3000);
+  }
+
+  /**
+   * Trims whitespace from input fields to prevent users from entering only spaces
+   */
+  trimInput(event: Event, controlName: string): void {
+    const input = event.target as HTMLInputElement;
+    const originalValue = input.value;
+    
+    // For email, strip ALL whitespace; otherwise trim leading/trailing
+    const sanitizedValue = controlName === 'email'
+      ? originalValue.replace(/\s+/g, '')
+      : originalValue.trim();
+    
+    if (sanitizedValue !== originalValue) {
+      // Update form control value
+      if (controlName === 'email' || controlName === 'phoneNumber') {
+        this.travelerDetailsForm.patchValue({ [controlName]: sanitizedValue });
+      }
+      
+      // Update input field
+      input.value = sanitizedValue;
+    }
+  }
+
+  /**
+   * Trims whitespace from traveler input fields
+   */
+  trimTravelerInput(event: Event, travelerIndex: number, controlName: string): void {
+    const input = event.target as HTMLInputElement;
+    const originalValue = input.value;
+    const sanitizedValue = originalValue.trim();
+    
+    if (sanitizedValue !== originalValue) {
+      const travelerControl = this.travelers.at(travelerIndex);
+      travelerControl.patchValue({ [controlName]: sanitizedValue });
+      input.value = sanitizedValue;
+    }
   }
 
   logout(): void {
