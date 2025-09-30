@@ -77,6 +77,15 @@ export const noWhitespaceValidator: ValidatorFn = (control: AbstractControl): Va
   return isWhitespace ? { whitespace: true } : null;
 };
 
+export const kenyanPhoneNumberValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  if (!control.value) return null;
+  // Remove any spaces and validate - accepts any phone number format with at least 9 digits
+  const cleanValue = control.value.replace(/\s+/g, '');
+  // Accept any phone number with at least 9 digits (allows +254, 0, or any international format)
+  const phonePattern = /^[+]?\d{9,15}$/;
+  return phonePattern.test(cleanValue) ? null : { invalidPhoneNumber: true };
+};
+
 // --- Data Structures ---
 interface BenefitDetail { name: string; included: boolean; limit?: string; notes?: string; }
 interface TravelPlan { id: string; name: string; description: string; type: 'standard'; priceUSD?: number; tags: string[]; isMostPopular?: boolean; benefits: BenefitDetail[]; }
@@ -123,7 +132,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
 
     this.travelerDetailsForm = this.fb.group({
       email: ['', [Validators.required, Validators.email, noWhitespaceValidator]],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^[+]?\d{9,15}$/), noWhitespaceValidator]],
+      phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator, noWhitespaceValidator]],
       numTravelers: [1, [Validators.required, Validators.min(1)]],
       winterSports: [false],
       // UPDATED: Added duplicateTravelerValidator to the FormArray
