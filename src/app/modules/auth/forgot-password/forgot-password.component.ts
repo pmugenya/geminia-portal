@@ -71,6 +71,48 @@ export class AuthForgotPasswordComponent implements OnInit {
     // -----------------------------------------------------------------------------------------------------
 
     /**
+     * Prevent space key from being entered in email field
+     */
+    preventSpaceInEmail(event: KeyboardEvent): void {
+        if (event.key === ' ' || event.code === 'Space' || event.keyCode === 32) {
+            event.preventDefault();
+        }
+    }
+
+    /**
+     * Trim input field on blur or input events
+     */
+    trimInput(event: Event, controlName: string): void {
+        const input = event.target as HTMLInputElement;
+        const originalValue = input.value;
+        const trimmedValue = originalValue.trim();
+        
+        if (originalValue !== trimmedValue) {
+            // Save cursor position
+            const cursorPosition = input.selectionStart || 0;
+            const leadingSpaces = originalValue.length - originalValue.trimStart().length;
+            
+            // Update the input element value immediately
+            input.value = trimmedValue;
+            
+            // Update form control with emitEvent to ensure validators run
+            const control = this.forgotPasswordForm.get(controlName);
+            if (control) {
+                control.setValue(trimmedValue, { emitEvent: true });
+                control.updateValueAndValidity();
+            }
+            
+            // Restore cursor position, adjusting for removed leading spaces
+            const newPosition = Math.max(0, cursorPosition - leadingSpaces);
+            setTimeout(() => {
+                if (input.setSelectionRange) {
+                    input.setSelectionRange(newPosition, newPosition);
+                }
+            }, 0);
+        }
+    }
+
+    /**
      * Send the reset link
      */
     sendResetLink(): void {
@@ -86,8 +128,11 @@ export class AuthForgotPasswordComponent implements OnInit {
         this.showAlert = false;
 
         // Forgot password
+        // Trim whitespace from email
+        const email = this.forgotPasswordForm.get('email').value?.trim() || '';
+        
         this._authService
-            .forgotPassword(this.forgotPasswordForm.get('email').value)
+            .forgotPassword(email)
             .pipe(
                 finalize(() => {
                     // Re-enable the form

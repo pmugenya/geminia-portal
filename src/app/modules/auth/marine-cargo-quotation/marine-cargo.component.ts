@@ -2065,7 +2065,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             suminsured: this.quotationForm.get('sumInsured')?.value,
             firstName: this.quotationForm.get('firstName')?.value,
             lastName: this.quotationForm.get('lastName')?.value,
-            email: this.quotationForm.get('email')?.value,
+            email: (this.quotationForm.get('email')?.value || '').toString().replace(/\s+/g, ''),
             phoneNumber: this.quotationForm.get('phoneNumber')?.value,
             shippingid: this.quotationForm.get('modeOfShipment')?.value,
             tradeType: this.quotationForm.get('tradeType')?.value,
@@ -2680,10 +2680,22 @@ Quote Reference: ${this.quoteResult.id}`;
         this.currentStep = step;
     }
 
+    preventSpaceInEmail(event: KeyboardEvent): void {
+        // Prevent space key from being entered in email fields
+        if (event.key === ' ' || event.code === 'Space' || event.keyCode === 32) {
+            event.preventDefault();
+        }
+    }
+
     trimInput(event: Event, controlName: string, formType: 'quotation' | 'export' | 'highRisk'): void {
         const input = event.target as HTMLInputElement | HTMLTextAreaElement;
-        const trimmedValue = input.value.trim();
-        if (input.value !== trimmedValue) {
+        const originalValue = input.value;
+        // For email, strip ALL whitespace characters; otherwise trim ends
+        const sanitizedValue = controlName === 'email'
+            ? originalValue.replace(/\s+/g, '')
+            : originalValue.trim();
+        
+        if (originalValue !== sanitizedValue) {
             let form: FormGroup;
             if (formType === 'quotation') {
                 form = this.quotationForm;
@@ -2692,7 +2704,28 @@ Quote Reference: ${this.quoteResult.id}`;
             } else {
                 form = this.highRiskRequestForm;
             }
-            form.get(controlName)?.setValue(trimmedValue);
+            
+            // Save cursor position
+            const cursorPosition = input.selectionStart || 0;
+            const leadingSpaces = originalValue.length - originalValue.trimStart().length;
+            
+            // Update the input element value immediately
+            input.value = sanitizedValue;
+            
+            // Update form control with emitEvent to ensure validators run
+            const control = form.get(controlName);
+            if (control) {
+                control.setValue(sanitizedValue, { emitEvent: true });
+                control.updateValueAndValidity();
+            }
+            
+            // Restore cursor position; adjust for removed leading spaces only
+            const newPosition = Math.max(0, cursorPosition - leadingSpaces);
+            setTimeout(() => {
+                if (input.setSelectionRange) {
+                    input.setSelectionRange(newPosition, newPosition);
+                }
+            }, 0);
         }
     }
 }
