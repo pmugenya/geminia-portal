@@ -2679,4 +2679,20 @@ Quote Reference: ${this.quoteResult.id}`;
     goToStep(step: number): void {
         this.currentStep = step;
     }
+
+    trimInput(event: Event, controlName: string, formType: 'quotation' | 'export' | 'highRisk'): void {
+        const input = event.target as HTMLInputElement | HTMLTextAreaElement;
+        const trimmedValue = input.value.trim();
+        if (input.value !== trimmedValue) {
+            let form: FormGroup;
+            if (formType === 'quotation') {
+                form = this.quotationForm;
+            } else if (formType === 'export') {
+                form = this.exportRequestForm;
+            } else {
+                form = this.highRiskRequestForm;
+            }
+            form.get(controlName)?.setValue(trimmedValue);
+        }
+    }
 }
