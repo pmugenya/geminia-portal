@@ -11,6 +11,7 @@ import { AuthService } from 'app/core/auth/auth.service';
 import { TravelQuoteService } from './travel-quote.service';
 import { UserService } from 'app/core/user/user.service';
 import { ShareModalComponent } from '../marine-cargo-quotation/share-modal.component';
+import { QuoteService } from '../shared/services/quote.service';
 
 // --- Custom Validator Functions ---
 
@@ -89,6 +90,8 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   displayedPlans: TravelPlan[] = [];
   quoteId: string | null = null; // Store quote ID after saving
   toastMessage: string = '';
+  isSaving: boolean = false;
+  quoteResult: any = null; // Store the backend response
   
   readonly standardDurations = [ {value: '4', label: 'Up to 4 days'}, {value: '7', label: 'Up to 7 days'}, {value: '10', label: 'Up to 10 days'}, {value: '15', label: 'Up to 15 days'}, {value: '21', label: 'Up to 21 days'}, {value: '31', label: 'Up to 31 days'}, {value: '62', label: 'Up to 62 days'}, {value: '92', label: 'Up to 92 days'}, {value: '180', 'label': 'Up to 180 days'}, {value: '365', label: '1 year multi-trip'} ];
   
@@ -100,7 +103,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   };
   
   constructor(
-    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService, private userService: UserService
+    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService, private userService: UserService, private quoteService: QuoteService
   ) {
     this.quoteForm = this.fb.group({
       duration: ['4', Validators.required],
@@ -209,24 +212,66 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     if (this.currentStep < 3) {
       this.calculatePremium();
       if (this.currentStep === 2) {
-        this.saveQuoteToLocalStorage();
-        // Generate a unique quote ID for download and share functionality
-        if (!this.quoteId) {
-          this.quoteId = `TRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        }
+        // Save quote to backend before proceeding to step 3
+        this.saveQuoteToBackend();
+      } else {
+        this.currentStep++;
       }
-      this.currentStep++;
     } 
   }
   
   prevStep(): void { if (this.currentStep > 1) this.currentStep--; }
 
-  saveQuoteToLocalStorage(): void {
+  saveQuoteToBackend(): void {
     if (this.travelerDetailsForm.invalid || !this.selectedPlanDetails) return;
-    this.travelQuoteService.saveQuote({
-        planDetails: { name: this.selectedPlanDetails.name, duration: this.getDurationText(this.qf.duration.value) },
-        travelerDetails: this.travelerDetailsForm.value,
-        premiumSummary: this.premium
+    
+    this.isSaving = true;
+    
+    // Prepare metadata similar to marine quote
+    const metadata = {
+      prodName: 'Travel Insurance',
+      planName: this.selectedPlanDetails.name,
+      coverPeriod: this.getDurationText(this.qf.duration.value),
+      numTravelers: this.tdf.numTravelers.value,
+      winterSports: this.tdf.winterSports.value,
+      email: this.tdf.email.value,
+      phoneNo: this.tdf.phoneNumber.value,
+      travelers: this.tdf.travelers.value,
+      subtotal: this.premium.subtotalUSD,
+      subtotalKES: this.premium.subtotalUSD * this.USD_TO_KES_RATE,
+      groupDiscount: this.premium.groupDiscountUSD,
+      ageSurcharge: this.premium.ageSurchargeUSD,
+      winterSportsSurcharge: this.premium.winterSportsSurchargeUSD,
+      phcf: this.premium.phcf,
+      trainingLevy: this.premium.trainingLevy,
+      stampDuty: this.premium.stampDuty,
+      netprem: this.premium.totalPayableKES,
+      description: `${this.selectedPlanDetails.name} - ${this.getDurationText(this.qf.duration.value)}`
+    };
+
+    const formData = new FormData();
+    formData.append('metadata', JSON.stringify(metadata));
+
+    this.quoteService.createQuote(formData).subscribe({
+      next: (res) => {
+        this.quoteResult = res;
+        this.quoteId = res.id; // Store the backend-generated quote ID
+        this.currentStep = 3;
+        this.isSaving = false;
+        this.showToast('Quote saved successfully!');
+        
+        // Also save to localStorage as backup
+        this.travelQuoteService.saveQuote({
+          planDetails: { name: this.selectedPlanDetails!.name, duration: this.getDurationText(this.qf.duration.value) },
+          travelerDetails: this.travelerDetailsForm.value,
+          premiumSummary: this.premium
+        });
+      },
+      error: (err) => {
+        console.error('Quote submission error:', err);
+        this.showToast('An error occurred while saving the quote. Please try again.');
+        this.isSaving = false;
+      }
     });
   }
 
@@ -238,10 +283,32 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   }
 
   private openPaymentDialog(): void {
+    if (!this.quoteResult) {
+      this.showToast('Please save the quote first before proceeding to payment.');
+      return;
+    }
+    
     const dialogRef = this.dialog.open(MpesaPaymentModalComponent, {
-      data: { amount: this.premium.totalPayableKES, phoneNumber: this.tdf.phoneNumber.value, reference: `FID-TRV-${Date.now()}`, description: `${this.selectedPlanDetails?.name} Cover` }
+      width: '500px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: { 
+        amount: this.premium.totalPayableKES, 
+        phoneNumber: this.tdf.phoneNumber.value, 
+        reference: this.quoteResult.refno || `TRV-${this.quoteId}`, 
+        description: `${this.selectedPlanDetails?.name} Travel Insurance Cover`,
+        quoteId: this.quoteId
+      }
     });
-    dialogRef.afterClosed().subscribe((result: PaymentResult | null) => { if (result?.success) this.router.navigate(['/dashboard']); });
+    
+    dialogRef.afterClosed().subscribe((result: PaymentResult | null) => { 
+      if (result?.success) {
+        this.showToast('Payment successful! Redirecting to dashboard...');
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 2000);
+      }
+    });
   }
   
   // NEW: Helper function to calculate age for the template

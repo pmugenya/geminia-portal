@@ -265,7 +265,16 @@
                         </div>
                         
                         <div class="mt-6">
-                            <button *ngIf="currentStep === 2" (click)="nextStep()" [disabled]="travelerDetailsForm.invalid" class="btn-primary w-full rounded-md px-4 py-3 font-medium">Review & Save Quote</button>
+                            <button *ngIf="currentStep === 2" (click)="nextStep()" [disabled]="travelerDetailsForm.invalid || isSaving" class="btn-primary w-full rounded-md px-4 py-3 font-medium">
+                                <span *ngIf="!isSaving">Review & Save Quote</span>
+                                <span *ngIf="isSaving" class="flex items-center justify-center">
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving Quote...
+                                </span>
+                            </button>
                             <div *ngIf="currentStep === 3" class="flex flex-col gap-3">
                                 <button (click)="downloadQuote()" mat-stroked-button class="w-full rounded-md border-2 border-pantone-dark-blue px-6 py-2 font-medium text-pantone-dark-blue hover:bg-pantone-dark-blue hover:text-white">
                                     <mat-icon class="!h-5 !w-5 !text-base">download</mat-icon>
