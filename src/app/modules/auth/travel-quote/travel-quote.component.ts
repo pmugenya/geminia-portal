@@ -242,19 +242,49 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     
     this.isSaving = true;
     
-    // Prepare metadata to match backend expected format
+    // TODO: Backend APIs for travel quotes not ready yet
+    // Temporarily working with local storage only
+    // When backend is ready, uncomment the API call below
+    
+    // Generate a temporary local quote ID
+    this.quoteId = `TRV-LOCAL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create mock quote result for local use
+    this.quoteResult = {
+      id: this.quoteId,
+      refno: this.quoteId,
+      status: 'DRAFT'
+    };
+    
+    // Save to localStorage
+    this.travelQuoteService.saveQuote({
+      planDetails: { 
+        name: this.selectedPlanDetails.name, 
+        duration: this.getDurationText(this.qf.duration.value) 
+      },
+      travelerDetails: this.travelerDetailsForm.value,
+      premiumSummary: this.premium
+    });
+    
+    // Simulate API delay for better UX
+    setTimeout(() => {
+      this.currentStep = 3;
+      this.isSaving = false;
+      this.showToast('Quote saved locally! (Backend API not yet configured)');
+    }, 500);
+    
+    /* UNCOMMENT THIS WHEN BACKEND IS READY:
+    
     const metadata = {
-      productId: 2417, // Travel Insurance product ID (different from marine's 2416)
-      suminsured: this.premium.subtotalUSD * this.USD_TO_KES_RATE, // Sum insured in KES
+      productId: 2417, // Confirm this with backend team
+      suminsured: this.premium.subtotalUSD * this.USD_TO_KES_RATE,
       email: (this.tdf.email.value || '').toString().replace(/\s+/g, ''),
       phoneNumber: this.tdf.phoneNumber.value,
-      // Travel-specific fields
       planName: this.selectedPlanDetails.name,
       coverPeriod: this.getDurationText(this.qf.duration.value),
       numTravelers: this.tdf.numTravelers.value,
       winterSports: this.tdf.winterSports.value,
-      travelers: JSON.stringify(this.tdf.travelers.value), // Stringify travelers array
-      // Premium breakdown
+      travelers: JSON.stringify(this.tdf.travelers.value),
       subtotal: this.premium.subtotalUSD,
       subtotalKES: this.premium.subtotalUSD * this.USD_TO_KES_RATE,
       groupDiscount: this.premium.groupDiscountUSD,
@@ -264,7 +294,6 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
       trainingLevy: this.premium.trainingLevy,
       stampDuty: this.premium.stampDuty,
       netprem: this.premium.totalPayableKES,
-      // Standard fields
       dateFormat: 'dd MMM yyyy',
       locale: 'en_US'
     };
@@ -275,12 +304,10 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     this.quoteService.createQuote(formData).subscribe({
       next: (res) => {
         this.quoteResult = res;
-        this.quoteId = res.id; // Store the backend-generated quote ID
+        this.quoteId = res.id;
         this.currentStep = 3;
         this.isSaving = false;
         this.showToast('Quote saved successfully!');
-        
-        // Also save to localStorage as backup
         this.travelQuoteService.saveQuote({
           planDetails: { name: this.selectedPlanDetails!.name, duration: this.getDurationText(this.qf.duration.value) },
           travelerDetails: this.travelerDetailsForm.value,
@@ -293,6 +320,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
         this.isSaving = false;
       }
     });
+    */
   }
 
   handlePayment(): void {
