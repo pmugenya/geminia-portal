@@ -109,6 +109,12 @@ export const nameValidator: ValidatorFn = (control: AbstractControl): Validation
     return namePattern.test(control.value) ? null : { invalidName: true };
 };
 
+export const noWhitespaceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const isWhitespace = (control.value || '').trim().length === 0;
+    return isWhitespace ? { whitespace: true } : null;
+};
+
 export const enhancedDuplicateFileValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!(control instanceof FormGroup)) {
         return null;
@@ -716,7 +722,12 @@ export class PaymentModalComponent implements OnInit {
                                 this.isProcessingStk = false;
                                 this.paymentSuccess = true;
                                 setTimeout(() => {
-                                    this.dialogRef.close(true);
+                                    this.dialogRef.close({
+                                        success: true,
+                                        method: 'stk',
+                                        reference: this.data.reference,
+                                        mpesaReceipt: statusRes.mpesaCode
+                                    });
                                     this.router.navigate(['/dashboard']);
                                 }, 1000);
 
@@ -1346,26 +1357,26 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         const allowedFileTypes = ['pdf', 'png', 'jpg', 'jpeg'];
         const maxFileSize = 10;
         return this.fb.group({
-            kraPin: ['', [Validators.required, kraPinValidator]],
-            idNumber: ['', [Validators.required, idNumberValidator]],
-            postalAddress: ['', Validators.required],
-            postalCode: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
+            kraPin: ['', [Validators.required, kraPinValidator, noWhitespaceValidator]],
+            idNumber: ['', [Validators.required, idNumberValidator, noWhitespaceValidator]],
+            postalAddress: ['', [Validators.required, noWhitespaceValidator]],
+            postalCode: ['', [Validators.required, Validators.pattern(/^\d+$/), noWhitespaceValidator]],
             kycDocuments: this.fb.group({
                 kraPinUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
                 nationalIdUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
                 invoiceUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
                 idfUpload: [null, [Validators.required, enhancedFileTypeValidator(allowedFileTypes, maxFileSize)]],
             }, { validators: enhancedDuplicateFileValidator }),
-            ucrNumber: ['', ucrNumberValidator],
-            idfNumber: ['', [Validators.required, idfNumberValidator]],
+            ucrNumber: ['', [ucrNumberValidator, noWhitespaceValidator]],
+            idfNumber: ['', [Validators.required, idfNumberValidator, noWhitespaceValidator]],
             loadingPort: ['', Validators.required],
             portOfDischarge: ['', Validators.required],
             sumInsured: ['', Validators.required],
-            vesselName: [''],
+            vesselName: ['', noWhitespaceValidator],
             finalDestinationCounty: ['', Validators.required],
             dateOfDispatch: ['', [Validators.required, this.noPastDatesValidator]],
             estimatedArrivalDate: ['', [Validators.required, this.noPastDatesValidator]],
-            descriptionOfGoods: ['', [Validators.required, minWords(3), maxWords(100)]],
+            descriptionOfGoods: ['', [Validators.required, minWords(3), maxWords(100), noWhitespaceValidator]],
         });
     }
 
@@ -1598,11 +1609,17 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
 
             dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((paymentResult: PaymentResult | null) => {
                 if (paymentResult?.success) {
+                    // Payment successful - close both modals
                     this.showToast('Payment successful!');
                     this.dialogRef.close('payment_success');
+                } else if (paymentResult === null || paymentResult === undefined) {
+                    // Payment modal closed without action - keep Complete Purchase modal open
+                    this.showToast('Payment cancelled. You can try again.');
+                    // Don't close the Complete Purchase modal
                 } else {
-                    this.showToast('Payment cancelled or failed. Your quote has been saved.');
-                    this.dialogRef.close('payment_failed');
+                    // Payment failed - keep Complete Purchase modal open
+                    this.showToast('Payment failed. Your quote has been saved. Please try again.');
+                    // Don't close the Complete Purchase modal
                 }
             });
         });
@@ -1625,6 +1642,7 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         }
         if (!control || !control.errors) return '';
         if (control.hasError('required')) return 'This field is required.';
+        if (control.hasError('whitespace')) return 'This field cannot contain only whitespace.';
         if (control.hasError('email')) return 'Please enter a valid email address.';
         if (control.hasError('requiredTrue')) return 'You must agree to proceed.';
         if (control.hasError('pastDate')) return 'Date cannot be in the past.';
@@ -1764,8 +1782,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     readonly portOptions: string[] = ['Lamu', 'Mombasa', 'Kisumu'];
     kenyanCounties: County[] = [];
     isSaving = false;
-    private readonly quoteStorageKey = 'savedMarineQuote';
-    private readonly editQuoteStorageKey = 'editMarineQuote';
 
     // Filter controls for search functionality
     countryFilterCtrl: FormControl = new FormControl();
@@ -1853,8 +1869,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
                         }
                     }, 100);
                 }
-            } else {
-                this.loadQuoteFromLocalStorage();
             }
         });
     }
@@ -1865,11 +1879,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
     }
 
     ngOnDestroy(): void {
-        // Save current form state to localStorage before destroying component
-        if (this.quotationForm && this.quotationForm.dirty) {
-            this.saveQuoteToLocalStorage(this.quotationForm.value);
-        }
-        
         this.destroy$.next();
         this.destroy$.complete();
     }
@@ -1995,10 +2004,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     private createQuotationForm(): FormGroup {
         return this.fb.group({
-            firstName: ['', [Validators.required, nameValidator]],
-            lastName: ['', [Validators.required, nameValidator]],
-            email: ['', [Validators.required, Validators.email]],
-            phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator]],
+            firstName: ['', [Validators.required, nameValidator, noWhitespaceValidator]],
+            lastName: ['', [Validators.required, nameValidator, noWhitespaceValidator]],
+            email: ['', [Validators.required, Validators.email, noWhitespaceValidator]],
+            phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator, noWhitespaceValidator]],
             modeOfShipment: ['', Validators.required],
             marineProduct: ['ICC (A) All Risks'],
             marineCategory: ['ICC (A) All Risks', Validators.required],
@@ -2068,11 +2077,8 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
                 this.quoteResult = res;
                 this.currentStep = 2;
                 this.isSaving = false;
-                localStorage.removeItem(this.quoteStorageKey);
                 
-                // Also remove edit localStorage if we were in edit mode
                 if (this.isEditMode) {
-                    localStorage.removeItem(this.editQuoteStorageKey);
                     this.showToast('Quote updated successfully!');
                 } else {
                     this.showToast('Quote created successfully!');
@@ -2122,9 +2128,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             }
         });
 
-        this.quotationForm.valueChanges.pipe(debounceTime(1000), takeUntil(this.destroy$)).subscribe(value => {
-            this.saveQuoteToLocalStorage(value);
-        });
 
         // Update the modeOfShipment subscription to reset countries
         this.quotationForm.get('modeOfShipment')?.valueChanges.subscribe((mode: number) => {
@@ -2175,81 +2178,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         }
     }
 
-    private saveQuoteToLocalStorage(formValue: any): void {
-        const storageKey = this.isEditMode ? this.editQuoteStorageKey : this.quoteStorageKey;
-        const dataToSave = {
-            formData: formValue,
-            isEditMode: this.isEditMode,
-            editModeQuoteId: this.editModeQuoteId,
-            originalQuoteData: this.originalQuoteData,
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem(storageKey, JSON.stringify(dataToSave));
-        console.log('Quote saved to localStorage:', storageKey, dataToSave);
-    }
-
-    private loadQuoteFromLocalStorage(): void {
-        const storageKey = this.isEditMode ? this.editQuoteStorageKey : this.quoteStorageKey;
-        const savedQuoteJSON = localStorage.getItem(storageKey);
-        
-        if (savedQuoteJSON) {
-            try {
-                const savedData = JSON.parse(savedQuoteJSON);
-                console.log('Loading quote from localStorage:', savedData);
-                
-                // Restore form data
-                if (savedData.formData) {
-                    this.quotationForm.patchValue(savedData.formData);
-                }
-                
-                // Restore edit mode state if applicable
-                if (savedData.isEditMode && savedData.editModeQuoteId) {
-                    this.isEditMode = savedData.isEditMode;
-                    this.editModeQuoteId = savedData.editModeQuoteId;
-                    this.originalQuoteData = savedData.originalQuoteData;
-                }
-                
-                this.showToast('Your previous progress has been restored from local storage.');
-            } catch (error) {
-                console.error('Error loading quote from localStorage:', error);
-                localStorage.removeItem(storageKey);
-            }
-        }
-    }
-
-    private saveEditQuoteToLocalStorage(quoteData: any): void {
-        const editData = {
-            quoteData: quoteData,
-            editModeQuoteId: this.editModeQuoteId,
-            isEditMode: true,
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem(this.editQuoteStorageKey, JSON.stringify(editData));
-        console.log('Edit quote data saved to localStorage:', editData);
-    }
-
-    private loadEditQuoteFromLocalStorage(): boolean {
-        const savedEditJSON = localStorage.getItem(this.editQuoteStorageKey);
-        
-        if (savedEditJSON) {
-            try {
-                const editData = JSON.parse(savedEditJSON);
-                console.log('Loading edit quote from localStorage:', editData);
-                
-                if (editData.quoteData && editData.editModeQuoteId === this.editModeQuoteId) {
-                    // Use the saved quote data to populate the form
-                    this.originalQuoteData = editData.quoteData;
-                    this.populateFormFromQuoteData(editData.quoteData);
-                    this.showToast('Quote data restored from local storage.');
-                    return true;
-                }
-            } catch (error) {
-                console.error('Error loading edit quote from localStorage:', error);
-                localStorage.removeItem(this.editQuoteStorageKey);
-            }
-        }
-        return false;
-    }
 
     private async populateFormFromQuoteData(quoteData: any): Promise<void> {
         console.log('Populating form from quote data:', quoteData);
@@ -2341,6 +2269,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         const control = form.get(field);
         if (!control || !control.errors) return '';
         if (control.hasError('required')) return 'This field is required.';
+        if (control.hasError('whitespace')) return 'This field cannot contain only whitespace.';
         if (control.hasError('email')) return 'Please enter a valid email address.';
         if (control.hasError('requiredTrue')) return 'You must agree to proceed.';
         if (control.hasError('pastDate')) return 'Date cannot be in the past.';
@@ -2365,15 +2294,15 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     private createModalForm(): FormGroup {
         return this.fb.group({
-            firstName: ['', [Validators.required, nameValidator]],
-            lastName: ['', [Validators.required, nameValidator]],
-            email: ['', [Validators.required, Validators.email]],
-            phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator]],
+            firstName: ['', [Validators.required, nameValidator, noWhitespaceValidator]],
+            lastName: ['', [Validators.required, nameValidator, noWhitespaceValidator]],
+            email: ['', [Validators.required, Validators.email, noWhitespaceValidator]],
+            phoneNumber: ['', [Validators.required, kenyanPhoneNumberValidator, noWhitespaceValidator]],
             originCountry: ['', Validators.required],
             destinationCountry: ['', Validators.required],
             shipmentDate: ['', [Validators.required, this.noPastDatesValidator]],
             sumInsured: [null, [Validators.required, Validators.min(1)]],
-            goodsDescription: ['', [Validators.required, minWords(3), maxWords(100)]],
+            goodsDescription: ['', [Validators.required, minWords(3), maxWords(100), noWhitespaceValidator]],
             termsAndPolicyConsent: [false, Validators.requiredTrue],
         });
     }
@@ -2425,22 +2354,13 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
         this.isEditMode = true;
         this.editModeQuoteId = quoteId;
         
-        // First try to load from localStorage as a quick fallback
-        if (this.loadEditQuoteFromLocalStorage()) {
-            console.log('Quote loaded from localStorage successfully');
-            return;
-        }
-        
-        // If not in localStorage, fetch from API
+        // Fetch from API
         this.userService.getSingleQuoteForEditing(quoteId).subscribe({
             next: (quoteData) => {
                 console.log('Loading quote for editing from API:', quoteData);
                 
                 // Store the original quote data for reference
                 this.originalQuoteData = { ...quoteData };
-                
-                // Save to localStorage immediately for future use
-                this.saveEditQuoteToLocalStorage(quoteData);
                 
                 // Use the new populate method
                 this.populateFormFromQuoteData(quoteData).then(() => {
@@ -2452,18 +2372,10 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
             },
             error: (err) => {
                 console.error('Error loading quote for editing:', err);
-                
-                // Try localStorage as fallback
-                if (this.loadEditQuoteFromLocalStorage()) {
-                    this.showToast('Quote loaded from local storage (API unavailable).');
-                } else {
-                    this.showToast('Error loading quote. Please try again.');
-                    // Clear edit mode on error
-                    this.isEditMode = false;
-                    this.editModeQuoteId = null;
-                    // Final fallback to regular localStorage
-                    this.loadQuoteFromLocalStorage();
-                }
+                this.showToast('Error loading quote. Please try again.');
+                // Clear edit mode on error
+                this.isEditMode = false;
+                this.editModeQuoteId = null;
             }
         });
     }
@@ -2588,11 +2500,6 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
 
     closeForm(): void {
         if (this.isLoggedIn) {
-            // Clear localStorage if we're in edit mode and closing
-            if (this.isEditMode) {
-                localStorage.removeItem(this.editQuoteStorageKey);
-            }
-            
             // Clear edit mode when closing
             const wasEditMode = this.isEditMode;
             this.isEditMode = false;
@@ -2715,7 +2622,7 @@ export class MarineCargoQuotationComponent implements OnInit, OnDestroy, AfterVi
  Premium Breakdown:
 • Sum Insured: ${currency} ${this.formatNumber(formValue.sumInsured)}
 • Base Premium: ${currency} ${this.formatNumber(this.quoteResult.premium)}
-• PHCF (0.25%): ${currency} ${this.formatNumber(this.quoteResult.phcf)}
+• PHCF (0.2%): ${currency} ${this.formatNumber(this.quoteResult.phcf)}
 • Training Levy (0.25%): ${currency} ${this.formatNumber(this.quoteResult.tl)}
 • Stamp Duty: ${currency} ${this.formatNumber(this.quoteResult.sd)}
 
