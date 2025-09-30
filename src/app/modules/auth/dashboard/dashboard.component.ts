@@ -686,6 +686,10 @@ ngOnDestroy(): void {
             label: 'Marine Insurance', icon: 'directions_boat', isExpanded: true,
             children: [ { label: 'New Quote', route: '/marine-quote', icon: 'add_circle' } ]
         },
+        {
+            label: 'Travel Insurance', icon: 'flight', isExpanded: false,
+            children: [ { label: 'New Quote', route: '/travel-quote', icon: 'add_circle' } ]
+        },
         { label: 'My Policies', icon: 'shield', sectionId: 'my-policies-section' },
         { label: 'Receipts', icon: 'receipt_long', route: '/receipts' }
     ];

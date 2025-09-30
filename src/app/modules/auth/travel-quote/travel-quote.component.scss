@@ -1,4 +1,10 @@
-// Define Geminia Insurance brand colors from the provided palette
+// Define brand colors to match marine cargo component
+:host {
+  --primary-color: #04b2e1;    /* Pantone 306C */
+  --hover-color: #21275c;      /* Pantone 2758C */
+  --brand-color: #21275c;      /* Explicit brand color for key elements */
+}
+
 $geminia-blue: #04b2e1;
 $geminia-navy: #21275c;
 $geminia-white: #ffffff;
@@ -164,9 +170,27 @@ input[type="radio"].sr-only { position: absolute; width: 1px; height: 1px; paddi
   td { font-size: 0.9rem; }
 }
 
+/* --- Pantone Brand Colors --- */
+$pantone-dark-blue: #21275c;
+$pantone-light-blue: #04b2e1;
+
+.border-pantone-dark-blue { border-color: $pantone-dark-blue !important; }
+.text-pantone-dark-blue { color: $pantone-dark-blue !important; }
+.border-pantone-light-blue { border-color: $pantone-light-blue !important; }
+.text-pantone-light-blue { color: $pantone-light-blue !important; }
+.bg-pantone-dark-blue { background-color: $pantone-dark-blue !important; }
+.bg-pantone-light-blue { background-color: $pantone-light-blue !important; }
+
 /* --- Animations --- */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(10px); }
+}
 .step-content { animation: fadeIn 0.4s ease-in-out; }
+.animate-fade-in-out { animation: fadeInOut 3s ease-in-out; }

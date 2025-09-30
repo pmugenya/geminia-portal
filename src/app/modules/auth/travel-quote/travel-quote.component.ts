@@ -4,10 +4,13 @@ import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { Subject, take, takeUntil, debounceTime, startWith } from 'rxjs';
 import { MpesaPaymentModalComponent, PaymentResult } from '../../auth/shared/payment-modal.component';
 import { AuthService } from 'app/core/auth/auth.service';
 import { TravelQuoteService } from './travel-quote.service';
+import { UserService } from 'app/core/user/user.service';
+import { ShareModalComponent } from '../marine-cargo-quotation/share-modal.component';
 
 // --- Custom Validator Functions ---
 
@@ -67,12 +70,12 @@ export const duplicateTravelerValidator: ValidatorFn = (control: AbstractControl
 // --- Data Structures ---
 interface BenefitDetail { name: string; included: boolean; limit?: string; notes?: string; }
 interface TravelPlan { id: string; name: string; description: string; type: 'standard'; priceUSD?: number; tags: string[]; isMostPopular?: boolean; benefits: BenefitDetail[]; }
-interface Premium { baseRateUSD: number; subtotalUSD: number; groupDiscountUSD: number; ageSurchargeUSD: number; winterSportsSurchargeUSD: number; totalPayableUSD: number; totalPayableKES: number; groupDiscountPercentage: number; }
+interface Premium { baseRateUSD: number; subtotalUSD: number; groupDiscountUSD: number; ageSurchargeUSD: number; winterSportsSurchargeUSD: number; phcf: number; trainingLevy: number; stampDuty: number; totalPayableUSD: number; totalPayableKES: number; groupDiscountPercentage: number; }
 
 @Component({
   selector: 'app-travel-quote',
   standalone: true,
-  imports: [ CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, DatePipe, DecimalPipe ],
+  imports: [ CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatButtonModule, DatePipe, DecimalPipe ],
   templateUrl: './travel-quote.component.html',
   styleUrls: ['./travel-quote.component.scss'],
 })
@@ -84,6 +87,8 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   selectedPlanDetails: TravelPlan | null = null;
   allTravelPlans: TravelPlan[] = [];
   displayedPlans: TravelPlan[] = [];
+  quoteId: string | null = null; // Store quote ID after saving
+  toastMessage: string = '';
   
   readonly standardDurations = [ {value: '4', label: 'Up to 4 days'}, {value: '7', label: 'Up to 7 days'}, {value: '10', label: 'Up to 10 days'}, {value: '15', label: 'Up to 15 days'}, {value: '21', label: 'Up to 21 days'}, {value: '31', label: 'Up to 31 days'}, {value: '62', label: 'Up to 62 days'}, {value: '92', label: 'Up to 92 days'}, {value: '180', 'label': 'Up to 180 days'}, {value: '365', label: '1 year multi-trip'} ];
   
@@ -95,7 +100,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   };
   
   constructor(
-    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService
+    private fb: FormBuilder, private router: Router, private dialog: MatDialog, private authService: AuthService, private travelQuoteService: TravelQuoteService, private userService: UserService
   ) {
     this.quoteForm = this.fb.group({
       duration: ['4', Validators.required],
@@ -104,7 +109,7 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
 
     this.travelerDetailsForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^\+254[17]\d{8}$/)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^(?:\+254|0)[17]\d{8}$/)]],
       numTravelers: [1, [Validators.required, Validators.min(1)]],
       winterSports: [false],
       // UPDATED: Added duplicateTravelerValidator to the FormArray
@@ -182,11 +187,19 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     const ageSurchargeUSD = totalAgeSurchargeUSD;
     
     const winterSportsSurchargeUSD = formValue.winterSports ? subtotalUSD : 0;
-    const totalPayableUSD = subtotalUSD - groupDiscountUSD + ageSurchargeUSD + winterSportsSurchargeUSD;
+    const subtotalBeforeTaxUSD = subtotalUSD - groupDiscountUSD + ageSurchargeUSD + winterSportsSurchargeUSD;
+    
+    // Calculate taxes in KES (similar to marine quote)
+    const subtotalKES = subtotalBeforeTaxUSD * this.USD_TO_KES_RATE;
+    const phcf = subtotalKES * 0.0025; // 0.25% PHCF
+    const trainingLevy = subtotalKES * 0.002; // 0.2% Training Levy
+    const stampDuty = 40; // Fixed stamp duty
+    const totalPayableKES = subtotalKES + phcf + trainingLevy + stampDuty;
+    const totalPayableUSD = totalPayableKES / this.USD_TO_KES_RATE;
     
     this.premium = {
-      baseRateUSD, subtotalUSD, groupDiscountUSD, ageSurchargeUSD, winterSportsSurchargeUSD, totalPayableUSD,
-      totalPayableKES: totalPayableUSD * this.USD_TO_KES_RATE, groupDiscountPercentage
+      baseRateUSD, subtotalUSD, groupDiscountUSD, ageSurchargeUSD, winterSportsSurchargeUSD,
+      phcf, trainingLevy, stampDuty, totalPayableUSD, totalPayableKES, groupDiscountPercentage
     };
   }
 
@@ -195,7 +208,13 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     if (this.currentStep === 2 && this.travelerDetailsForm.invalid) { this.travelerDetailsForm.markAllAsTouched(); return; }
     if (this.currentStep < 3) {
       this.calculatePremium();
-      if (this.currentStep === 2) this.saveQuoteToLocalStorage();
+      if (this.currentStep === 2) {
+        this.saveQuoteToLocalStorage();
+        // Generate a unique quote ID for download and share functionality
+        if (!this.quoteId) {
+          this.quoteId = `TRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+      }
       this.currentStep++;
     } 
   }
@@ -242,7 +261,98 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   getDurationText(value: string): string { return this.standardDurations.find(d => d.value === value)?.label || 'N/A'; }
   closeForm(): void { this.router.navigate(['/dashboard']); }
   abs(value: number): number { return Math.abs(value); }
-  private resetPremium(): Premium { return { baseRateUSD: 0, subtotalUSD: 0, groupDiscountUSD: 0, ageSurchargeUSD: 0, winterSportsSurchargeUSD: 0, totalPayableUSD: 0, totalPayableKES: 0, groupDiscountPercentage: 0 }; }
+  private resetPremium(): Premium { return { baseRateUSD: 0, subtotalUSD: 0, groupDiscountUSD: 0, ageSurchargeUSD: 0, winterSportsSurchargeUSD: 0, phcf: 0, trainingLevy: 0, stampDuty: 0, totalPayableUSD: 0, totalPayableKES: 0, groupDiscountPercentage: 0 }; }
+
+  downloadQuote(): void {
+    if (this.quoteId) {
+      this.userService.downloadQuote(this.quoteId).subscribe({
+        next: (base64String) => {
+          const base64 = base64String.split(',')[1] || base64String;
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `travel-quote-${this.quoteId}.pdf`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          this.showToast('Quote downloaded successfully!');
+        },
+        error: (err) => {
+          console.error('Download error:', err);
+          this.showToast('Download feature requires payment. Please complete payment first.');
+        }
+      });
+    } else {
+      this.showToast('No quote available to download.');
+    }
+  }
+
+  shareQuote(): void {
+    if (!this.quoteId) {
+      this.showToast('No quote available to share.');
+      return;
+    }
+    const quoteDetails = this.generateShareableQuoteText();
+    const shareableLink = this.generateShareableLink();
+    this.showShareModal(quoteDetails, shareableLink);
+  }
+
+  private showShareModal(quoteText: string, shareLink: string): void {
+    const modal = this.dialog.open(ShareModalComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+      data: {
+        quoteText: quoteText,
+        shareLink: shareLink,
+        quoteId: this.quoteId
+      }
+    });
+    modal.afterClosed().subscribe(result => {
+      if (result === 'copied') {
+        this.showToast('Quote details copied to clipboard!');
+      } else if (result === 'link-copied') {
+        this.showToast('Share link copied to clipboard!');
+      }
+    });
+  }
+
+  private generateShareableQuoteText(): string {
+    return `Travel Insurance Quote - Geminia Insurance
+
+Plan: ${this.selectedPlanDetails?.name}
+Cover Period: ${this.getDurationText(this.qf.duration.value)}
+Number of Travelers: ${this.tdf.numTravelers.value}
+
+Premium Breakdown:
+Subtotal (USD): $${this.premium.subtotalUSD.toFixed(2)}${this.premium.groupDiscountUSD > 0 ? `\nGroup Discount (${this.premium.groupDiscountPercentage}%): -$${this.premium.groupDiscountUSD.toFixed(2)}` : ''}${this.premium.ageSurchargeUSD !== 0 ? `\nAge-Based Adjustment: ${this.premium.ageSurchargeUSD > 0 ? '+' : '-'}$${Math.abs(this.premium.ageSurchargeUSD).toFixed(2)}` : ''}${this.premium.winterSportsSurchargeUSD > 0 ? `\nWinter Sports Surcharge: +$${this.premium.winterSportsSurchargeUSD.toFixed(2)}` : ''}
+PHCF (0.25%): KES ${this.premium.phcf.toFixed(2)}
+Training Levy (0.2%): KES ${this.premium.trainingLevy.toFixed(2)}
+Stamp Duty: KES ${this.premium.stampDuty.toFixed(2)}
+
+TOTAL PAYABLE: KES ${this.premium.totalPayableKES.toFixed(2)}
+
+Contact: ${this.tdf.email.value}
+Phone: ${this.tdf.phoneNumber.value}
+
+Get your travel insurance quote at: ${window.location.origin}/travel-quote`;
+  }
+
+  private generateShareableLink(): string {
+    return `${window.location.origin}/travel-quote?quote=${this.quoteId}`;
+  }
+
+  showToast(message: string): void {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
+  }
 
   private initializePlans(): void {
     this.allTravelPlans = [

@@ -233,30 +233,48 @@
                     <div class="sticky top-24 rounded-lg bg-white p-6 shadow-sm">
                         <h3 class="mb-4 text-lg font-semibold text-gray-900">Premium Summary</h3>
                         <div class="summary-bg space-y-3 rounded-lg p-4 text-sm">
-                            <div class="flex justify-between font-semibold">
-                                <span>Subtotal (USD)</span><span>$ {{ premium.subtotalUSD | number: '1.2-2' }}</span>
+                            <div class="flex justify-between">
+                                <span>Subtotal (USD)</span><span class="font-bold">$ {{ premium.subtotalUSD | number: '1.2-2' }}</span>
                             </div>
                             <div *ngIf="premium.groupDiscountUSD > 0" class="flex justify-between text-green-600">
                                 <span>Group Discount ({{ premium.groupDiscountPercentage }}%)</span>
-                                <span>- $ {{ premium.groupDiscountUSD | number: '1.2-2' }}</span>
+                                <span class="font-bold">- $ {{ premium.groupDiscountUSD | number: '1.2-2' }}</span>
                             </div>
                             <div *ngIf="premium.ageSurchargeUSD !== 0" class="flex justify-between" [ngClass]="{ 'text-red-500': premium.ageSurchargeUSD > 0, 'text-green-600': premium.ageSurchargeUSD < 0 }">
                                 <span>Age-Based Adjustment</span>
-                                <span>{{ premium.ageSurchargeUSD > 0 ? '+' : '-' }} $ {{ abs(premium.ageSurchargeUSD) | number: '1.2-2' }}</span>
+                                <span class="font-bold">{{ premium.ageSurchargeUSD > 0 ? '+' : '-' }} $ {{ abs(premium.ageSurchargeUSD) | number: '1.2-2' }}</span>
                             </div>
                             <div *ngIf="premium.winterSportsSurchargeUSD > 0" class="flex justify-between text-red-500">
                                 <span>Winter Sports Surcharge</span>
-                                <span>+ $ {{ premium.winterSportsSurchargeUSD | number: '1.2-2' }}</span>
+                                <span class="font-bold">+ $ {{ premium.winterSportsSurchargeUSD | number: '1.2-2' }}</span>
                             </div>
-                            <div class="my-2 border-t"></div>
-                            <div class="total-payable-text flex items-center justify-between text-xl font-bold">
+                            <div class="my-2 border-t border-gray-300"></div>
+                            <div class="flex justify-between text-gray-700">
+                                <span>PHCF (0.25%)</span><span class="font-bold">KES {{ premium.phcf | number: '1.2-2' }}</span>
+                            </div>
+                            <div class="flex justify-between text-gray-700">
+                                <span>Training Levy (0.2%)</span><span class="font-bold">KES {{ premium.trainingLevy | number: '1.2-2' }}</span>
+                            </div>
+                            <div class="flex justify-between text-gray-700">
+                                <span>Stamp Duty</span><span class="font-bold">KES {{ premium.stampDuty | number: '1.2-2' }}</span>
+                            </div>
+                            <div class="my-2 border-t-2 border-gray-400"></div>
+                            <div class="total-payable-text flex items-center justify-between text-xl font-bold text-gray-900">
                                 <span>Total Payable</span><span>KES {{ premium.totalPayableKES | number: '1.2-2' }}</span>
                             </div>
                         </div>
                         
                         <div class="mt-6">
                             <button *ngIf="currentStep === 2" (click)="nextStep()" [disabled]="travelerDetailsForm.invalid" class="btn-primary w-full rounded-md px-4 py-3 font-medium">Review & Save Quote</button>
-                            <div *ngIf="currentStep === 3" class="mt-4 flex flex-col gap-4">
+                            <div *ngIf="currentStep === 3" class="flex flex-col gap-3">
+                                <button (click)="downloadQuote()" mat-stroked-button class="w-full rounded-md border-2 border-pantone-dark-blue px-6 py-2 font-medium text-pantone-dark-blue hover:bg-pantone-dark-blue hover:text-white">
+                                    <mat-icon class="!h-5 !w-5 !text-base">download</mat-icon>
+                                    Download Quote
+                                </button>
+                                <button (click)="shareQuote()" mat-stroked-button class="w-full rounded-md border-2 border-pantone-light-blue px-6 py-2 font-medium text-pantone-light-blue hover:bg-pantone-light-blue hover:text-white">
+                                    <mat-icon class="!h-5 !w-5 !text-base">share</mat-icon>
+                                    Share Quote
+                                </button>
                                 <button (click)="handlePayment()" class="btn-primary rounded-md px-6 py-2 font-medium">Proceed to Payment</button>
                             </div>
                              <button (click)="prevStep()" class="hover:text-geminia-blue mt-2 w-full text-center text-sm font-medium text-gray-600">Back</button>
@@ -266,4 +284,9 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Toast Notification -->
+<div *ngIf="toastMessage" class="fixed bottom-5 right-5 z-50 animate-fade-in-out rounded-lg bg-gray-800 px-5 py-3 text-white shadow-lg transition-opacity duration-300">
+    {{ toastMessage }}
 </div>

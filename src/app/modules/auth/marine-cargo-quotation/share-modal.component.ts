@@ -23,7 +23,7 @@ export interface ShareModalData {
                 </div>
                 <div class="header-text-content">
                     <h1 mat-dialog-title class="modal-title">Share Quote</h1>
-                    <p class="modal-subtitle">Share your marine cargo insurance quote</p>
+                    <p class="modal-subtitle">{{ getQuoteTypeDescription() }}</p>
                 </div>
                 <button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog">
                     <mat-icon>close</mat-icon>
@@ -268,7 +268,8 @@ export class ShareModalComponent {
     }
 
     shareViaGmail(): void {
-        const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        const quoteType = this.getQuoteType();
+        const subject = encodeURIComponent(`${quoteType} Insurance Quote - Geminia`);
         // Share only the quote text without website URL
         const body = encodeURIComponent(this.data.quoteText);
 
@@ -279,7 +280,8 @@ export class ShareModalComponent {
     }
 
     shareViaOutlook(): void {
-        const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        const quoteType = this.getQuoteType();
+        const subject = encodeURIComponent(`${quoteType} Insurance Quote - Geminia`);
         // Share only the quote text without website URL
         // The body for Outlook needs URL-encoded line breaks (%0D%0A)
         const body = encodeURIComponent(this.data.quoteText).replace(/%0A/g, '%0D%0A');
@@ -291,7 +293,8 @@ export class ShareModalComponent {
     }
 
     shareViaYahoo(): void {
-        const subject = encodeURIComponent('Marine Cargo Insurance Quote - Geminia');
+        const quoteType = this.getQuoteType();
+        const subject = encodeURIComponent(`${quoteType} Insurance Quote - Geminia`);
         // Share only the quote text without website URL
         const body = encodeURIComponent(this.data.quoteText);
 
@@ -299,6 +302,26 @@ export class ShareModalComponent {
         const yahooUrl = `https://compose.mail.yahoo.com/?To=&Subject=${subject}&Body=${body}`;
         window.open(yahooUrl, '_blank');
         this.closeDialog();
+    }
+
+    getQuoteType(): string {
+        // Detect quote type from the quote text
+        if (this.data.quoteText.includes('Travel Insurance')) {
+            return 'Travel';
+        } else if (this.data.quoteText.includes('Marine Cargo')) {
+            return 'Marine Cargo';
+        }
+        return 'Insurance';
+    }
+
+    getQuoteTypeDescription(): string {
+        const quoteType = this.getQuoteType();
+        if (quoteType === 'Travel') {
+            return 'Share your travel insurance quote';
+        } else if (quoteType === 'Marine Cargo') {
+            return 'Share your marine cargo insurance quote';
+        }
+        return 'Share your insurance quote';
     }
 
     getPreviewText(): string {
@@ -311,12 +334,14 @@ export class ShareModalComponent {
         
         if (premiumStartIndex === -1 || totalPayableIndex === -1) {
             // Fallback to basic preview if structure is different
-            return `Marine Cargo Insurance Quote\n\nPremium Details Available\nComplete quote information will be shared`;
+            const quoteType = this.getQuoteType();
+            return `${quoteType} Insurance Quote\n\nPremium Details Available\nComplete quote information will be shared`;
         }
         
         // Create modern preview with only premium breakdown and total
         const premiumLines = lines.slice(premiumStartIndex, totalPayableIndex + 1);
+        const quoteType = this.getQuoteType();
         
-        return `Marine Cargo Insurance Quote - Geminia\n\n${premiumLines.join('\n')}\n\nComplete details will be shared via your selected method`;
+        return `${quoteType} Insurance Quote - Geminia\n\n${premiumLines.join('\n')}\n\nComplete details will be shared via your selected method`;
     }
 }
