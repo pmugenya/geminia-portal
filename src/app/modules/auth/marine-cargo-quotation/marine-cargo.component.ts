@@ -409,7 +409,7 @@ export class TermsPrivacyModalComponent {
                     <h1 mat-dialog-title class="modal-title">Pay Here</h1>
                     <p class="modal-subtitle">Pay KES {{ data.amount | number: '1.2-2' }} for {{ data.description }}</p>
                 </div>
-                <button mat-icon-button (click)="closeDialog()" class="close-button" aria-label="Close dialog">
+                <button mat-icon-button (click)="closeDialogWithoutPayment()" class="close-button" aria-label="Close dialog">
                     <mat-icon>close</mat-icon>
                 </button>
             </div>
@@ -682,6 +682,11 @@ export class PaymentModalComponent implements OnInit {
 
     closeDialog(result: PaymentResult | null = null): void {
         this.dialogRef.close(result);
+    }
+
+    closeDialogWithoutPayment(): void {
+        // Close without payment - return null so Complete Purchase modal stays open
+        this.dialogRef.close(null);
     }
 
     processStkPush(): void {
