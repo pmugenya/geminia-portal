@@ -536,12 +536,46 @@ Get your travel insurance quote at: ${window.location.origin}/travel-quote`;
 
   /**
    * Prevents users from entering leading spaces in email and phone fields
+   * Also prevents spaces at cursor position 0 (beginning of text)
    */
   preventLeadingSpace(event: KeyboardEvent): void {
     const input = event.target as HTMLInputElement;
-    // If input is empty or only contains whitespace, and user presses space, prevent it
-    if (event.key === ' ' && (!input.value || input.value.trim().length === 0)) {
-      event.preventDefault();
+    const cursorPosition = input.selectionStart || 0;
+    
+    // Prevent space if:
+    // 1. Input is empty or only whitespace
+    // 2. Cursor is at position 0 (beginning)
+    if (event.key === ' ') {
+      if (!input.value || input.value.trim().length === 0 || cursorPosition === 0) {
+        event.preventDefault();
+      }
+    }
+  }
+
+  /**
+   * Continuously removes leading whitespace as user types in email/phone fields
+   */
+  handleInputChange(event: Event, controlName: string): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+    
+    // Remove leading spaces
+    if (value !== value.trimStart()) {
+      const cursorPosition = input.selectionStart || 0;
+      const trimmedValue = value.trimStart();
+      const removedChars = value.length - trimmedValue.length;
+      
+      // Update the input value
+      input.value = trimmedValue;
+      
+      // Update form control
+      if (controlName === 'email' || controlName === 'phoneNumber') {
+        this.travelerDetailsForm.patchValue({ [controlName]: trimmedValue }, { emitEvent: false });
+      }
+      
+      // Adjust cursor position
+      const newPosition = Math.max(0, cursorPosition - removedChars);
+      input.setSelectionRange(newPosition, newPosition);
     }
   }
 

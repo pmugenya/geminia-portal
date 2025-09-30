@@ -130,7 +130,7 @@
                             <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                                <div>
                                    <label class="mb-2 block text-sm font-medium text-gray-700">Email Address<span class="text-red-500">*</span></label>
-                                   <input type="email" formControlName="email" (blur)="trimInput($event, 'email')" (keydown)="preventLeadingSpace($event)" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
+                                   <input type="email" formControlName="email" (input)="handleInputChange($event, 'email')" (blur)="trimInput($event, 'email')" (keydown)="preventLeadingSpace($event)" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" />
                                     <div *ngIf="tdf.email.invalid && (tdf.email.dirty || tdf.email.touched)" class="mt-1 text-xs text-red-500">
                                        <div *ngIf="tdf.email.errors?.['required']">Email address is required.</div>
                                        <div *ngIf="tdf.email.errors?.['email']">Please enter a valid email address.</div>
@@ -139,7 +139,7 @@
                                </div>
                                <div>
                                    <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number<span class="text-red-500">*</span></label>
-                                   <input type="tel" formControlName="phoneNumber" (blur)="trimInput($event, 'phoneNumber')" (keydown)="preventLeadingSpace($event)" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" placeholder="+254712345678" />
+                                   <input type="tel" formControlName="phoneNumber" (input)="handleInputChange($event, 'phoneNumber')" (blur)="trimInput($event, 'phoneNumber')" (keydown)="preventLeadingSpace($event)" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2" placeholder="+254712345678" />
                                     <div *ngIf="tdf.phoneNumber.invalid && (tdf.phoneNumber.dirty || tdf.phoneNumber.touched)" class="mt-1 text-xs text-red-500">
                                        <div *ngIf="tdf.phoneNumber.errors?.['required']">Phone number is required.</div>
                                        <div *ngIf="tdf.phoneNumber.errors?.['invalidPhoneNumber']">Please enter a valid phone number (9-15 digits).</div>
