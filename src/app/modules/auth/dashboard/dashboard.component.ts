@@ -21,6 +21,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { AuthenticationService, PendingQuote, StoredUser } from '../shared/services/auth.service';
 import { UserService } from '../../../core/user/user.service';
+import { TravelQuoteService } from '../travel-quote/travel-quote.service';
 import {
     KycShippingPaymentModalComponent,
     KycShippingPaymentModalData, PaymentModalComponent,
@@ -353,7 +354,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     public router: Router,
     private snackBar: MatSnackBar,
     private authService: AuthenticationService,
-    private userService: UserService
+    private userService: UserService,
+    private travelQuoteService: TravelQuoteService
   ) {}
 
   ngOnInit(): void {
@@ -378,13 +380,69 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const offset = this.page * this.pageSize;
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
           next: (res) => {
-             this.pendingQuotes = res.pageItems;
+             // Get backend quotes (marine)
+             let backendQuotes = res.pageItems || [];
+             
+             // Get local travel quotes from localStorage
+             const localTravelQuotes = this.travelQuoteService.getAllQuotes();
+             
+             // Convert travel quotes to match PendingQuote format for dashboard display
+             const travelQuotesForDisplay = localTravelQuotes.map(tq => ({
+               id: tq.id,
+               quoteId: 0, // Not applicable for local quotes
+               refno: tq.refno,
+               prodName: tq.prodName,
+               sumassured: tq.premiumSummary?.totalPayableKES || 0,
+               netprem: tq.premiumSummary?.totalPayableKES || 0,
+               createDate: tq.createDate,
+               status: tq.status,
+               phoneNo: tq.travelerDetails?.phoneNumber || '',
+               shippingmodeId: 0, // Not applicable for travel
+               description: `${tq.planDetails?.name} - ${tq.planDetails?.duration}`,
+               pinNumber: '',
+               idNumber: '',
+               originCountry: null,
+               // Add travel-specific display info (optional fields)
+               planName: tq.planDetails?.name,
+               coverPeriod: tq.planDetails?.duration,
+               email: tq.travelerDetails?.email
+             } as any));
+             
+             // Merge backend and local quotes
+             this.pendingQuotes = [...backendQuotes, ...travelQuotesForDisplay];
+             
              // Filter out expired quotes
              this.filteredPendingQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
-             this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
+             this.totalRecords = (res.totalFilteredRecords || res.totalElements || 0) + localTravelQuotes.length;
              this.updateDashboardStats();
           },
-          error: (err) => console.error('Error loading quotes', err)
+          error: (err) => {
+            console.error('Error loading quotes from backend', err);
+            // If backend fails, still show local travel quotes
+            const localTravelQuotes = this.travelQuoteService.getAllQuotes();
+            const travelQuotesForDisplay = localTravelQuotes.map(tq => ({
+               id: tq.id,
+               quoteId: 0,
+               refno: tq.refno,
+               prodName: tq.prodName,
+               sumassured: tq.premiumSummary?.totalPayableKES || 0,
+               netprem: tq.premiumSummary?.totalPayableKES || 0,
+               createDate: tq.createDate,
+               status: tq.status,
+               phoneNo: tq.travelerDetails?.phoneNumber || '',
+               shippingmodeId: 0,
+               description: `${tq.planDetails?.name} - ${tq.planDetails?.duration}`,
+               pinNumber: '',
+               idNumber: '',
+               originCountry: null,
+               planName: tq.planDetails?.name,
+               coverPeriod: tq.planDetails?.duration,
+               email: tq.travelerDetails?.email
+             } as any));
+             this.pendingQuotes = travelQuotesForDisplay;
+             this.filteredPendingQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
+             this.totalRecords = localTravelQuotes.length;
+          }
       });
   }
 

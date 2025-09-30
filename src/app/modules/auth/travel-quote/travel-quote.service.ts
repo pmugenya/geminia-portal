@@ -10,12 +10,22 @@ export interface TravelQuote {
     premiumSummary: any; // And for this as well
 }
 
+// Extended quote with metadata for dashboard
+export interface SavedTravelQuote extends TravelQuote {
+    id: string;
+    refno: string;
+    status: string;
+    createDate: string;
+    prodName: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TravelQuoteService {
 
   private readonly QUOTE_STORAGE_KEY = 'fidelity_travel_quote';
+  private readonly QUOTES_LIST_KEY = 'fidelity_travel_quotes_list';
 
   constructor() { }
 
@@ -52,5 +62,57 @@ export class TravelQuoteService {
    */
   clearQuote(): void {
     localStorage.removeItem(this.QUOTE_STORAGE_KEY);
+  }
+
+  /**
+   * Saves a quote to the quotes list with metadata for dashboard display
+   */
+  saveQuoteToList(quoteData: { quote: TravelQuote; id: string; refno: string; status: string }): void {
+    try {
+      const existingQuotes = this.getAllQuotes();
+      
+      const savedQuote: SavedTravelQuote = {
+        ...quoteData.quote,
+        id: quoteData.id,
+        refno: quoteData.refno,
+        status: quoteData.status,
+        createDate: new Date().toISOString(),
+        prodName: 'Travel Insurance'
+      };
+      
+      // Check if quote already exists (by id) and update it
+      const existingIndex = existingQuotes.findIndex(q => q.id === quoteData.id);
+      if (existingIndex !== -1) {
+        existingQuotes[existingIndex] = savedQuote;
+      } else {
+        existingQuotes.push(savedQuote);
+      }
+      
+      localStorage.setItem(this.QUOTES_LIST_KEY, JSON.stringify(existingQuotes));
+      console.log('Quote saved to list:', savedQuote);
+    } catch (e) {
+      console.error('Error saving quote to list', e);
+    }
+  }
+
+  /**
+   * Retrieves all saved travel quotes from localStorage
+   * @returns Array of saved travel quotes
+   */
+  getAllQuotes(): SavedTravelQuote[] {
+    try {
+      const quotesJson = localStorage.getItem(this.QUOTES_LIST_KEY);
+      return quotesJson ? JSON.parse(quotesJson) : [];
+    } catch (e) {
+      console.error('Error retrieving quotes list', e);
+      return [];
+    }
+  }
+
+  /**
+   * Clears all saved quotes from localStorage
+   */
+  clearAllQuotes(): void {
+    localStorage.removeItem(this.QUOTES_LIST_KEY);
   }
 }

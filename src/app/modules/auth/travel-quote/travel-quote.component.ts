@@ -257,13 +257,23 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     };
     
     // Save to localStorage
-    this.travelQuoteService.saveQuote({
+    const quoteData = {
       planDetails: { 
         name: this.selectedPlanDetails.name, 
         duration: this.getDurationText(this.qf.duration.value) 
       },
       travelerDetails: this.travelerDetailsForm.value,
       premiumSummary: this.premium
+    };
+    
+    this.travelQuoteService.saveQuote(quoteData);
+    
+    // Also save to quotes list for dashboard display
+    this.travelQuoteService.saveQuoteToList({
+      quote: quoteData,
+      id: this.quoteId!,
+      refno: this.quoteId!,
+      status: 'DRAFT'
     });
     
     // Simulate API delay for better UX
