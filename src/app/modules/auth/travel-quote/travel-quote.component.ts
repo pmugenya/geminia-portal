@@ -525,6 +525,17 @@ Get your travel insurance quote at: ${window.location.origin}/travel-quote`;
     }
   }
 
+  /**
+   * Prevents users from entering leading spaces in email and phone fields
+   */
+  preventLeadingSpace(event: KeyboardEvent): void {
+    const input = event.target as HTMLInputElement;
+    // If input is empty or only contains whitespace, and user presses space, prevent it
+    if (event.key === ' ' && (!input.value || input.value.trim().length === 0)) {
+      event.preventDefault();
+    }
+  }
+
   logout(): void {
     this.authenticationService.logout();
     this.showToast('You have been logged out successfully.');
