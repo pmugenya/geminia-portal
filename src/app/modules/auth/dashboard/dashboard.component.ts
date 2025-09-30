@@ -320,9 +320,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   user: StoredUser | null = null;
   pendingQuotes: PendingQuote[] = [];
+  filteredPendingQuotes: PendingQuote[] = []; // Filtered to exclude expired quotes
   page = 0;
   pageSize = 2;
   currentIndex: number=0;
+  readonly QUOTE_EXPIRY_DAYS = 15;
   pageLength: number=2;
   toastMessage: string = '';
   totalRecords = 0;
@@ -377,6 +379,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
           next: (res) => {
              this.pendingQuotes = res.pageItems;
+             // Filter out expired quotes
+             this.filteredPendingQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
              this.totalRecords = res.totalFilteredRecords || res.totalElements || 0;
              this.updateDashboardStats();
           },
@@ -729,6 +733,43 @@ ngOnDestroy(): void {
       'Submitted': 'status-submitted', 'Under Review': 'status-review', 'More Information Required': 'status-info-required', 'Approved': 'status-approved', 'Settled': 'status-settled', 'Rejected': 'status-rejected'
     };
     return statusMap[status] || '';
+  }
+
+  // Quote expiration methods
+  isQuoteExpired(quote: PendingQuote): boolean {
+    if (!quote.createDate) return false;
+    const createdDate = new Date(quote.createDate);
+    const expiryDate = new Date(createdDate);
+    expiryDate.setDate(expiryDate.getDate() + this.QUOTE_EXPIRY_DAYS);
+    return new Date() > expiryDate;
+  }
+
+  getDaysUntilExpiry(quote: PendingQuote): number {
+    if (!quote.createDate) return this.QUOTE_EXPIRY_DAYS;
+    const createdDate = new Date(quote.createDate);
+    const expiryDate = new Date(createdDate);
+    expiryDate.setDate(expiryDate.getDate() + this.QUOTE_EXPIRY_DAYS);
+    const daysRemaining = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, daysRemaining);
+  }
+
+  getExpiryDate(quote: PendingQuote): Date | null {
+    if (!quote.createDate) return null;
+    const createdDate = new Date(quote.createDate);
+    const expiryDate = new Date(createdDate);
+    expiryDate.setDate(expiryDate.getDate() + this.QUOTE_EXPIRY_DAYS);
+    return expiryDate;
+  }
+
+  isQuoteExpiringSoon(quote: PendingQuote): boolean {
+    const daysRemaining = this.getDaysUntilExpiry(quote);
+    return daysRemaining > 0 && daysRemaining <= 3; // Expiring within 3 days
+  }
+
+  getQuoteExpiryStatusClass(quote: PendingQuote): string {
+    if (this.isQuoteExpired(quote)) return 'expired';
+    if (this.isQuoteExpiringSoon(quote)) return 'expiring-soon';
+    return 'active';
   }
 
     protected readonly Math = Math;

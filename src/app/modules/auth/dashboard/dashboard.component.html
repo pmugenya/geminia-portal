@@ -130,10 +130,10 @@
                         </h3>
                     </div>
                     <div class="p-6">
-                        <div *ngIf="pendingQuotes.length > 0; else noQuotes"
+                        <div *ngIf="filteredPendingQuotes.length > 0; else noQuotes"
                              class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-                            <div *ngFor="let quote of pendingQuotes; let i = index"
+                            <div *ngFor="let quote of filteredPendingQuotes; let i = index"
                                  class="quote-card group flex flex-col rounded-xl border border-gray-200 bg-gray-50 p-6">
                                 <div class="flex-grow">
                                     <p class="text-xs text-gray-500">Ref No: {{ quote.refno }}</p>
@@ -149,8 +149,16 @@
                                       </span>
 
                                         <p class="text-xs text-gray-500">
-                                            Created: {{ quote.createDate | date: 'shortDate' }}
+                                            Created: {{ quote.createDate | date: 'M/d/yy, h:mm a' }}
                                         </p>
+                                    </div>
+
+                                    <!-- Expiration Warning -->
+                                    <div *ngIf="isQuoteExpiringSoon(quote)" class="mb-3 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                                        <mat-icon class="!h-4 !w-4 !text-sm text-amber-600">warning</mat-icon>
+                                        <span class="text-xs font-medium text-amber-700">
+                                            Expires in {{ getDaysUntilExpiry(quote) }} day{{ getDaysUntilExpiry(quote) !== 1 ? 's' : '' }}
+                                        </span>
                                     </div>
 
                                     <h4 class="mb-2 truncate text-lg font-bold text-pantone-dark-blue" [title]="quote.prodName">{{ quote.prodName }}</h4>
@@ -188,7 +196,7 @@
                         </div>
 
                         <!-- Pagination controls -->
-                        <div class="mt-6 flex justify-center space-x-4" *ngIf="pendingQuotes.length > 0">
+                        <div class="mt-6 flex justify-center space-x-4" *ngIf="filteredPendingQuotes.length > 0">
                             <button mat-stroked-button (click)="prevPage()" [disabled]="page === 0">Previous</button>
                             <span class="px-2 py-1 text-sm">Page {{ page + 1 }} of {{ Math.ceil(totalRecords / pageSize) }}</span>
                             <button mat-stroked-button (click)="nextPage()" [disabled]="(page + 1) * pageSize >= totalRecords">Next</button>
