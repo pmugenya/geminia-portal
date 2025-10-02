@@ -531,9 +531,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (this.isMobileSidebarOpen) this.isMobileSidebarOpen = false;
     }
 
-    initiatePayment(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
-      this.openKycShippingPaymentModal(quoteId,originCountry,shippingmodeId,sumassured,pinNo,idNo,status,phone,prem,refno);
-  }
+    initiatePayment(quote: PendingQuote): void {
+        // Differentiate between Travel and Marine quotes
+        if (quote.prodName === 'Travel Insurance') {
+            // For Travel quotes, open the generic M-Pesa payment modal directly
+            this.openMpesaPaymentModal(quote.netprem, quote.phoneNo, quote.refno);
+        } else {
+            // For Marine quotes, use the existing KYC/Shipping modal flow
+            this.openKycShippingPaymentModal(quote.quoteId, quote.originCountry, quote.shippingmodeId, quote.sumassured, quote.pinNumber, quote.idNumber, quote.status, quote.phoneNo, quote.netprem, quote.refno);
+        }
+    }
 
   showOption(status):boolean{
       return status!=='PAID';
@@ -579,6 +586,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
 }
 
 
+
+    private openMpesaPaymentModal(premium: number, phoneNo: string, ref: string): void {
+        const dialogRef = this.dialog.open(MpesaPaymentModalComponent, {
+            width: '450px',
+            data: {
+                amount: premium,
+                phoneNumber: phoneNo,
+                reference: ref,
+                description: `Travel Insurance for Quote ${ref}`
+            },
+            disableClose: true
+        });
+
+        dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((paymentResult: PaymentResult | null) => {
+            if (paymentResult?.success) {
+                this.showToast('Payment for travel quote successful!');
+                // Optionally, update the travel quote status in localStorage
+                this.travelQuoteService.updateQuoteStatus(ref, 'PAID');
+                this.loadDashboardData(); // Refresh the dashboard
+            } else {
+                this.showToast('Payment cancelled or failed. Your quote has been saved.');
+            }
+        });
+    }
 
     private openPaymentModal(premium,phoneNo,ref): void {
         const dialogRef = this.dialog.open(PaymentModalComponent, {

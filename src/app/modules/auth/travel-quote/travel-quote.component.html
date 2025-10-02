@@ -253,7 +253,7 @@
                 <div *ngIf="currentStep > 1" class="lg:col-span-1">
                     <div class="sticky top-24 rounded-lg bg-white p-6 shadow-sm">
                         <h3 class="mb-4 text-lg font-semibold text-gray-900">Premium Summary</h3>
-                        <div class="summary-bg space-y-3 rounded-lg p-4 text-sm">
+                                                <div class="space-y-3 text-sm">
                             <div class="flex justify-between">
                                 <span>Subtotal (USD)</span><span class="font-bold">$ {{ premium.subtotalUSD | number: '1.2-2' }}</span>
                             </div>
@@ -279,9 +279,13 @@
                             <div class="flex justify-between text-gray-700">
                                 <span>Stamp Duty</span><span class="font-bold">KES {{ premium.stampDuty | number: '1.2-2' }}</span>
                             </div>
-                            <div class="my-2 border-t-2 border-gray-400"></div>
-                            <div class="total-payable-text flex items-center justify-between text-xl font-bold text-gray-900">
-                                <span>Total Payable</span><span>KES {{ premium.totalPayableKES | number: '1.2-2' }}</span>
+                        </div>
+
+                        <!-- New Total Payable Box -->
+                        <div class="total-payable-box">
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-semibold">Total Payable</span>
+                                <span class="text-2xl font-bold">KES {{ premium.totalPayableKES | number: '1.2-2' }}</span>
                             </div>
                         </div>
                         
@@ -297,9 +301,9 @@
                                 </span>
                             </button>
                             <div *ngIf="currentStep === 3" class="flex flex-col gap-3">
-                                <button (click)="downloadQuote()" mat-stroked-button class="w-full rounded-md border-2 border-pantone-dark-blue px-6 py-2 font-medium text-pantone-dark-blue hover:bg-pantone-dark-blue hover:text-white">
-                                    <mat-icon class="!h-5 !w-5 !text-base">download</mat-icon>
-                                    Download Quote
+                                                                <button (click)="downloadQuote()" class="btn-primary flex w-full items-center justify-center gap-2 rounded-md px-6 py-2 font-medium">
+                                    <mat-icon>download</mat-icon>
+                                    <span>Download Quote</span>
                                 </button>
                                 <button (click)="shareQuote()" mat-stroked-button class="w-full rounded-md border-2 border-pantone-light-blue px-6 py-2 font-medium text-pantone-light-blue hover:bg-pantone-light-blue hover:text-white">
                                     <mat-icon class="!h-5 !w-5 !text-base">share</mat-icon>
@@ -307,7 +311,7 @@
                                 </button>
                                 <button (click)="handlePayment()" class="btn-primary rounded-md px-6 py-2 font-medium">Proceed to Payment</button>
                             </div>
-                             <button (click)="prevStep()" class="hover:text-geminia-blue mt-2 w-full text-center text-sm font-medium text-gray-600">Back</button>
+                                                          <button (click)="prevStep()" class="mt-4 w-full rounded-md border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Back</button>
                         </div>
                     </div>
                 </div>

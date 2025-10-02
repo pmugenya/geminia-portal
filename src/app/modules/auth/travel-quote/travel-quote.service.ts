@@ -115,4 +115,26 @@ export class TravelQuoteService {
   clearAllQuotes(): void {
     localStorage.removeItem(this.QUOTES_LIST_KEY);
   }
+
+  /**
+   * Updates the status of a specific travel quote in the list.
+   * @param refno The reference number of the quote to update.
+   * @param status The new status for the quote.
+   */
+  updateQuoteStatus(refno: string, status: 'DRAFT' | 'PENDING' | 'PAID' | 'EXPIRED'): void {
+    try {
+      const quotes = this.getAllQuotes();
+      const quoteIndex = quotes.findIndex(q => q.refno === refno);
+
+      if (quoteIndex !== -1) {
+        quotes[quoteIndex].status = status;
+        localStorage.setItem(this.QUOTES_LIST_KEY, JSON.stringify(quotes));
+        console.log(`Status for quote ${refno} updated to ${status}.`);
+      } else {
+        console.warn(`Quote with refno ${refno} not found for status update.`);
+      }
+    } catch (e) {
+      console.error('Error updating quote status in localStorage', e);
+    }
+  }
 }
