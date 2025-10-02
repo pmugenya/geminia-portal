@@ -3,7 +3,7 @@
 /*  @ Styles from this file will override 'vendors.scss' and Fuse's base styles.
 /* ----------------------------------------------------------------------------------------------------- */
 
-@import 'components/login-toast';
+@use 'components/login-toast';
 // src/styles.scss
 
 // ... other global styles ...

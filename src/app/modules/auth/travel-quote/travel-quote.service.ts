@@ -121,6 +121,11 @@ export class TravelQuoteService {
    * @param refno The reference number of the quote to update.
    * @param status The new status for the quote.
    */
+  getQuoteById(quoteId: string): SavedTravelQuote | null {
+    const quotes = this.getAllQuotes();
+    return quotes.find(q => q.id === quoteId) || null;
+  }
+
   updateQuoteStatus(refno: string, status: 'DRAFT' | 'PENDING' | 'PAID' | 'EXPIRED'): void {
     try {
       const quotes = this.getAllQuotes();

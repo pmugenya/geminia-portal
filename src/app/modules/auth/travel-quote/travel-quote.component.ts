@@ -3,8 +3,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TravellerDetailsModalComponent, TravellerDetailsModalData, TravellerDetailsFormOutput } from './traveller-details-modal.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { Subject, take, takeUntil, debounceTime, startWith } from 'rxjs';
 import { MpesaPaymentModalComponent, PaymentResult } from '../../auth/shared/payment-modal.component';
 import { AuthService } from 'app/core/auth/auth.service';
@@ -94,7 +96,7 @@ interface Premium { baseRateUSD: number; subtotalUSD: number; groupDiscountUSD: 
 @Component({
   selector: 'app-travel-quote',
   standalone: true,
-  imports: [ CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, MatButtonModule, DatePipe, DecimalPipe ],
+  imports: [ CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, DatePipe, DecimalPipe, MatIconModule ],
   templateUrl: './travel-quote.component.html',
   styleUrls: ['./travel-quote.component.scss'],
 })
@@ -351,9 +353,36 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
   }
 
   handlePayment(): void {
-    if (this.travelerDetailsForm.invalid) return;
-    this.authService.check().pipe(take(1)).subscribe(isAuthenticated => {
-      if (isAuthenticated) { this.openPaymentDialog(); } else { this.router.navigate(['/']); }
+    if (this.travelerDetailsForm.invalid) {
+        this.travelerDetailsForm.markAllAsTouched();
+        return;
+    }
+
+    const travellersData: TravellerDetailsModalData = {
+        travellers: this.travelers.controls.map(control => {
+            const dob = control.get('dob')?.value;
+            const age = this.getAge(dob);
+            return {
+                fullName: control.get('fullName')?.value,
+                dateOfBirth: dob,
+                isMinor: age < 18
+            };
+        })
+    };
+
+    const dialogRef = this.dialog.open(TravellerDetailsModalComponent, {
+        width: '500px',
+        data: travellersData,
+        disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe((result: TravellerDetailsFormOutput | null) => {
+        if (result) {
+            console.log('Traveller details submitted:', result);
+            // Here you would save the extra details to your quote object
+            // For now, we proceed to payment.
+            this.openPaymentDialog();
+        }
     });
   }
 
@@ -386,23 +415,25 @@ export class TravelQuoteComponent implements OnInit, OnDestroy {
     });
   }
   
-  // NEW: Helper function to calculate age for the template
-  getAge(dob: string | null): number | null {
-    if (!dob) return null;
-    const birthDate = new Date(dob);
-    if (isNaN(birthDate.getTime())) return null; // Invalid date
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return age;
-  }
 
   getDurationText(value: string): string { return this.standardDurations.find(d => d.value === value)?.label || 'N/A'; }
   closeForm(): void { this.router.navigate(['/dashboard']); }
   abs(value: number): number { return Math.abs(value); }
+
+  getAge(dob: string | Date | null): number | null {
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) return null; // Invalid date
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
   private resetPremium(): Premium { return { baseRateUSD: 0, subtotalUSD: 0, groupDiscountUSD: 0, ageSurchargeUSD: 0, winterSportsSurchargeUSD: 0, phcf: 0, trainingLevy: 0, stampDuty: 0, totalPayableUSD: 0, totalPayableKES: 0, groupDiscountPercentage: 0 }; }
 
   downloadQuote(): void {

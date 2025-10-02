@@ -26,6 +26,7 @@ import {
     KycShippingPaymentModalComponent,
     KycShippingPaymentModalData, PaymentModalComponent,
 } from '../marine-cargo-quotation/marine-cargo.component';
+import { TravellerDetailsModalComponent, TravellerDetailsModalData, TravellerDetailsFormOutput } from '../travel-quote/traveller-details-modal.component';
 
 // --- (All your interface and modal component definitions remain the same) ---
 // --- TYPE DEFINITIONS ---
@@ -532,15 +533,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     initiatePayment(quote: PendingQuote): void {
-        // Differentiate between Travel and Marine quotes
-        if (quote.prodName === 'Travel Insurance') {
-            // For Travel quotes, open the generic M-Pesa payment modal directly
-            this.openMpesaPaymentModal(quote.netprem, quote.phoneNo, quote.refno);
-        } else {
-            // For Marine quotes, use the existing KYC/Shipping modal flow
-            this.openKycShippingPaymentModal(quote.quoteId, quote.originCountry, quote.shippingmodeId, quote.sumassured, quote.pinNumber, quote.idNumber, quote.status, quote.phoneNo, quote.netprem, quote.refno);
+    if (quote.prodName === 'Travel Insurance') {
+        const fullQuote = this.travelQuoteService.getQuoteById(quote.id);
+        if (!fullQuote || !fullQuote.travelerDetails?.travelers) {
+            this.showToast('Could not retrieve full traveler details for this quote.');
+            return;
         }
+
+        const travellersData: TravellerDetailsModalData = {
+            travellers: fullQuote.travelerDetails.travelers.map((t: any) => {
+                const dob = t.dob;
+                const age = this.getAge(dob); // Assuming getAge exists or we add it
+                return {
+                    fullName: t.fullName,
+                    dateOfBirth: dob,
+                    isMinor: age < 18,
+                };
+            }),
+        };
+
+        const dialogRef = this.dialog.open(TravellerDetailsModalComponent, {
+            width: '500px',
+            data: travellersData,
+            disableClose: true,
+        });
+
+        dialogRef.afterClosed().subscribe((result: TravellerDetailsFormOutput | null) => {
+            if (result) {
+                console.log('Traveller details from dashboard flow:', result);
+                // Now, open the actual payment modal
+                this.openMpesaPaymentModal(quote.netprem, quote.phoneNo, quote.refno);
+            }
+        });
+
+    } else {
+        // For Marine quotes, use the existing KYC/Shipping modal flow
+        this.openKycShippingPaymentModal(quote.quoteId, quote.originCountry, quote.shippingmodeId, quote.sumassured, quote.pinNumber, quote.idNumber, quote.status, quote.phoneNo, quote.netprem, quote.refno);
     }
+}
 
   showOption(status):boolean{
       return status!=='PAID';
@@ -633,6 +663,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     private showToast(message: string): void { this.toastMessage = message; setTimeout(() => (this.toastMessage = ''), 5000); }
+
+    getAge(dob: string | Date | null): number | null {
+      if (!dob) return null;
+      const birthDate = new Date(dob);
+      if (isNaN(birthDate.getTime())) return null; // Invalid date
+  
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
 
     editQuote(quoteId: string): void {
         this.router.navigate(['/marine-quote'], { queryParams: { editId: quoteId } });
