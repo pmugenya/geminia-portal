@@ -35,6 +35,9 @@ export interface ShipmentDetailsData {
         MatProgressSpinnerModule,
         MatIconModule,
         MatSnackBarModule,
+        MatSelectModule,
+        NgxMatSelectSearchModule,
+        ScrollingModule,
         PaymentModalComponent
     ],
     template: `
@@ -61,7 +64,16 @@ export interface ShipmentDetailsData {
 
                         <mat-form-field appearance="outline">
                             <mat-label>Country of Origin</mat-label>
-                            <input matInput formControlName="originCountryName">
+                            <mat-select formControlName="originCountryId">
+                                <mat-option>
+                                    <ngx-mat-select-search [formControl]="countryFilterCtrl" placeholderLabel="Search countries..."></ngx-mat-select-search>
+                                </mat-option>
+                                <cdk-virtual-scroll-viewport itemSize="50" class="h-[200px]">
+                                    <mat-option *cdkVirtualFor="let country of filteredCountries" [value]="country.id">
+                                        {{ country.countryname }}
+                                    </mat-option>
+                                </cdk-virtual-scroll-viewport>
+                            </mat-select>
                         </mat-form-field>
 
                         <mat-form-field appearance="outline">
@@ -86,17 +98,42 @@ export interface ShipmentDetailsData {
 
                         <mat-form-field appearance="outline">
                             <mat-label>Loading Port</mat-label>
-                            <input matInput formControlName="originPortName">
+                            <mat-select formControlName="originPortId">
+                                <mat-option>
+                                    <ngx-mat-select-search [formControl]="loadingPortFilterCtrl" placeholderLabel="Search ports..."></ngx-mat-select-search>
+                                </mat-option>
+                                <cdk-virtual-scroll-viewport itemSize="50" class="h-[200px]">
+                                    <mat-option *cdkVirtualFor="let port of filteredLoadingPorts" [value]="port.id">
+                                        {{ port.portName }}
+                                    </mat-option>
+                                </cdk-virtual-scroll-viewport>
+                            </mat-select>
                         </mat-form-field>
 
                         <mat-form-field appearance="outline">
                             <mat-label>Port of Discharge</mat-label>
-                            <input matInput formControlName="destPortName">
+                            <mat-select formControlName="destPortId">
+                                <mat-option>
+                                    <ngx-mat-select-search [formControl]="dischargePortFilterCtrl" placeholderLabel="Search ports..."></ngx-mat-select-search>
+                                </mat-option>
+                                <cdk-virtual-scroll-viewport itemSize="50" class="h-[200px]">
+                                    <mat-option *cdkVirtualFor="let port of filteredDischargePorts" [value]="port.id">
+                                        {{ port.portName }}
+                                    </mat-option>
+                                </cdk-virtual-scroll-viewport>
+                            </mat-select>
                         </mat-form-field>
 
                         <mat-form-field appearance="outline">
                             <mat-label>Final Destination (County)</mat-label>
-                            <input matInput formControlName="countyName">
+                            <mat-select formControlName="countyId">
+                                <mat-option>
+                                    <ngx-mat-select-search [formControl]="countyFilterCtrl" placeholderLabel="Search counties..."></ngx-mat-select-search>
+                                </mat-option>
+                                <mat-option *ngFor="let county of filteredCounties" [value]="county.id">
+                                    {{ county.portName }}
+                                </mat-option>
+                            </mat-select>
                         </mat-form-field>
 
                         <mat-form-field appearance="outline">
@@ -176,8 +213,31 @@ export interface ShipmentDetailsData {
       }
     `]
 })
-export class ShipmentDetailsModalComponent implements OnInit {
+export class ShipmentDetailsModalComponent implements OnInit, OnDestroy {
     shipmentForm: FormGroup;
+    private destroy$ = new Subject<void>();
+
+    // Filter controls for searchable dropdowns
+    countryFilterCtrl: FormControl = new FormControl();
+    loadingPortFilterCtrl: FormControl = new FormControl();
+    dischargePortFilterCtrl: FormControl = new FormControl();
+    countyFilterCtrl: FormControl = new FormControl();
+
+    // Data arrays for dropdowns
+    filteredCountries: any[] = [];
+    filteredLoadingPorts: any[] = [];
+    filteredDischargePorts: any[] = [];
+    filteredCounties: any[] = [];
+
+    // Pagination state
+    countriesPage = 0;
+    loadingPortsPage = 0;
+    dischargePortsPage = 0;
+    
+    // Loading states
+    countriesLoading = false;
+    loadingPortsLoading = false;
+    dischargePortsLoading = false;
 
     constructor(
         private fb: FormBuilder,
@@ -193,14 +253,18 @@ export class ShipmentDetailsModalComponent implements OnInit {
         this.shipmentForm = this.fb.group({
             shippingModeName: [''],
             importerType: [''],
-            originCountryName: [''],
+            originCountryId: [''],
+            originCountryName: [''], // Keep for display
             consignmentNumber: [''],
             sumassured: [null, Validators.required],
             description: [''],
             vesselName: [''],
-            originPortName: [''],
-            destPortName: [''],
-            countyName: [''],
+            originPortId: [''],
+            originPortName: [''], // Keep for display
+            destPortId: [''],
+            destPortName: [''], // Keep for display
+            countyId: [''],
+            countyName: [''], // Keep for display
             idfNumber: [''],
             ucrNumber: [''],
             postalAddress: [''],
@@ -208,6 +272,13 @@ export class ShipmentDetailsModalComponent implements OnInit {
         });
 
         this.loadShipmentDetails();
+        this.setupSearchFilters();
+        this.loadInitialData();
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     loadShipmentDetails(): void {
@@ -220,13 +291,17 @@ export class ShipmentDetailsModalComponent implements OnInit {
                 this.shipmentForm.patchValue({
                     shippingModeName: details.shippingModeName || '',
                     importerType: details.importerType || '',
+                    originCountryId: details.originCountryId || '',
                     originCountryName: details.originCountryName || '',
                     consignmentNumber: details.consignmentNumber || '',
                     sumassured: details.sumassured || 0,
                     description: details.description || '',
                     vesselName: details.vesselName || '',
+                    originPortId: details.loadingAtId || details.originPortId || '',
                     originPortName: details.originPortName || '',
+                    destPortId: details.dischargeId || details.destPortId || '',
                     destPortName: details.destPortName || '',
+                    countyId: details.countyId || '',
                     countyName: details.countyName || '',
                     idfNumber: details.idfNumber || '',
                     ucrNumber: details.ucrNumber || '',
@@ -234,6 +309,9 @@ export class ShipmentDetailsModalComponent implements OnInit {
                     postalAddress: this.data.postalAddress || '',
                     postalCode: this.data.postalCode || ''
                 });
+                
+                // Ensure the dropdowns show the correct selected values
+                this.ensureDropdownSelections(details);
             },
             error: (err) => {
                 console.error('Error fetching shipment details', err);
@@ -298,6 +376,187 @@ export class ShipmentDetailsModalComponent implements OnInit {
                 }
             });
         });
+    }
+
+    private setupSearchFilters(): void {
+        // Country search with debounce
+        this.countryFilterCtrl.valueChanges.pipe(
+            debounceTime(300),
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filteredCountries = [];
+            this.countriesPage = 0;
+            this.loadNextCountriesPage();
+        });
+
+        // Loading port search with debounce
+        this.loadingPortFilterCtrl.valueChanges.pipe(
+            debounceTime(300),
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filteredLoadingPorts = [];
+            this.loadingPortsPage = 0;
+            this.loadNextLoadingPortsPage();
+        });
+
+        // Discharge port search with debounce
+        this.dischargePortFilterCtrl.valueChanges.pipe(
+            debounceTime(300),
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filteredDischargePorts = [];
+            this.dischargePortsPage = 0;
+            this.loadNextDischargePortsPage();
+        });
+
+        // County search (local filtering)
+        this.countyFilterCtrl.valueChanges.pipe(
+            takeUntil(this.destroy$)
+        ).subscribe(() => {
+            this.filterCounties();
+        });
+    }
+
+    private loadInitialData(): void {
+        this.loadNextCountriesPage();
+        this.loadNextLoadingPortsPage();
+        this.loadNextDischargePortsPage();
+        this.loadCounties();
+    }
+
+    loadNextCountriesPage(): void {
+        if (this.countriesLoading) return;
+        this.countriesLoading = true;
+        
+        this.userService.getCountries(this.countriesPage, 20, 1) // type 1 for countries
+            .subscribe({
+                next: (res) => {
+                    const searchTerm = this.countryFilterCtrl.value?.toLowerCase() || '';
+                    const newCountries = searchTerm 
+                        ? res.pageItems.filter((country: any) => 
+                            country.countryname.toLowerCase().includes(searchTerm))
+                        : res.pageItems;
+                    
+                    this.filteredCountries = [...this.filteredCountries, ...newCountries];
+                    this.countriesPage++;
+                    this.countriesLoading = false;
+                },
+                error: () => {
+                    this.countriesLoading = false;
+                }
+            });
+    }
+
+    loadNextLoadingPortsPage(): void {
+        if (this.loadingPortsLoading) return;
+        this.loadingPortsLoading = true;
+        
+        // Get country and shipping mode from form or use defaults
+        const countryId = this.shipmentForm.get('originCountryId')?.value || 7; // Default to Armenia
+        const shippingModeType = "1"; // Sea shipping mode as string
+        
+        this.userService.getPorts(countryId, shippingModeType, this.loadingPortsPage, 20, this.loadingPortFilterCtrl.value)
+            .subscribe({
+                next: (res) => {
+                    this.filteredLoadingPorts = [...this.filteredLoadingPorts, ...res.pageItems];
+                    this.loadingPortsPage++;
+                    this.loadingPortsLoading = false;
+                },
+                error: () => {
+                    this.loadingPortsLoading = false;
+                }
+            });
+    }
+
+    loadNextDischargePortsPage(): void {
+        if (this.dischargePortsLoading) return;
+        this.dischargePortsLoading = true;
+        
+        const countryId = 116; // Kenya
+        const shippingModeType = "1"; // Sea shipping mode as string
+        
+        this.userService.getPorts(countryId, shippingModeType, this.dischargePortsPage, 20, this.dischargePortFilterCtrl.value)
+            .subscribe({
+                next: (res) => {
+                    this.filteredDischargePorts = [...this.filteredDischargePorts, ...res.pageItems];
+                    this.dischargePortsPage++;
+                    this.dischargePortsLoading = false;
+                },
+                error: () => {
+                    this.dischargePortsLoading = false;
+                }
+            });
+    }
+
+    private loadCounties(): void {
+        this.userService.getCounties(0, 100).subscribe({
+            next: (res) => {
+                this.filteredCounties = res.pageItems || [];
+            },
+            error: (err) => {
+                console.error('Error loading counties:', err);
+            }
+        });
+    }
+
+    private filterCounties(): void {
+        if (!this.filteredCounties) {
+            return;
+        }
+        let search = this.countyFilterCtrl.value;
+        if (!search) {
+            return;
+        }
+        search = search.toLowerCase();
+        this.filteredCounties = this.filteredCounties.filter(county => 
+            county.portName.toLowerCase().includes(search)
+        );
+    }
+
+    private ensureDropdownSelections(details: any): void {
+        // Ensure the selected country is in the filtered list
+        if (details.originCountryId && details.originCountryName) {
+            const countryExists = this.filteredCountries.find(c => c.id === details.originCountryId);
+            if (!countryExists) {
+                this.filteredCountries.unshift({
+                    id: details.originCountryId,
+                    countryname: details.originCountryName
+                });
+            }
+        }
+
+        // Ensure the selected loading port is in the filtered list
+        if (details.loadingAtId && details.originPortName) {
+            const portExists = this.filteredLoadingPorts.find(p => p.id === details.loadingAtId);
+            if (!portExists) {
+                this.filteredLoadingPorts.unshift({
+                    id: details.loadingAtId,
+                    portName: details.originPortName
+                });
+            }
+        }
+
+        // Ensure the selected discharge port is in the filtered list
+        if (details.dischargeId && details.destPortName) {
+            const portExists = this.filteredDischargePorts.find(p => p.id === details.dischargeId);
+            if (!portExists) {
+                this.filteredDischargePorts.unshift({
+                    id: details.dischargeId,
+                    portName: details.destPortName
+                });
+            }
+        }
+
+        // Ensure the selected county is in the filtered list
+        if (details.countyId && details.countyName) {
+            const countyExists = this.filteredCounties.find(c => c.id === details.countyId);
+            if (!countyExists) {
+                this.filteredCounties.unshift({
+                    id: details.countyId,
+                    portName: details.countyName
+                });
+            }
+        }
     }
 
     closeDialog(): void {

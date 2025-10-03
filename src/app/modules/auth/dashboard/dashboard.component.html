@@ -189,11 +189,56 @@
                             </div>
                         </div>
 
-                        <!-- Pagination controls -->
-                        <div class="mt-6 flex justify-center space-x-4" *ngIf="filteredPendingQuotes.length > 0">
-                            <button mat-stroked-button (click)="prevPage()" [disabled]="page === 0">Previous</button>
-                            <span class="px-2 py-1 text-sm">Page {{ page + 1 }} of {{ Math.ceil(totalRecords / pageSize) }}</span>
-                            <button mat-stroked-button (click)="nextPage()" [disabled]="(page + 1) * pageSize >= totalRecords">Next</button>
+                        <!-- Enhanced Pagination controls -->
+                        <div class="mt-6 flex flex-col items-center space-y-4" *ngIf="totalRecords > pageSize">
+                            <!-- Page info -->
+                            <div class="text-sm text-gray-600">
+                                Showing {{ (page * pageSize) + 1 }} to {{ Math.min((page + 1) * pageSize, totalRecords) }} of {{ totalRecords }} quotes
+                            </div>
+                            
+                            <!-- Pagination buttons -->
+                            <div class="flex items-center space-x-2">
+                                <!-- Previous button -->
+                                <button mat-icon-button (click)="prevPage()" [disabled]="page === 0" 
+                                        class="rounded-lg" [class.text-gray-400]="page === 0">
+                                    <mat-icon>chevron_left</mat-icon>
+                                </button>
+                                
+                                <!-- Page numbers -->
+                                <div class="flex space-x-1">
+                                    <!-- First page -->
+                                    <button *ngIf="getPageNumbers()[0] > 0" 
+                                            mat-button (click)="goToPage(0)" 
+                                            class="min-w-[40px] h-10 rounded-lg text-sm">
+                                        1
+                                    </button>
+                                    <span *ngIf="getPageNumbers()[0] > 1" class="px-2 text-gray-400">...</span>
+                                    
+                                    <!-- Visible page numbers -->
+                                    <button *ngFor="let pageNum of getPageNumbers()" 
+                                            mat-button (click)="goToPage(pageNum)" 
+                                            [class.bg-pantone-dark-blue]="pageNum === page"
+                                            [class.text-white]="pageNum === page"
+                                            [class.text-pantone-dark-blue]="pageNum !== page"
+                                            class="min-w-[40px] h-10 rounded-lg text-sm font-medium">
+                                        {{ pageNum + 1 }}
+                                    </button>
+                                    
+                                    <!-- Last page -->
+                                    <span *ngIf="getPageNumbers()[getPageNumbers().length - 1] < getTotalPages() - 2" class="px-2 text-gray-400">...</span>
+                                    <button *ngIf="getPageNumbers()[getPageNumbers().length - 1] < getTotalPages() - 1" 
+                                            mat-button (click)="goToPage(getTotalPages() - 1)" 
+                                            class="min-w-[40px] h-10 rounded-lg text-sm">
+                                        {{ getTotalPages() }}
+                                    </button>
+                                </div>
+                                
+                                <!-- Next button -->
+                                <button mat-icon-button (click)="nextPage()" [disabled]="(page + 1) * pageSize >= totalRecords" 
+                                        class="rounded-lg" [class.text-gray-400]="(page + 1) * pageSize >= totalRecords">
+                                    <mat-icon>chevron_right</mat-icon>
+                                </button>
+                            </div>
                         </div>
                         <ng-template #noQuotes>
                             <p class="py-8 text-center text-gray-500">You have no saved quotes. Start a new one and it will appear here!</p>

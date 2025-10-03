@@ -381,7 +381,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const offset = this.page * this.pageSize;
       this.userService.getClientQuotes(offset, this.pageSize).subscribe({
           next: (res) => {
-             // Get backend quotes (marine)
+             // Get backend quotes (marine) - sorted by creation date descending (most recent first)
              let backendQuotes = res.pageItems || [];
              
              // Get local travel quotes from localStorage
@@ -409,12 +409,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
                email: tq.travelerDetails?.email
              } as any));
              
-             // Merge backend and local quotes
-             this.pendingQuotes = [...backendQuotes, ...travelQuotesForDisplay];
+             // Merge backend and local quotes, sort by creation date descending (most recent first)
+             this.pendingQuotes = [...backendQuotes, ...travelQuotesForDisplay]
+               .sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime());
              
-             // Filter out expired quotes
-             this.filteredPendingQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
-             this.totalRecords = (res.totalFilteredRecords || res.totalElements || 0) + localTravelQuotes.length;
+             // Filter out expired quotes and apply pagination
+             const allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
+             this.totalRecords = allValidQuotes.length;
+             
+             // Apply client-side pagination for the current page
+             const startIndex = this.page * this.pageSize;
+             const endIndex = startIndex + this.pageSize;
+             this.filteredPendingQuotes = allValidQuotes.slice(startIndex, endIndex);
+             
              this.updateDashboardStats();
           },
           error: (err) => {
@@ -440,9 +447,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
                coverPeriod: tq.planDetails?.duration,
                email: tq.travelerDetails?.email
              } as any));
-             this.pendingQuotes = travelQuotesForDisplay;
-             this.filteredPendingQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
-             this.totalRecords = localTravelQuotes.length;
+             
+             // Sort by creation date descending (most recent first)
+             this.pendingQuotes = travelQuotesForDisplay
+               .sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime());
+             
+             const allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
+             this.totalRecords = allValidQuotes.length;
+             
+             // Apply client-side pagination
+             const startIndex = this.page * this.pageSize;
+             const endIndex = startIndex + this.pageSize;
+             this.filteredPendingQuotes = allValidQuotes.slice(startIndex, endIndex);
           }
       });
   }
@@ -908,6 +924,41 @@ ngOnDestroy(): void {
     if (this.isQuoteExpired(quote)) return 'expired';
     if (this.isQuoteExpiringSoon(quote)) return 'expiring-soon';
     return 'active';
+  }
+
+  // Pagination methods for saved quotes (nextPage and prevPage already exist above)
+
+  goToPage(pageNumber: number): void {
+    if (pageNumber >= 0 && pageNumber < this.getTotalPages()) {
+      this.page = pageNumber;
+      this.loadDashboardData();
+    }
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.totalRecords / this.pageSize);
+  }
+
+  getPageNumbers(): number[] {
+    const totalPages = this.getTotalPages();
+    const currentPage = this.page;
+    const pages: number[] = [];
+    
+    // Show up to 5 page numbers around current page
+    const maxPagesToShow = 5;
+    let startPage = Math.max(0, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(0, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   }
 
     protected readonly Math = Math;

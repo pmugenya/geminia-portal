@@ -113,7 +113,9 @@ export const nameValidator: ValidatorFn = (control: AbstractControl): Validation
 
 export const noWhitespaceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
-    const isWhitespace = (control.value || '').trim().length === 0;
+    // Ensure the value is a string before calling trim
+    const stringValue = typeof control.value === 'string' ? control.value : String(control.value);
+    const isWhitespace = stringValue.trim().length === 0;
     return isWhitespace ? { whitespace: true } : null;
 };
 
