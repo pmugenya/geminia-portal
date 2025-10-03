@@ -323,6 +323,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   user: StoredUser | null = null;
   pendingQuotes: PendingQuote[] = [];
   filteredPendingQuotes: PendingQuote[] = []; // Filtered to exclude expired quotes
+  allValidQuotes: PendingQuote[] = []; // All valid quotes (not expired) for pagination
   page = 0;
   pageSize = 2;
   currentIndex: number=0;
@@ -378,8 +379,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadDashboardData(): void {
-      const offset = this.page * this.pageSize;
-      this.userService.getClientQuotes(offset, this.pageSize).subscribe({
+      // Load all quotes first, then apply pagination client-side for better UX
+      this.userService.getClientQuotes(0, 1000).subscribe({ // Load more quotes to ensure we get all
           next: (res) => {
              // Get backend quotes (marine) - sorted by creation date descending (most recent first)
              let backendQuotes = res.pageItems || [];
@@ -413,14 +414,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
              this.pendingQuotes = [...backendQuotes, ...travelQuotesForDisplay]
                .sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime());
              
-             // Filter out expired quotes and apply pagination
-             const allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
-             this.totalRecords = allValidQuotes.length;
+             // Filter out expired quotes and store all valid quotes
+             this.allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
+             this.totalRecords = this.allValidQuotes.length;
              
              // Apply client-side pagination for the current page
-             const startIndex = this.page * this.pageSize;
-             const endIndex = startIndex + this.pageSize;
-             this.filteredPendingQuotes = allValidQuotes.slice(startIndex, endIndex);
+             this.applyPagination();
              
              this.updateDashboardStats();
           },
@@ -452,13 +451,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
              this.pendingQuotes = travelQuotesForDisplay
                .sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime());
              
-             const allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
-             this.totalRecords = allValidQuotes.length;
+             this.allValidQuotes = this.pendingQuotes.filter(quote => !this.isQuoteExpired(quote));
+             this.totalRecords = this.allValidQuotes.length;
              
              // Apply client-side pagination
-             const startIndex = this.page * this.pageSize;
-             const endIndex = startIndex + this.pageSize;
-             this.filteredPendingQuotes = allValidQuotes.slice(startIndex, endIndex);
+             this.applyPagination();
           }
       });
   }
@@ -529,17 +526,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     hasLess(): boolean { return this.currentIndex > 0; }
     hasMore(): boolean { return (this.currentIndex + 1) * this.pageLength < this.totalPolicies; }
 
+    // Apply pagination to the current data without reloading
+    applyPagination(): void {
+        const startIndex = this.page * this.pageSize;
+        const endIndex = startIndex + this.pageSize;
+        this.filteredPendingQuotes = this.allValidQuotes.slice(startIndex, endIndex);
+    }
+
     nextPage() {
         if ((this.page + 1) * this.pageSize < this.totalRecords) {
             this.page++;
-            this.loadDashboardData();
+            this.applyPagination();
         }
     }
 
     prevPage() {
         if (this.page > 0) {
             this.page--;
-            this.loadDashboardData();
+            this.applyPagination();
         }
     }
 
@@ -700,54 +704,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
    deleteQuote(quoteId: string, quoteIndex?: number): void {
-  if (confirm('Are you sure you want to delete this saved quote?')) {
-    console.log('Deleting quote with ID:', quoteId, 'at index:', quoteIndex);
+    if (confirm('Are you sure you want to delete this saved quote?')) {
+      console.log('Deleting quote with ID:', quoteId, 'at index:', quoteIndex);
 
-    if (quoteIndex !== undefined && quoteIndex >= 0 && quoteIndex < this.pendingQuotes.length) {
-      // Delete by index (more reliable when IDs are duplicated)
-      console.log('Deleting quote at index:', quoteIndex);
-      this.pendingQuotes.splice(quoteIndex, 1);
-      this.totalRecords = Math.max(0, this.totalRecords - 1);
+      // Remove from all arrays
+      this.pendingQuotes = this.pendingQuotes.filter(q => q.id !== quoteId);
+      this.allValidQuotes = this.allValidQuotes.filter(q => q.id !== quoteId);
+      this.totalRecords = this.allValidQuotes.length;
+
+      // Check if current page becomes empty and adjust if needed
+      if (this.filteredPendingQuotes.length === 1 && this.page > 0) {
+        this.page--;
+      }
+
+      // Reapply pagination
+      this.applyPagination();
 
       this.snackBar.open('Quote deleted successfully.', 'OK', {
         duration: 3000,
         panelClass: ['geminia-toast-panel']
       });
-
-      // Handle pagination
-      if (this.pendingQuotes.length === 0 && this.page > 0) {
-        this.page--;
-        this.loadDashboardData();
-      }
-    } else {
-      // Fallback: try to delete by ID but only the first match
-      console.log('No index provided, deleting first quote with ID:', quoteId);
-      const indexToDelete = this.pendingQuotes.findIndex(q => q.id === quoteId);
-
-      if (indexToDelete !== -1) {
-        this.pendingQuotes.splice(indexToDelete, 1);
-        this.totalRecords = Math.max(0, this.totalRecords - 1);
-
-        this.snackBar.open('Quote deleted successfully.', 'OK', {
-          duration: 3000,
-          panelClass: ['geminia-toast-panel']
-        });
-
-        // Handle pagination
-        if (this.pendingQuotes.length === 0 && this.page > 0) {
-          this.page--;
-          this.loadDashboardData();
-        }
-      } else {
-        console.error('Quote not found');
-        this.snackBar.open('Quote not found.', 'OK', {
-          duration: 3000,
-          panelClass: ['geminia-toast-panel']
-        });
-      }
     }
   }
-}
 
   logout(): void {
      this.authService.logout();
@@ -931,7 +909,7 @@ ngOnDestroy(): void {
   goToPage(pageNumber: number): void {
     if (pageNumber >= 0 && pageNumber < this.getTotalPages()) {
       this.page = pageNumber;
-      this.loadDashboardData();
+      this.applyPagination();
     }
   }
 
@@ -960,6 +938,8 @@ ngOnDestroy(): void {
     
     return pages;
   }
+
+  // Note: deleteQuote, showOption, and showToast methods already exist above
 
     protected readonly Math = Math;
 }
