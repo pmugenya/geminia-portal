@@ -13,7 +13,8 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { ShareModalComponent } from './share-modal.component'; 
+import { ShareModalComponent } from './share-modal.component';
+import { ShipmentDetailsModalComponent } from './shipment-details-modal.component'; 
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -788,7 +789,7 @@ export class PaymentModalComponent implements OnInit {
     imports: [
         CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule,
         MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, DatePipe,
-        ThousandsSeparatorValueAccessor, PaymentModalComponent, FuseAlertComponent,
+        ThousandsSeparatorValueAccessor, PaymentModalComponent, FuseAlertComponent, ShipmentDetailsModalComponent,
         MatSelectModule, NgxMatSelectSearchModule, ScrollingModule
     ],
     providers: [DatePipe],
@@ -1592,16 +1593,33 @@ export class KycShippingPaymentModalComponent implements OnInit, OnDestroy {
         formData.append('metadata', JSON.stringify(updatedMetadata));
         this.quotationService.createApplication(formData).subscribe({
             next: (res) => {
-                this.showToast('Quote details updated. Proceeding to payment.');
-                this.openPaymentModal(res.commandId);
                 this.isSubmitting = false;
-                this.formErrorMessage = null;
+                this.dialogRef.close(); // Close KYC modal
+                this.openShipmentDetailsModal(res.commandId, res.refno, res.phoneNo, res.netpremium);
             },
             error: (err) => {
                 console.error('Application creation error:', err);
                 this.formErrorMessage = 'Application creation error:' + err?.error?.errors[0].defaultUserMessage;
                 this.isSubmitting = false;
             },
+        });
+    }
+
+    private openShipmentDetailsModal(shippingId: number, refno: string, phoneNo: string, premium: number): void {
+        const kycFormValue = this.kycShippingForm.value;
+        const shipmentDialogRef = this.dialog.open(ShipmentDetailsModalComponent, {
+            width: '800px',
+            data: { 
+                shippingId: shippingId,
+                postalAddress: kycFormValue.postalAddress,
+                postalCode: kycFormValue.postalCode
+            },
+            disableClose: true
+        });
+
+        shipmentDialogRef.afterClosed().subscribe(result => {
+            // Payment modal is now handled by the ShipmentDetailsModalComponent
+            // No need to chain to payment modal here anymore
         });
     }
 

@@ -576,6 +576,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return status!=='PAID';
   }
 
+
     private openKycShippingPaymentModal(quoteId: number,originCountry:string,shippingmodeId:number,sumassured:number,pinNo: string,idNo: string,status:string,phone:string,prem:number,refno:string): void {
   const isMobile = window.innerWidth <= 480;
 

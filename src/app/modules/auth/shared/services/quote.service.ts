@@ -57,4 +57,24 @@ export class QuoteService {
     updateQuote(quoteId: string, formData: FormData): Observable<any> {
         return this.http.put(`${this.baseUrl}/quote/${quoteId}`, formData);
     }
+
+    /**
+     * Fetches shipment details by shipping ID.
+     * @param shippingId The ID of the shipping details to fetch.
+     * @returns Observable with the shipment data.
+     */
+    getShipmentDetails(shippingId: number): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/shippingapplication/${shippingId}`);
+    }
+
+    /**
+     * Updates existing shipment details.
+     * @param shippingId The ID of the shipping details to update.
+     * @param details The updated shipment data.
+     * @returns Observable with the updated shipment data.
+     */
+    updateShipmentDetails(shippingId: number, details: any): Observable<any> {
+        // Try POST method as an alternative to PUT
+        return this.http.post(`${this.baseUrl}/shippingapplication/${shippingId}`, details);
+    }
 }
